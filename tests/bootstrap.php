@@ -24,4 +24,3 @@ if (file_exists($root . '/config/bootstrap.php')) {
     return;
 }
 require $root . '/vendor/cakephp/cakephp/tests/bootstrap.php';
-\Cake\Core\Plugin::load('Search', ['path' => dirname(dirname(__FILE__)) . DS]);

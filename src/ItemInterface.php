@@ -17,6 +17,7 @@ interface ItemInterface
     public function getTitle();
 
     /**
+     * @param \Cake\Menu\LinkInterface $link Link Object
      * @return $this
      */
     public function setLink(LinkInterface $link);
@@ -26,6 +27,18 @@ interface ItemInterface
     public function setId();
 
     public function isActive();
+
+    /**
+     * @param bool $isActive Sets the active status
+     */
+    public function setActive($isActive);
+
+    /**
+     * Sets the visibility of the item
+     *
+     * @param bool $isVisible Is visible or not
+     */
+    public function setVisibility($isVisible);
 
     public function isVisible();
 
