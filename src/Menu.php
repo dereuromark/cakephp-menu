@@ -6,7 +6,9 @@ namespace Cake\Menu;
 class Menu implements MenuInterface
 {
 
+    protected $_itemCollection;
     protected $_attributes = [];
+    protected $_itemClass = Item::class;
 
     public function add(ItemInterface $item)
     {
@@ -20,6 +22,12 @@ class Menu implements MenuInterface
         }
 
         return $this->_attributes[$name];
+    }
+
+    public function addRaw($title, $link, $attributes) {
+		(new $this->_itemClass())
+			->setTitle($title)
+			->setLink();
     }
 
     public function setData($name, $value)
@@ -41,4 +49,23 @@ class Menu implements MenuInterface
     protected function _sort($name, $direction)
     {
     }
+
+	public function remove($itemId) {
+		// TODO: Implement remove() method.
+	}
+
+	public function getAttributes() {
+		// TODO: Implement getAttributes() method.
+	}
+
+	public function setAttribute($name, $value) {
+		// TODO: Implement setAttribute() method.
+	}
+
+	/**
+	 * @param callable|string $by
+	 */
+	public function filter($by, $options) {
+		// TODO: Implement filter() method.
+	}
 }

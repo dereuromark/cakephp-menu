@@ -5,6 +5,7 @@ namespace Cake\Menu\TestCase\Menu;
 
 use Cake\Menu\Item;
 use Cake\Menu\Link;
+use Cake\Menu\Menu;
 use Cake\Menu\Renderer\StringTemplateRenderer;
 use Cake\TestSuite\TestCase;
 
@@ -23,5 +24,10 @@ class ItemTestCase extends TestCase {
 		debug($item);
 
 		debug($renderer->renderItem($item));
+
+		$menu = new Menu();
+		$menu->add(new Item('foo'));
+
+
 	}
 }

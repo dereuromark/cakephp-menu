@@ -8,7 +8,7 @@ interface MenuInterface
 
     public function add(ItemInterface $item);
 
-    public function remove();
+    public function remove($itemId);
 
     public function setData($name, $value);
 

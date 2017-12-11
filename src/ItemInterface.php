@@ -3,8 +3,27 @@ declare(strict_types = 1);
 
 namespace Cake\Menu;
 
+/**
+ * Item Interface
+ */
 interface ItemInterface
 {
+
+	/**
+	 * @return bool
+	 */
+	public function isRaw();
+
+	/**
+	 * @param string $content
+	 * @return $this
+	 */
+	public function setRaw($content);
+
+	/**
+	 * @return string
+	 */
+	public function getRaw();
 
     /**
      * @param string $title

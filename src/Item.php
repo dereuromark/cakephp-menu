@@ -5,15 +5,23 @@ namespace Cake\Menu;
 
 class Item implements ItemInterface
 {
+
+    protected $_id;
+    protected $_isRaw = true;
+    protected $_isDivider = true;
     protected $_isVisible = true;
     protected $_isActive = false;
     protected $_attributes = [];
     protected $_title;
     protected $_data;
     protected $_link;
+    protected $_parent;
+    protected $_raw;
 
     public function __construct($title = null, $link = null)
     {
+        $this->_id = str_replace('.', '', uniqid('id-', true));
+
         $this->setTitle($title);
         if ($link instanceof LinkInterface) {
             $this->setLink($link);
@@ -45,10 +53,29 @@ class Item implements ItemInterface
         return $this->_link;
     }
 
-    public function setTitle($title) {
+    public function setTitle($title)
+    {
         $this->_title = $title;
 
         return $this;
+    }
+
+    public function isRaw()
+    {
+        return $this->_isRaw;
+    }
+
+    public function setRaw($data)
+    {
+        $this->_raw = $data;
+        $this->_isRaw = true;
+
+        return $this;
+    }
+
+    public function getRaw()
+    {
+    	return $this->_raw;
     }
 
     public function add(ItemInterface $item)
@@ -84,24 +111,31 @@ class Item implements ItemInterface
     /**
      * @return string
      */
-    public function getTitle() {
+    public function getTitle()
+    {
         return $this->_title;
     }
 
-    public function getId() {
-        // TODO: Implement getId() method.
+    public function getId()
+    {
+        return $this->_id;
     }
 
-    public function setId() {
-        // TODO: Implement setId() method.
+    public function setId($id)
+    {
+        $this->_id = $id;
+
+        return $this;
     }
 
-    public function isActive() {
-        // TODO: Implement isActive() method.
+    public function isActive()
+    {
+        return $this->_isActive;
     }
 
-    public function isVisible() {
-        // TODO: Implement isVisible() method.
+    public function isVisible()
+    {
+        return $this->_isVisible;
     }
 
     /**
@@ -109,36 +143,38 @@ class Item implements ItemInterface
      * @param string $value
      * @return $this
      */
-    public function setAttribute($name, $value) {
-        // TODO: Implement setAttribute() method.
+    public function setAttribute($name, $value)
+    {
+        $this->_attributes[$name] = $value;
+
+        return $this;
     }
 
     /**
      * @return array
      */
-    public function getAttributes() {
-        // TODO: Implement getAttributes() method.
+    public function getAttributes()
+    {
+        return $this->_attributes;
     }
 
     /**
      * @return bool
      */
-    public function hasParent() {
-        // TODO: Implement hasParent() method.
+    public function hasParent()
+    {
+        return !empty($this->_parent);
     }
 
-    public function setParent(ItemInterface $item) {
-        // TODO: Implement setParent() method.
+    public function setParent(ItemInterface $item)
+    {
+        $this->_parent= $item;
+
+        return $this;
     }
 
-    public function getParent() {
-        // TODO: Implement getParent() method.
+    public function getParent()
+    {
+        return $this->_parent;
     }
 }
-
-/*
-$menu = (new Menu())
-    ->setStatusResolver(new StatusResolver())
-    ->add(new Item())
-    ->addNewItem();
-*/
