@@ -1,27 +1,26 @@
 {
-  "name": "foc/menu",
+  "name": "friendsofcake/menu",
   "description": "CakePHP Menu Plugin",
   "homepage": "http://cakephp.org",
   "type": "cakephp-plugin",
   "license": "MIT",
   "require": {
-    "php": ">=7.0",
-    "cakephp/cakephp": "~3.5"
+    "php": ">=7.1",
+    "cakephp/cakephp": "^3.5"
   },
   "require-dev": {
-    "phpunit/phpunit": ">6.0",
+    "phpunit/phpunit": "^6.0",
     "cakephp/cakephp-codesniffer": "2.*"
   },
   "autoload": {
     "psr-4": {
-      "Cake\\Menu\\": "src"
+      "Cake\\Menu\\": "src/"
     }
   },
   "autoload-dev": {
     "psr-4": {
-      "Cake\\Menu\\Test\\": "tests",
-      "Cake\\": "./vendor/cakephp/cakephp/src",
-      "Cake\\Test\\": "./vendor/cakephp/cakephp/tests"
+      "Cake\\Menu\\Test\\": "tests/",
+      "Cake\\Test\\": "vendor/cakephp/cakephp/tests/"
     }
   },
   "minimum-stability": "beta",
