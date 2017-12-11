@@ -1,4 +1,6 @@
-# CakePHP Menu Builder
+# CakePHP Menu Plugin
+
+A menu builder for CakePHP apps.
 
 **WORK IN PROGRESS!**
 
