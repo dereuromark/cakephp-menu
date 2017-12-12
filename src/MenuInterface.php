@@ -10,6 +10,11 @@ interface MenuInterface
 
     public function remove($itemId);
 
+    /**
+     * @param string $name
+     * @param mixed $value
+     * @return $this
+     */
     public function setData($name, $value);
 
     public function getData($name);
@@ -20,8 +25,14 @@ interface MenuInterface
 
     /**
      * @param callable|string $by
+     * @param array $options
      */
-    public function filter($by, $options);
+    public function filter($by, array $options);
 
+    /**
+     * @param string $name
+     * @param string $direction
+     * @return void
+     */
     public function sortBy($name, $direction = 'desc');
 }

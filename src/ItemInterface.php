@@ -27,6 +27,7 @@ interface ItemInterface
 
     /**
      * @param string $title
+     * @return $this
      */
     public function setTitle($title);
 
@@ -43,8 +44,15 @@ interface ItemInterface
 
     public function getId();
 
+    /**
+     * @param string $id
+     * @return $this
+     */
     public function setId($id);
 
+    /**
+     * @return bool
+     */
     public function isActive();
 
     /**
@@ -82,6 +90,12 @@ interface ItemInterface
      * @return $this
      */
     public function setAttribute($name, $value);
+
+    /**
+     * @param array $attributes
+     * @return $this
+     */
+    public function setAttributes(array $attributes);
 
     /**
      * @return array

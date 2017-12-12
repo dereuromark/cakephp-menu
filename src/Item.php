@@ -5,19 +5,43 @@ namespace Cake\Menu;
 
 class Item implements ItemInterface
 {
-
+    /**
+     * @var string
+     */
     protected $_id;
+
     protected $_isRaw = true;
     protected $_isDivider = true;
     protected $_isVisible = true;
     protected $_isActive = false;
+
     protected $_attributes = [];
     protected $_title;
+
+    /**
+     * @var string
+     */
     protected $_data;
-    protected $_link;
-    protected $_parent;
+
+    /**
+     * @var string
+     */
     protected $_raw;
 
+    /**
+     * @var LinkInterface
+     */
+    protected $_link;
+
+    /**
+     * @var \Cake\Menu\ItemInterface
+     */
+    protected $_parent;
+
+    /**
+     * @param string|null $title
+     * @param LinkInterface|null $link
+     */
     public function __construct($title = null, $link = null)
     {
         $this->_id = str_replace('.', '', uniqid('id-', true));
@@ -28,6 +52,10 @@ class Item implements ItemInterface
         }
     }
 
+    /**
+     * @param bool $isVisible
+     * @return $this
+     */
     public function setVisibility($isVisible)
     {
         $this->_isVisible = $isVisible;
@@ -35,6 +63,10 @@ class Item implements ItemInterface
         return $this;
     }
 
+    /**
+     * @param bool $isActive
+     * @return $this
+     */
     public function setActive($isActive)
     {
         $this->_isActive = $isActive;
@@ -42,6 +74,10 @@ class Item implements ItemInterface
         return $this;
     }
 
+    /**
+     * @param \Cake\Menu\LinkInterface $link
+     * @return $this
+     */
     public function setLink(LinkInterface $link)
     {
         $this->_link = $link;
@@ -49,10 +85,17 @@ class Item implements ItemInterface
         return $this;
     }
 
+    /**
+     * @return \Cake\Menu\LinkInterface
+     */
     public function getLink() {
         return $this->_link;
     }
 
+    /**
+     * @param string $title
+     * @return $this
+     */
     public function setTitle($title)
     {
         $this->_title = $title;
@@ -60,11 +103,18 @@ class Item implements ItemInterface
         return $this;
     }
 
+    /**
+     * @return bool
+     */
     public function isRaw()
     {
         return $this->_isRaw;
     }
 
+    /**
+     * @param string $data
+     * @return $this
+     */
     public function setRaw($data)
     {
         $this->_raw = $data;
@@ -73,27 +123,55 @@ class Item implements ItemInterface
         return $this;
     }
 
+    /**
+     * @return string
+     */
     public function getRaw()
     {
     	return $this->_raw;
     }
 
+    /**
+     * @param \Cake\Menu\ItemInterface $item
+     * @return $this
+     */
     public function add(ItemInterface $item)
     {
         $item->setParent($this);
         $this->getSubMenu()->add($item);
+
+        return $this;
     }
 
+    /**
+     * @return MenuInterface
+     */
     public function getSubMenu()
     {
+        //TODO
     }
 
-    public function SetSubMenu()
+    /**
+     * @param \Cake\Menu\MenuInterface $menu
+     * @return $this
+     */
+    public function setSubMenu(MenuInterface $menu)
     {
+        //TODO
+
+        return $this;
     }
 
+    /**
+     * @param string|null $name
+     * @return mixed|array|null
+     */
     public function getData($name = null)
     {
+        if ($name === null) {
+            return $this->_attributes;
+        }
+
         if (!isset($this->_attributes[$name])) {
             return null;
         }
@@ -101,6 +179,11 @@ class Item implements ItemInterface
         return $this->_attributes[$name];
     }
 
+    /**
+     * @param string $name
+     * @param mixed $value
+     * @return $this
+     */
     public function setData($name, $value)
     {
         $this->_attributes[$name] = $value;
@@ -116,11 +199,18 @@ class Item implements ItemInterface
         return $this->_title;
     }
 
+    /**
+     * @return string
+     */
     public function getId()
     {
         return $this->_id;
     }
 
+    /**
+     * @param string $id
+     * @return $this
+     */
     public function setId($id)
     {
         $this->_id = $id;
@@ -128,11 +218,17 @@ class Item implements ItemInterface
         return $this;
     }
 
+    /**
+     * @return bool
+     */
     public function isActive()
     {
         return $this->_isActive;
     }
 
+    /**
+     * @return bool
+     */
     public function isVisible()
     {
         return $this->_isVisible;
@@ -146,6 +242,16 @@ class Item implements ItemInterface
     public function setAttribute($name, $value)
     {
         $this->_attributes[$name] = $value;
+
+        return $this;
+    }
+
+    /**
+     * @param array $attributes
+     * @return $this
+     */
+    public function setAttributes(array $attributes) {
+        $this->_attributes = $attributes;
 
         return $this;
     }
@@ -166,13 +272,20 @@ class Item implements ItemInterface
         return !empty($this->_parent);
     }
 
+    /**
+     * @param \Cake\Menu\ItemInterface $item
+     * @return $this
+     */
     public function setParent(ItemInterface $item)
     {
-        $this->_parent= $item;
+        $this->_parent = $item;
 
         return $this;
     }
 
+    /**
+     * @return \Cake\Menu\ItemInterface
+     */
     public function getParent()
     {
         return $this->_parent;

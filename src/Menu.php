@@ -8,13 +8,28 @@ class Menu implements MenuInterface
 
     protected $_itemCollection;
     protected $_attributes = [];
+
+    /**
+     * @var string
+     */
     protected $_itemClass = Item::class;
 
+    /**
+     * @param \Cake\Menu\ItemInterface $item
+     * @return $this
+     */
     public function add(ItemInterface $item)
     {
+        //TODO: object?
+        $this->_itemCollection[] = $item;
+
         return $this;
     }
 
+    /**
+     * @param string $name
+     * @return mixed|null
+     */
     public function getData($name)
     {
         if (!isset($this->_attributes[$name])) {
@@ -24,12 +39,32 @@ class Menu implements MenuInterface
         return $this->_attributes[$name];
     }
 
-    public function addRaw($title, $link, $attributes) {
-		(new $this->_itemClass())
-			->setTitle($title)
-			->setLink();
+    /**
+     * @param string $title
+     * @param \Cake\Menu\LinkInterface|null $link
+     * @param array $attributes
+     * @return $this
+     */
+    public function addRaw($title, $link = null, array $attributes = []) {
+        /** @var \Cake\Menu\ItemInterface $item */
+		$item = new $this->_itemClass();
+		$item
+			->setTitle($title);
+		if ($link) {
+			$item->setLink($link);
+        }
+        if ($attributes) {
+		    $item->setAttributes($attributes);
+        }
+
+        return $this;
     }
 
+    /**
+     * @param string $name
+     * @param mixed $value
+     * @return $this
+     */
     public function setData($name, $value)
     {
         $this->_attributes[$name] = $value;
@@ -37,6 +72,11 @@ class Menu implements MenuInterface
         return $this;
     }
 
+    /**
+     * @param string $name
+     * @param string $direction
+     * @return void
+     */
     public function sortBy($name, $direction = 'desc')
     {
         if (is_callable($name)) {
@@ -64,8 +104,9 @@ class Menu implements MenuInterface
 
 	/**
 	 * @param callable|string $by
+     * @param array $options
 	 */
-	public function filter($by, $options) {
+	public function filter($by, array $options) {
 		// TODO: Implement filter() method.
 	}
 }

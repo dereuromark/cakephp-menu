@@ -15,19 +15,23 @@ use Cake\TestSuite\TestCase;
 class ItemTestCase extends TestCase {
 
 	public function testItem() {
-		$renderer = new StringTemplateRenderer();
-
 		$item = (new Item())
 			->setTitle('First')
 			->setLink(new Link());
-
 		debug($item);
 
-		debug($renderer->renderItem($item));
+        $renderer = new StringTemplateRenderer();
+        debug($renderer->renderItem($item));
+
+        $item2 = (new Item())
+            ->setTitle('Second')
+            ->setLink(new Link());
 
 		$menu = new Menu();
 		$menu->add(new Item('foo'));
+		$menu->add($item);
+        $menu->add($item2);
 
-
+        //Render menu
 	}
 }

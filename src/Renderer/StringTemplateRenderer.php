@@ -27,6 +27,10 @@ class StringTemplateRenderer {
 	public function render() {
 	}
 
+    /**
+     * @param \Cake\Menu\ItemInterface $item
+     * @return string
+     */
 	public function renderItem(ItemInterface $item) {
 		if ($item instanceof ItemSelfRenderer) {
 			return $item->render();
@@ -36,6 +40,7 @@ class StringTemplateRenderer {
 		$attributes['href'] = $item->getLink()->getUrl();
 
 		$attr = [];
+		//TODO: escape
 		foreach ($attributes as $name => $value) {
 			$attr[] = $name . '="' . $value . '"';
 		}
