@@ -5,56 +5,65 @@ namespace Cake\Menu;
 
 use Cake\Routing\Router;
 
-class Link implements LinkInterface {
+class Link implements LinkInterface
+{
 
-	/**
-	 * @var array
-	 */
-	protected $_attributes = [];
+    protected $_attributes = [];
+    protected $_url;
+    protected $_title;
 
-	/**
-	 * @param string $name
-	 * @param mixed $value
-	 * @return $this
-	 */
-	public function setAttribute($name, $value) {
-		$this->_attributes[$name] = $value;
+    public function setUrl($url)
+    {
+        $this->_url = $url;
 
-		return $this;
-	}
+        return $this;
+    }
 
-	/**
-	 * @return array
-	 */
-	public function getAttributes() {
-		return $this->_attributes;
-	}
+    public function setTitle($title)
+    {
+        $this->_title = $title;
 
-	/**
-	 * @return string
-	 */
-	public function getRawUrl() {
-		// TODO: Implement getRawUrl() method.
-	}
+        return $this;
+    }
 
-	/**
-	 * @return string
-	 */
-	public function getUrl() {
-		$rawUrl = $this->getRawUrl();
-		if (is_string($rawUrl)) {
-			return $rawUrl;
-		}
+    public function setAttribute($name, $value)
+    {
+        $this->_attributes[$name] = $value;
 
-		return $this->_builder($rawUrl);
-	}
+        return $this;
+    }
 
-	/**
-	 * @param string|array $rawUrl
-	 * @return string
-	 */
-	protected function _builder($rawUrl) {
-		return Router::url($rawUrl);
-	}
+    public function getAttributes()
+    {
+        return $this->_attributes;
+    }
 
+    public function getRawUrl()
+    {
+        return $this->_url;
+    }
+
+    /**
+     * @return string
+     */
+    public function getUrl()
+    {
+        $rawUrl = $this->getRawUrl();
+        if (is_string($rawUrl)) {
+            return $rawUrl;
+        }
+
+        return $this->_builder($rawUrl);
+    }
+
+    /**
+     * @return string
+     */
+    protected function _builder($rawUrl)
+    {
+        if (is_string($rawUrl)) {
+            return $rawUrl;
+        }
+        return Router::url($rawUrl);
+    }
 }

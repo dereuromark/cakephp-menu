@@ -11,6 +11,6 @@ interface RendererInterface {
      * @param \Cake\Menu\MenuInterface $menu
      * @return string
      */
-	public function render(MenuInterface $menu);
+    public function render(MenuInterface $menu);
 
 }
