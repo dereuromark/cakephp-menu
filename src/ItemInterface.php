@@ -41,6 +41,14 @@ interface ItemInterface {
 	 */
 	public function setLink(LinkInterface $link);
 
+    /**
+     * @return \Cake\Menu\LinkInterface
+     */
+    public function getLink();
+
+    /**
+     * @return string
+     */
 	public function getId();
 
 	/**

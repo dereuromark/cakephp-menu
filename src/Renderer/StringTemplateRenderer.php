@@ -4,6 +4,7 @@ declare(strict_types = 1);
 namespace Cake\Menu\Renderer;
 
 use Cake\Core\InstanceConfigTrait;
+use Cake\Menu\Item\SelfRendererInterface;
 use Cake\Menu\ItemInterface;
 use Cake\Menu\MenuInterface;
 use Cake\View\StringTemplateTrait;
@@ -44,7 +45,7 @@ class StringTemplateRenderer {
 	 * @return string
 	 */
 	public function renderItem(ItemInterface $item) {
-		if ($item instanceof ItemSelfRenderer) {
+		if ($item instanceof SelfRendererInterface) {
 			return $item->render();
 		}
 
