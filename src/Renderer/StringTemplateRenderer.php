@@ -20,9 +20,9 @@ class StringTemplateRenderer {
 	protected $_defaultConfig = [
 		'templates' => [
 			'menuWrapper' => '<ul>{{items}}</ul>',
-			'item' => '<li {{attributes}}>{{before}}{{item}}{{after}}</li>',
-			'link' => '<a {{attributes}}>{{title}}</a>',
-		],
+			'item' => '<li{{attributes}}>{{before}}{{item}}{{after}}</li>',
+			'link' => '<a{{attributes}}>{{title}}</a>'
+		]
 	];
 
 	/**
