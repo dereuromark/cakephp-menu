@@ -17,6 +17,7 @@ class MenuHelper extends Helper {
 	 *
 	 * @param \Cake\Menu\Menu $menu
 	 * @param array $options Options
+	 *
 	 * @return string
 	 */
 	public function render(Menu $menu, array $options = []) {

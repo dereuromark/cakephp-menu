@@ -11,9 +11,9 @@ use Zend\Diactoros\Request;
 
 class Psr7UrlResolverTest extends TestCase {
 
-    /**
-     * @return void
-     */
+	/**
+	 * @return void
+	 */
 	public function testItem() {
 		$link = new Link();
 		$link->setUrl('http://www.cakephp.org/users?sort=desc&name=florian');

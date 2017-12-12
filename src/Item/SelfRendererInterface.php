@@ -5,9 +5,9 @@ namespace Cake\Menu\Item;
 
 interface SelfRendererInterface {
 
-    /**
-     * @return string
-     */
-    public function render();
+	/**
+	 * @return string
+	 */
+	public function render();
 
 }

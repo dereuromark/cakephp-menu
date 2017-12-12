@@ -13,9 +13,9 @@ use Cake\TestSuite\TestCase;
  */
 class MenuTest extends TestCase {
 
-    /**
-     * @return void
-     */
+	/**
+	 * @return void
+	 */
 	public function testMenu() {
 		$item = (new Item())
 			->setTitle('First')
@@ -31,8 +31,8 @@ class MenuTest extends TestCase {
 
 		//Render menu
 
-        $attributes = $menu->getAttributes();
-        debug($attributes);
+		$attributes = $menu->getAttributes();
+		debug($attributes);
 	}
 
 }

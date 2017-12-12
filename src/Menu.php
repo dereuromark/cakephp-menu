@@ -22,6 +22,7 @@ class Menu implements MenuInterface {
 
 	/**
 	 * @param \Cake\Menu\ItemInterface $item
+	 *
 	 * @return $this
 	 */
 	public function add(ItemInterface $item) {
@@ -33,6 +34,7 @@ class Menu implements MenuInterface {
 
 	/**
 	 * @param string $name
+	 *
 	 * @return mixed|null
 	 */
 	public function getData($name) {
@@ -47,6 +49,7 @@ class Menu implements MenuInterface {
 	 * @param string $title
 	 * @param \Cake\Menu\LinkInterface|null $link
 	 * @param array $attributes
+	 *
 	 * @return $this
 	 */
 	public function addRaw($title, $link = null, array $attributes = []) {
@@ -67,6 +70,7 @@ class Menu implements MenuInterface {
 	/**
 	 * @param string $name
 	 * @param mixed $value
+	 *
 	 * @return $this
 	 */
 	public function setData($name, $value) {
@@ -78,9 +82,10 @@ class Menu implements MenuInterface {
 	/**
 	 * @param string $name
 	 * @param string $direction
+	 *
 	 * @return void
 	 */
-	public function sortBy($name, $direction = 'desc') {
+	public function sortBy($name, $direction = self::SORT_DESC) {
 		if (is_callable($name)) {
 			$name($this, $direction);
 		}
@@ -88,11 +93,17 @@ class Menu implements MenuInterface {
 		$this->_sort($name, $direction);
 	}
 
+	/**
+	 * @param string $name
+	 * @param string $direction
+	 * @return void
+	 */
 	protected function _sort($name, $direction) {
 	}
 
 	/**
 	 * @param string $itemId
+	 *
 	 * @return $this
 	 */
 	public function remove($itemId) {
@@ -109,6 +120,7 @@ class Menu implements MenuInterface {
 	/**
 	 * @param string $name
 	 * @param mixed $value
+	 *
 	 * @return $this
 	 */
 	public function setAttribute($name, $value) {
@@ -118,6 +130,7 @@ class Menu implements MenuInterface {
 	/**
 	 * @param callable|string $by
 	 * @param array $options
+	 *
 	 * @return void
 	 */
 	public function filter($by, array $options) {

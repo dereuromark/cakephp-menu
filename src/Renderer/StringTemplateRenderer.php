@@ -4,8 +4,8 @@ declare(strict_types = 1);
 namespace Cake\Menu\Renderer;
 
 use Cake\Core\InstanceConfigTrait;
-use Cake\Menu\Item\SelfRendererInterface;
 use Cake\Menu\ItemInterface;
+use Cake\Menu\Item\SelfRendererInterface;
 use Cake\Menu\MenuInterface;
 use Cake\View\StringTemplateTrait;
 
@@ -21,8 +21,8 @@ class StringTemplateRenderer {
 		'templates' => [
 			'menuWrapper' => '<ul>{{items}}</ul>',
 			'item' => '<li {{attributes}}>{{before}}{{item}}{{after}}</li>',
-			'link' => '<a {{attributes}}>{{title}}</a>'
-		]
+			'link' => '<a {{attributes}}>{{title}}</a>',
+		],
 	];
 
 	/**
@@ -33,6 +33,7 @@ class StringTemplateRenderer {
 
 	/**
 	 * @param \Cake\Menu\MenuInterface $menu
+	 *
 	 * @return string
 	 */
 	public function render(MenuInterface $menu) {
@@ -42,6 +43,7 @@ class StringTemplateRenderer {
 
 	/**
 	 * @param \Cake\Menu\ItemInterface $item
+	 *
 	 * @return string
 	 */
 	public function renderItem(ItemInterface $item) {
@@ -60,7 +62,7 @@ class StringTemplateRenderer {
 
 		return $this->templater()->format('link', [
 			'attributes' => implode(' ', $attr),
-			'title' => $item->getTitle()
+			'title' => $item->getTitle(),
 		]);
 	}
 

@@ -11,34 +11,43 @@ class Link implements LinkInterface {
 	 * @var array
 	 */
 	protected $_attributes = [];
-    protected $_url;
-    protected $_title;
 
-    /**
-     * @param string|array $url
-     * @return $this
-     */
-    public function setUrl($url)
-    {
-        $this->_url = $url;
+	/**
+	 * @var string|array
+	 */
+	protected $_url;
 
-        return $this;
-    }
+	/**
+	 * @var string
+	 */
+	protected $_title;
 
-    /**
-     * @param string $title
-     * @return $this
-     */
-    public function setTitle($title)
-    {
-        $this->_title = $title;
+	/**
+	 * @param string|array $url
+	 *
+	 * @return $this
+	 */
+	public function setUrl($url) {
+		$this->_url = $url;
 
-        return $this;
-    }
+		return $this;
+	}
+
+	/**
+	 * @param string $title
+	 *
+	 * @return $this
+	 */
+	public function setTitle($title) {
+		$this->_title = $title;
+
+		return $this;
+	}
 
 	/**
 	 * @param string $name
 	 * @param mixed $value
+	 *
 	 * @return $this
 	 */
 	public function setAttribute($name, $value) {
@@ -58,7 +67,7 @@ class Link implements LinkInterface {
 	 * @return string
 	 */
 	public function getRawUrl() {
-        return $this->_url;
+		return $this->_url;
 	}
 
 	/**
@@ -75,13 +84,14 @@ class Link implements LinkInterface {
 
 	/**
 	 * @param string|array $rawUrl
+	 *
 	 * @return string
 	 */
 	protected function _builder($rawUrl) {
 	    // Really good? What about string relative ones?
-        if (is_string($rawUrl)) {
-            return $rawUrl;
-        }
+		if (is_string($rawUrl)) {
+			return $rawUrl;
+		}
 
 		return Router::url($rawUrl);
 	}

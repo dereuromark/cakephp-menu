@@ -17,6 +17,10 @@ class LoggedInResolver implements ResolverInterface {
 		$this->_user = $user;
 	}
 
+	/**
+	 * @param \Cake\Menu\ItemInterface $item
+	 * @return void
+	 */
 	public function resolve(ItemInterface $item) {
 		if ($this->_user) {
 			$item->setVisibility(true);

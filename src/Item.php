@@ -75,6 +75,7 @@ class Item implements ItemInterface {
 
 	/**
 	 * @param bool $isVisible
+	 *
 	 * @return $this
 	 */
 	public function setVisibility($isVisible) {
@@ -85,6 +86,7 @@ class Item implements ItemInterface {
 
 	/**
 	 * @param bool $isActive
+	 *
 	 * @return $this
 	 */
 	public function setActive($isActive) {
@@ -95,6 +97,7 @@ class Item implements ItemInterface {
 
 	/**
 	 * @param \Cake\Menu\LinkInterface $link
+	 *
 	 * @return $this
 	 */
 	public function setLink(LinkInterface $link) {
@@ -112,6 +115,7 @@ class Item implements ItemInterface {
 
 	/**
 	 * @param string $title
+	 *
 	 * @return $this
 	 */
 	public function setTitle($title) {
@@ -129,6 +133,7 @@ class Item implements ItemInterface {
 
 	/**
 	 * @param string $data
+	 *
 	 * @return $this
 	 */
 	public function setRaw($data) {
@@ -147,6 +152,7 @@ class Item implements ItemInterface {
 
 	/**
 	 * @param \Cake\Menu\ItemInterface $item
+	 *
 	 * @return $this
 	 */
 	public function add(ItemInterface $item) {
@@ -165,6 +171,7 @@ class Item implements ItemInterface {
 
 	/**
 	 * @param \Cake\Menu\MenuInterface $menu
+	 *
 	 * @return $this
 	 */
 	public function setSubMenu(MenuInterface $menu) {
@@ -175,6 +182,7 @@ class Item implements ItemInterface {
 
 	/**
 	 * @param string|null $name
+	 *
 	 * @return mixed|array|null
 	 */
 	public function getData($name = null) {
@@ -192,6 +200,7 @@ class Item implements ItemInterface {
 	/**
 	 * @param string $name
 	 * @param mixed $value
+	 *
 	 * @return $this
 	 */
 	public function setData($name, $value) {
@@ -216,6 +225,7 @@ class Item implements ItemInterface {
 
 	/**
 	 * @param string $id
+	 *
 	 * @return $this
 	 */
 	public function setId($id) {
@@ -241,6 +251,7 @@ class Item implements ItemInterface {
 	/**
 	 * @param string $name
 	 * @param string $value
+	 *
 	 * @return $this
 	 */
 	public function setAttribute($name, $value) {
@@ -251,6 +262,7 @@ class Item implements ItemInterface {
 
 	/**
 	 * @param array $attributes
+	 *
 	 * @return $this
 	 */
 	public function setAttributes(array $attributes) {
@@ -275,6 +287,7 @@ class Item implements ItemInterface {
 
 	/**
 	 * @param \Cake\Menu\ItemInterface $item
+	 *
 	 * @return $this
 	 */
 	public function setParent(ItemInterface $item) {

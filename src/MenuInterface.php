@@ -5,6 +5,9 @@ namespace Cake\Menu;
 
 interface MenuInterface {
 
+	const SORT_ASC = 'asc';
+	const SORT_DESC = 'desc';
+
 	public function add(ItemInterface $item);
 
 	public function remove($itemId);
@@ -12,12 +15,14 @@ interface MenuInterface {
 	/**
 	 * @param string $name
 	 * @param mixed $value
+	 *
 	 * @return $this
 	 */
 	public function setData($name, $value);
 
 	/**
 	 * @param string $name
+	 *
 	 * @return mixed
 	 */
 	public function getData($name);
@@ -30,6 +35,7 @@ interface MenuInterface {
 	/**
 	 * @param string $name
 	 * @param mixed $value
+	 *
 	 * @return mixed
 	 */
 	public function setAttribute($name, $value);
@@ -37,6 +43,7 @@ interface MenuInterface {
 	/**
 	 * @param callable|string $by
 	 * @param array $options
+	 *
 	 * @return void
 	 */
 	public function filter($by, array $options);
@@ -44,8 +51,9 @@ interface MenuInterface {
 	/**
 	 * @param string $name
 	 * @param string $direction
+	 *
 	 * @return void
 	 */
-	public function sortBy($name, $direction = 'desc');
+	public function sortBy($name, $direction = self::SORT_DESC);
 
 }

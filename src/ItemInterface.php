@@ -15,6 +15,7 @@ interface ItemInterface {
 
 	/**
 	 * @param string $content
+	 *
 	 * @return $this
 	 */
 	public function setRaw($content);
@@ -26,6 +27,7 @@ interface ItemInterface {
 
 	/**
 	 * @param string $title
+	 *
 	 * @return $this
 	 */
 	public function setTitle($title);
@@ -37,22 +39,24 @@ interface ItemInterface {
 
 	/**
 	 * @param \Cake\Menu\LinkInterface $link Link Object
+	 *
 	 * @return $this
 	 */
 	public function setLink(LinkInterface $link);
 
-    /**
-     * @return \Cake\Menu\LinkInterface
-     */
-    public function getLink();
+	/**
+	 * @return \Cake\Menu\LinkInterface
+	 */
+	public function getLink();
 
-    /**
-     * @return string
-     */
+	/**
+	 * @return string
+	 */
 	public function getId();
 
 	/**
 	 * @param string $id
+	 *
 	 * @return $this
 	 */
 	public function setId($id);
@@ -64,6 +68,7 @@ interface ItemInterface {
 
 	/**
 	 * @param bool $isActive Sets the active status
+	 *
 	 * @return $this
 	 */
 	public function setActive($isActive);
@@ -77,12 +82,14 @@ interface ItemInterface {
 	 * Sets the visibility of the item
 	 *
 	 * @param bool $isVisible Is visible or not
+	 *
 	 * @return $this
 	 */
 	public function setVisibility($isVisible);
 
 	/**
 	 * @param \Cake\Menu\ItemInterface $item
+	 *
 	 * @return $this
 	 */
 	public function add(ItemInterface $item);
@@ -90,12 +97,14 @@ interface ItemInterface {
 	/**
 	 * @param string $name
 	 * @param mixed $value
+	 *
 	 * @return $this
 	 */
 	public function setData($name, $value);
 
 	/**
 	 * @param string|null $name
+	 *
 	 * @return mixed
 	 */
 	public function getData($name = null);
@@ -105,6 +114,7 @@ interface ItemInterface {
 	 *
 	 * @param string $name
 	 * @param string $value
+	 *
 	 * @return $this
 	 */
 	public function setAttribute($name, $value);
@@ -113,6 +123,7 @@ interface ItemInterface {
 	 * Replaces all attributes completely.
 	 *
 	 * @param array $attributes
+	 *
 	 * @return $this
 	 */
 	public function setAttributes(array $attributes);
@@ -129,6 +140,7 @@ interface ItemInterface {
 
 	/**
 	 * @param \Cake\Menu\ItemInterface $item
+	 *
 	 * @return $this
 	 */
 	public function setParent(ItemInterface $item);
