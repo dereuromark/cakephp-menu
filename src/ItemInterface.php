@@ -43,7 +43,7 @@ interface ItemInterface
 
     public function getId();
 
-    public function setId();
+    public function setId($id);
 
     public function isActive();
 
