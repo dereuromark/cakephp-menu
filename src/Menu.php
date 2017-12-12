@@ -3,69 +3,125 @@ declare(strict_types = 1);
 
 namespace Cake\Menu;
 
-class Menu implements MenuInterface
-{
+class Menu implements MenuInterface {
 
-    protected $_itemCollection;
-    protected $_attributes = [];
-    protected $_itemClass = Item::class;
+	/**
+	 * @var array
+	 */
+	protected $_itemCollection;
 
-    public function add(ItemInterface $item)
-    {
-        return $this;
-    }
+	/**
+	 * @var array
+	 */
+	protected $_attributes = [];
 
-    public function getData($name)
-    {
-        if (!isset($this->_attributes[$name])) {
-            return null;
-        }
+	/**
+	 * @var string
+	 */
+	protected $_itemClass = Item::class;
 
-        return $this->_attributes[$name];
-    }
+	/**
+	 * @param \Cake\Menu\ItemInterface $item
+	 * @return $this
+	 */
+	public function add(ItemInterface $item) {
+		//TODO: object?
+		$this->_itemCollection[] = $item;
 
-    public function addRaw($title, $link, $attributes) {
-        (new $this->_itemClass())
-            ->setTitle($title)
-            ->setLink();
-    }
+		return $this;
+	}
 
-    public function setData($name, $value)
-    {
-        $this->_attributes[$name] = $value;
+	/**
+	 * @param string $name
+	 * @return mixed|null
+	 */
+	public function getData($name) {
+		if (!isset($this->_attributes[$name])) {
+			return null;
+		}
 
-        return $this;
-    }
+		return $this->_attributes[$name];
+	}
 
-    public function sortBy($name, $direction = 'desc')
-    {
-        if (is_callable($name)) {
-            $name($this, $direction);
-        }
+	/**
+	 * @param string $title
+	 * @param \Cake\Menu\LinkInterface|null $link
+	 * @param array $attributes
+	 * @return $this
+	 */
+	public function addRaw($title, $link = null, array $attributes = []) {
+		/** @var \Cake\Menu\ItemInterface $item */
+		$item = new $this->_itemClass();
+		$item
+			->setTitle($title);
+		if ($link) {
+			$item->setLink($link);
+		}
+		if ($attributes) {
+		    $item->setAttributes($attributes);
+		}
 
-        $this->_sort($name, $direction);
-    }
+		return $this;
+	}
 
-    protected function _sort($name, $direction)
-    {
-    }
+	/**
+	 * @param string $name
+	 * @param mixed $value
+	 * @return $this
+	 */
+	public function setData($name, $value) {
+		$this->_attributes[$name] = $value;
 
-    public function remove($itemId) {
-        // TODO: Implement remove() method.
-    }
+		return $this;
+	}
 
-    public function getAttributes() {
-        // TODO: Implement getAttributes() method.
-    }
+	/**
+	 * @param string $name
+	 * @param string $direction
+	 * @return void
+	 */
+	public function sortBy($name, $direction = 'desc') {
+		if (is_callable($name)) {
+			$name($this, $direction);
+		}
 
-    public function setAttribute($name, $value) {
-        // TODO: Implement setAttribute() method.
-    }
+		$this->_sort($name, $direction);
+	}
 
-    /**
-     * @param callable|string $by
-     */
-    public function filter($by, $options) {
-        // TODO: Implement filter() method.
-    }
+	protected function _sort($name, $direction) {
+	}
+
+	/**
+	 * @param string $itemId
+	 * @return $this
+	 */
+	public function remove($itemId) {
+		// TODO: Implement remove() method.
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getAttributes() {
+		return $this->_attributes;
+	}
+
+	/**
+	 * @param string $name
+	 * @param mixed $value
+	 * @return $this
+	 */
+	public function setAttribute($name, $value) {
+		// TODO: Implement setAttribute() method.
+	}
+
+	/**
+	 * @param callable|string $by
+	 * @param array $options
+	 * @return void
+	 */
+	public function filter($by, array $options) {
+		// TODO: Implement filter() method.
+	}
+
 }

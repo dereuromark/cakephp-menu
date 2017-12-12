@@ -5,22 +5,22 @@ use Cake\Menu\ItemInterface;
 
 class LoggedInResolver implements ResolverInterface {
 
-    /**
-     * @var array|\ArrayObject
-     */
-    protected $_user;
+	/**
+	 * @var array|\ArrayObject
+	 */
+	protected $_user;
 
-    /**
-     * @param array|\ArrayObject $user
-     */
-    public function __construct($user) {
-        $this->_user = $user;
-    }
+	/**
+	 * @param array|\ArrayObject $user
+	 */
+	public function __construct($user) {
+		$this->_user = $user;
+	}
 
-    public function resolve(ItemInterface $item) {
-        if ($this->_user) {
-            $item->setVisibility(true);
-        }
-    }
+	public function resolve(ItemInterface $item) {
+		if ($this->_user) {
+			$item->setVisibility(true);
+		}
+	}
 
 }

@@ -5,13 +5,19 @@ namespace Cake\Menu;
 
 use Cake\Routing\Router;
 
-class Link implements LinkInterface
-{
+class Link implements LinkInterface {
 
-    protected $_attributes = [];
+	/**
+	 * @var array
+	 */
+	protected $_attributes = [];
     protected $_url;
     protected $_title;
 
+    /**
+     * @param string|array $url
+     * @return $this
+     */
     public function setUrl($url)
     {
         $this->_url = $url;
@@ -19,6 +25,10 @@ class Link implements LinkInterface
         return $this;
     }
 
+    /**
+     * @param string $title
+     * @return $this
+     */
     public function setTitle($title)
     {
         $this->_title = $title;
@@ -26,44 +36,54 @@ class Link implements LinkInterface
         return $this;
     }
 
-    public function setAttribute($name, $value)
-    {
-        $this->_attributes[$name] = $value;
+	/**
+	 * @param string $name
+	 * @param mixed $value
+	 * @return $this
+	 */
+	public function setAttribute($name, $value) {
+		$this->_attributes[$name] = $value;
 
-        return $this;
-    }
+		return $this;
+	}
 
-    public function getAttributes()
-    {
-        return $this->_attributes;
-    }
+	/**
+	 * @return array
+	 */
+	public function getAttributes() {
+		return $this->_attributes;
+	}
 
-    public function getRawUrl()
-    {
+	/**
+	 * @return string
+	 */
+	public function getRawUrl() {
         return $this->_url;
-    }
+	}
 
-    /**
-     * @return string
-     */
-    public function getUrl()
-    {
-        $rawUrl = $this->getRawUrl();
+	/**
+	 * @return string
+	 */
+	public function getUrl() {
+		$rawUrl = $this->getRawUrl();
+		if (is_string($rawUrl)) {
+			return $rawUrl;
+		}
+
+		return $this->_builder($rawUrl);
+	}
+
+	/**
+	 * @param string|array $rawUrl
+	 * @return string
+	 */
+	protected function _builder($rawUrl) {
+	    // Really good? What about string relative ones?
         if (is_string($rawUrl)) {
             return $rawUrl;
         }
 
-        return $this->_builder($rawUrl);
-    }
+		return Router::url($rawUrl);
+	}
 
-    /**
-     * @return string
-     */
-    protected function _builder($rawUrl)
-    {
-        if (is_string($rawUrl)) {
-            return $rawUrl;
-        }
-        return Router::url($rawUrl);
-    }
 }

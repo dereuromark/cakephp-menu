@@ -3,8 +3,7 @@ declare(strict_types = 1);
 
 namespace Cake\Menu\Item;
 
-interface SelfRendererInterface
-{
+interface SelfRendererInterface {
 
     /**
      * @return string

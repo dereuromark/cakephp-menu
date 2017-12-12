@@ -3,11 +3,10 @@ declare(strict_types = 1);
 
 namespace Cake\Menu;
 
-interface LinkInterface
-{
+interface LinkInterface {
 
     /**
-     * Set HTML attributes for the link
+     * Sets HTML attributes for the link
      *
      * @param string $name
      * @param string $value
@@ -16,23 +15,24 @@ interface LinkInterface
     public function setAttribute($name, $value);
 
     /**
-     * Get all attributes as array
+     * Gets all attributes as array
      *
      * @return array Attributes
      */
     public function getAttributes();
 
-    /**
+	/**
      * Returns whatever the implementation expects to build an URL from
      *
-     * @return mixed Returns whatever the implementation expects to build an URL from
-     */
-    public function getRawUrl();
+	 * @return mixed
+	 */
+	public function getRawUrl();
 
     /**
-     * Get the URL
+     * Gets the URL
      *
      * @return string
      */
     public function getUrl();
+
 }

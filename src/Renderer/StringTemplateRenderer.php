@@ -11,57 +11,57 @@ use Cake\View\StringTemplateTrait;
 
 class StringTemplateRenderer {
 
-    use InstanceConfigTrait;
-    use StringTemplateTrait;
+	use InstanceConfigTrait;
+	use StringTemplateTrait;
 
-    /**
-     * @var array
-     */
-    protected $_defaultConfig = [
-        'templates' => [
-            'menuWrapper' => '<ul>{{items}}</ul>',
-            'item' => '<li {{attributes}}>{{before}}{{item}}{{after}}</li>',
-            'link' => '<a {{attributes}}>{{title}}</a>'
-        ]
-    ];
+	/**
+	 * @var array
+	 */
+	protected $_defaultConfig = [
+		'templates' => [
+			'menuWrapper' => '<ul>{{items}}</ul>',
+			'item' => '<li {{attributes}}>{{before}}{{item}}{{after}}</li>',
+			'link' => '<a {{attributes}}>{{title}}</a>'
+		]
+	];
 
-    /**
-     * @var array
-     */
-    protected $_templates = [
-    ];
+	/**
+	 * @var array
+	 */
+	protected $_templates = [
+	];
 
-    /**
-     * @param \Cake\Menu\MenuInterface $menu
-     * @return string
-     */
-    public function render(MenuInterface $menu) {
-        //TODO
-        return '';
-    }
+	/**
+	 * @param \Cake\Menu\MenuInterface $menu
+	 * @return string
+	 */
+	public function render(MenuInterface $menu) {
+	    //TODO
+	    return '';
+	}
 
-    /**
-     * @param \Cake\Menu\ItemInterface $item
-     * @return string
-     */
-    public function renderItem(ItemInterface $item) {
-        if ($item instanceof SelfRendererInterface) {
-            return $item->render();
-        }
+	/**
+	 * @param \Cake\Menu\ItemInterface $item
+	 * @return string
+	 */
+	public function renderItem(ItemInterface $item) {
+		if ($item instanceof SelfRendererInterface) {
+			return $item->render();
+		}
 
-        $attributes = $item->getLink()->getAttributes();
-        $attributes['href'] = $item->getLink()->getUrl();
+		$attributes = $item->getLink()->getAttributes();
+		$attributes['href'] = $item->getLink()->getUrl();
 
-        $attr = [];
-        //TODO: escape
-        foreach ($attributes as $name => $value) {
-            $attr[] = $name . '="' . $value . '"';
-        }
+		$attr = [];
+		//TODO: escape
+		foreach ($attributes as $name => $value) {
+			$attr[] = $name . '="' . $value . '"';
+		}
 
-        return $this->templater()->format('link', [
-            'attributes' => implode(' ', $attr),
-            'title' => $item->getTitle()
-        ]);
-    }
+		return $this->templater()->format('link', [
+			'attributes' => implode(' ', $attr),
+			'title' => $item->getTitle()
+		]);
+	}
 
 }
