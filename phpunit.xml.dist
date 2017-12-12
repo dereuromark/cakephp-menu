@@ -7,7 +7,7 @@
 
     <testsuites>
         <testsuite name="menu">
-            <directory>./tests/</directory>
+            <directory>./tests/TestCase/</directory>
         </testsuite>
     </testsuites>
 
