@@ -22,7 +22,7 @@ class Psr7UrlResolverTest extends TestCase {
 		$resolver = new Psr7UrlResolver($request);
 		$resolver->resolve($item);
 
-		debug($item->isActive());
+		$this->assertTrue($item->isActive());
 	}
 
 }
