@@ -3,291 +3,291 @@ declare(strict_types = 1);
 
 namespace Cake\Menu;
 
-class Item implements ItemInterface
-{
-    /**
-     * @var string
-     */
-    protected $_id;
+class Item implements ItemInterface {
 
-    protected $_isRaw = true;
-    protected $_isDivider = true;
-    protected $_isVisible = true;
-    protected $_isActive = false;
+	/**
+	 * @var string
+	 */
+	protected $_id;
 
-    protected $_attributes = [];
-    protected $_title;
+	/**
+	 * @var bool
+	 */
+	protected $_isRaw = true;
 
-    /**
-     * @var string
-     */
-    protected $_data;
+	/**
+	 * @var bool
+	 */
+	protected $_isDivider = true;
 
-    /**
-     * @var string
-     */
-    protected $_raw;
+	/**
+	 * @var bool
+	 */
+	protected $_isVisible = true;
 
-    /**
-     * @var LinkInterface
-     */
-    protected $_link;
+	/**
+	 * @var bool
+	 */
+	protected $_isActive = false;
 
-    /**
-     * @var \Cake\Menu\ItemInterface
-     */
-    protected $_parent;
+	/**
+	 * @var array
+	 */
+	protected $_attributes = [];
 
-    /**
-     * @param string|null $title
-     * @param LinkInterface|null $link
-     */
-    public function __construct($title = null, $link = null)
-    {
-        $this->_id = str_replace('.', '', uniqid('id-', true));
+	/**
+	 * @var string|null
+	 */
+	protected $_title;
 
-        $this->setTitle($title);
-        if ($link instanceof LinkInterface) {
-            $this->setLink($link);
-        }
-    }
+	/**
+	 * @var string|null
+	 */
+	protected $_data;
 
-    /**
-     * @param bool $isVisible
-     * @return $this
-     */
-    public function setVisibility($isVisible)
-    {
-        $this->_isVisible = $isVisible;
+	/**
+	 * @var string|null
+	 */
+	protected $_raw;
 
-        return $this;
-    }
+	/**
+	 * @var \Cake\Menu\LinkInterface|null
+	 */
+	protected $_link;
 
-    /**
-     * @param bool $isActive
-     * @return $this
-     */
-    public function setActive($isActive)
-    {
-        $this->_isActive = $isActive;
+	/**
+	 * @var \Cake\Menu\ItemInterface|null
+	 */
+	protected $_parent;
 
-        return $this;
-    }
+	/**
+	 * @param string|null $title
+	 * @param \Cake\Menu\LinkInterface|null $link
+	 */
+	public function __construct($title = null, $link = null) {
+		$this->_id = str_replace('.', '', uniqid('id-', true));
 
-    /**
-     * @param \Cake\Menu\LinkInterface $link
-     * @return $this
-     */
-    public function setLink(LinkInterface $link)
-    {
-        $this->_link = $link;
+		$this->setTitle($title);
+		if ($link instanceof LinkInterface) {
+			$this->setLink($link);
+		}
+	}
 
-        return $this;
-    }
+	/**
+	 * @param bool $isVisible
+	 * @return $this
+	 */
+	public function setVisibility($isVisible) {
+		$this->_isVisible = $isVisible;
 
-    /**
-     * @return \Cake\Menu\LinkInterface
-     */
-    public function getLink() {
-        return $this->_link;
-    }
+		return $this;
+	}
 
-    /**
-     * @param string $title
-     * @return $this
-     */
-    public function setTitle($title)
-    {
-        $this->_title = $title;
+	/**
+	 * @param bool $isActive
+	 * @return $this
+	 */
+	public function setActive($isActive) {
+		$this->_isActive = $isActive;
 
-        return $this;
-    }
+		return $this;
+	}
 
-    /**
-     * @return bool
-     */
-    public function isRaw()
-    {
-        return $this->_isRaw;
-    }
+	/**
+	 * @param \Cake\Menu\LinkInterface $link
+	 * @return $this
+	 */
+	public function setLink(LinkInterface $link) {
+		$this->_link = $link;
 
-    /**
-     * @param string $data
-     * @return $this
-     */
-    public function setRaw($data)
-    {
-        $this->_raw = $data;
-        $this->_isRaw = true;
+		return $this;
+	}
 
-        return $this;
-    }
+	/**
+	 * @return \Cake\Menu\LinkInterface
+	 */
+	public function getLink() {
+		return $this->_link;
+	}
 
-    /**
-     * @return string
-     */
-    public function getRaw()
-    {
-    	return $this->_raw;
-    }
+	/**
+	 * @param string $title
+	 * @return $this
+	 */
+	public function setTitle($title) {
+		$this->_title = $title;
 
-    /**
-     * @param \Cake\Menu\ItemInterface $item
-     * @return $this
-     */
-    public function add(ItemInterface $item)
-    {
-        $item->setParent($this);
-        $this->getSubMenu()->add($item);
+		return $this;
+	}
 
-        return $this;
-    }
+	/**
+	 * @return bool
+	 */
+	public function isRaw() {
+		return $this->_isRaw;
+	}
 
-    /**
-     * @return MenuInterface
-     */
-    public function getSubMenu()
-    {
-        //TODO
-    }
+	/**
+	 * @param string $data
+	 * @return $this
+	 */
+	public function setRaw($data) {
+		$this->_raw = $data;
+		$this->_isRaw = true;
 
-    /**
-     * @param \Cake\Menu\MenuInterface $menu
-     * @return $this
-     */
-    public function setSubMenu(MenuInterface $menu)
-    {
-        //TODO
+		return $this;
+	}
 
-        return $this;
-    }
+	/**
+	 * @return string
+	 */
+	public function getRaw() {
+		return $this->_raw;
+	}
 
-    /**
-     * @param string|null $name
-     * @return mixed|array|null
-     */
-    public function getData($name = null)
-    {
-        if ($name === null) {
-            return $this->_attributes;
-        }
+	/**
+	 * @param \Cake\Menu\ItemInterface $item
+	 * @return $this
+	 */
+	public function add(ItemInterface $item) {
+		$item->setParent($this);
+		$this->getSubMenu()->add($item);
 
-        if (!isset($this->_attributes[$name])) {
-            return null;
-        }
+		return $this;
+	}
 
-        return $this->_attributes[$name];
-    }
+	/**
+	 * @return \Cake\Menu\MenuInterface
+	 */
+	public function getSubMenu() {
+		//TODO
+	}
 
-    /**
-     * @param string $name
-     * @param mixed $value
-     * @return $this
-     */
-    public function setData($name, $value)
-    {
-        $this->_attributes[$name] = $value;
+	/**
+	 * @param \Cake\Menu\MenuInterface $menu
+	 * @return $this
+	 */
+	public function setSubMenu(MenuInterface $menu) {
+		//TODO
 
-        return $this;
-    }
+		return $this;
+	}
 
-    /**
-     * @return string
-     */
-    public function getTitle()
-    {
-        return $this->_title;
-    }
+	/**
+	 * @param string|null $name
+	 * @return mixed|array|null
+	 */
+	public function getData($name = null) {
+		if ($name === null) {
+			return $this->_attributes;
+		}
 
-    /**
-     * @return string
-     */
-    public function getId()
-    {
-        return $this->_id;
-    }
+		if (!isset($this->_attributes[$name])) {
+			return null;
+		}
 
-    /**
-     * @param string $id
-     * @return $this
-     */
-    public function setId($id)
-    {
-        $this->_id = $id;
+		return $this->_attributes[$name];
+	}
 
-        return $this;
-    }
+	/**
+	 * @param string $name
+	 * @param mixed $value
+	 * @return $this
+	 */
+	public function setData($name, $value) {
+		$this->_attributes[$name] = $value;
 
-    /**
-     * @return bool
-     */
-    public function isActive()
-    {
-        return $this->_isActive;
-    }
+		return $this;
+	}
 
-    /**
-     * @return bool
-     */
-    public function isVisible()
-    {
-        return $this->_isVisible;
-    }
+	/**
+	 * @return string
+	 */
+	public function getTitle() {
+		return $this->_title;
+	}
 
-    /**
-     * @param string $name
-     * @param string $value
-     * @return $this
-     */
-    public function setAttribute($name, $value)
-    {
-        $this->_attributes[$name] = $value;
+	/**
+	 * @return string
+	 */
+	public function getId() {
+		return $this->_id;
+	}
 
-        return $this;
-    }
+	/**
+	 * @param string $id
+	 * @return $this
+	 */
+	public function setId($id) {
+		$this->_id = $id;
 
-    /**
-     * @param array $attributes
-     * @return $this
-     */
-    public function setAttributes(array $attributes) {
-        $this->_attributes = $attributes;
+		return $this;
+	}
 
-        return $this;
-    }
+	/**
+	 * @return bool
+	 */
+	public function isActive() {
+		return $this->_isActive;
+	}
 
-    /**
-     * @return array
-     */
-    public function getAttributes()
-    {
-        return $this->_attributes;
-    }
+	/**
+	 * @return bool
+	 */
+	public function isVisible() {
+		return $this->_isVisible;
+	}
 
-    /**
-     * @return bool
-     */
-    public function hasParent()
-    {
-        return !empty($this->_parent);
-    }
+	/**
+	 * @param string $name
+	 * @param string $value
+	 * @return $this
+	 */
+	public function setAttribute($name, $value) {
+		$this->_attributes[$name] = $value;
 
-    /**
-     * @param \Cake\Menu\ItemInterface $item
-     * @return $this
-     */
-    public function setParent(ItemInterface $item)
-    {
-        $this->_parent = $item;
+		return $this;
+	}
 
-        return $this;
-    }
+	/**
+	 * @param array $attributes
+	 * @return $this
+	 */
+	public function setAttributes(array $attributes) {
+		$this->_attributes = $attributes;
 
-    /**
-     * @return \Cake\Menu\ItemInterface
-     */
-    public function getParent()
-    {
-        return $this->_parent;
-    }
+		return $this;
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getAttributes() {
+		return $this->_attributes;
+	}
+
+	/**
+	 * @return bool
+	 */
+	public function hasParent() {
+		return !empty($this->_parent);
+	}
+
+	/**
+	 * @param \Cake\Menu\ItemInterface $item
+	 * @return $this
+	 */
+	public function setParent(ItemInterface $item) {
+		$this->_parent = $item;
+
+		return $this;
+	}
+
+	/**
+	 * @return \Cake\Menu\ItemInterface
+	 */
+	public function getParent() {
+		return $this->_parent;
+	}
+
 }

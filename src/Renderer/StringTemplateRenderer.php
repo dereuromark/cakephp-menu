@@ -1,17 +1,21 @@
 <?php
-declare(strict_types=1);
+declare(strict_types = 1);
 
 namespace Cake\Menu\Renderer;
 
 use Cake\Core\InstanceConfigTrait;
 use Cake\Menu\ItemInterface;
+use Cake\Menu\MenuInterface;
 use Cake\View\StringTemplateTrait;
 
 class StringTemplateRenderer {
 
-	use StringTemplateTrait;
 	use InstanceConfigTrait;
+	use StringTemplateTrait;
 
+	/**
+	 * @var array
+	 */
 	protected $_defaultConfig = [
 		'templates' => [
 			'menuWrapper' => '<ul>{{items}}</ul>',
@@ -20,17 +24,25 @@ class StringTemplateRenderer {
 		]
 	];
 
+	/**
+	 * @var array
+	 */
 	protected $_templates = [
-
 	];
 
-	public function render() {
+	/**
+	 * @param \Cake\Menu\MenuInterface $menu
+	 * @return string
+	 */
+	public function render(MenuInterface $menu) {
+	    //TODO
+	    return '';
 	}
 
-    /**
-     * @param \Cake\Menu\ItemInterface $item
-     * @return string
-     */
+	/**
+	 * @param \Cake\Menu\ItemInterface $item
+	 * @return string
+	 */
 	public function renderItem(ItemInterface $item) {
 		if ($item instanceof ItemSelfRenderer) {
 			return $item->render();
@@ -50,4 +62,5 @@ class StringTemplateRenderer {
 			'title' => $item->getTitle()
 		]);
 	}
+
 }

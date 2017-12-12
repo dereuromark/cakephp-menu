@@ -2,22 +2,25 @@
 namespace Cake\Menu\Resolver;
 
 use Cake\Menu\ItemInterface;
-use Cake\Menu\StatusResolverInterface;
 
-class LoggedInResolver implements ResolverInterface
-{
+class LoggedInResolver implements ResolverInterface {
 
-    protected $_user;
+	/**
+	 * @var array|\ArrayObject
+	 */
+	protected $_user;
 
-    public function __construct($user)
-    {
-        $this->_user = $user;
-    }
+	/**
+	 * @param array|\ArrayObject $user
+	 */
+	public function __construct($user) {
+		$this->_user = $user;
+	}
 
-    public function resolve(ItemInterface $item)
-    {
-        if (!empty($user)) {
-            $item->setVisibility(true);
-        }
-    }
+	public function resolve(ItemInterface $item) {
+		if ($this->_user) {
+			$item->setVisibility(true);
+		}
+	}
+
 }

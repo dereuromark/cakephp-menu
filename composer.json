@@ -11,7 +11,7 @@
   "require-dev": {
     "cakephp/cakephp": "dev-master as 3.5",
     "phpunit/phpunit": "^6.0",
-    "cakephp/cakephp-codesniffer": "2.*"
+    "fig-r/psr2r-sniffer": "dev-master"
   },
   "autoload": {
     "psr-4": {
@@ -26,5 +26,11 @@
     }
   },
   "minimum-stability": "beta",
-  "prefer-stable": true
+  "prefer-stable": true,
+  "scripts": {
+    "test": "phpunit",
+    "test-coverage": "phpunit --log-junit webroot/coverage/unitreport.xml --coverage-html webroot/coverage --coverage-clover webroot/coverage/coverage.xml",
+    "cs-check": "phpcs -v -p --standard=vendor/fig-r/psr2r-sniffer/PSR2R/ruleset.xml --ignore=/vendor/,/tmp/,/logs/ --extensions=php ./",
+    "cs-fix": "phpcbf -v --standard=vendor/fig-r/psr2r-sniffer/PSR2R/ruleset.xml --ignore=/vendor/,/tmp/,/logs/ --extensions=php ./"
+  }
 }

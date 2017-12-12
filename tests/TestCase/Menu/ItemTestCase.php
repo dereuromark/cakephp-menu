@@ -20,18 +20,19 @@ class ItemTestCase extends TestCase {
 			->setLink(new Link());
 		debug($item);
 
-        $renderer = new StringTemplateRenderer();
-        debug($renderer->renderItem($item));
+		$renderer = new StringTemplateRenderer();
+		debug($renderer->renderItem($item));
 
-        $item2 = (new Item())
-            ->setTitle('Second')
-            ->setLink(new Link());
+		$item2 = (new Item())
+			->setTitle('Second')
+			->setLink(new Link());
 
 		$menu = new Menu();
 		$menu->add(new Item('foo'));
 		$menu->add($item);
-        $menu->add($item2);
+		$menu->add($item2);
 
-        //Render menu
+		//Render menu
 	}
+
 }

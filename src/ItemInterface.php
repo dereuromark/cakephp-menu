@@ -6,8 +6,7 @@ namespace Cake\Menu;
 /**
  * Item Interface
  */
-interface ItemInterface
-{
+interface ItemInterface {
 
 	/**
 	 * @return bool
@@ -25,89 +24,110 @@ interface ItemInterface
 	 */
 	public function getRaw();
 
-    /**
-     * @param string $title
-     * @return $this
-     */
-    public function setTitle($title);
+	/**
+	 * @param string $title
+	 * @return $this
+	 */
+	public function setTitle($title);
 
-    /**
-     * @return string
-     */
-    public function getTitle();
+	/**
+	 * @return string
+	 */
+	public function getTitle();
 
-    /**
-     * @param \Cake\Menu\LinkInterface $link Link Object
-     * @return $this
-     */
-    public function setLink(LinkInterface $link);
+	/**
+	 * @param \Cake\Menu\LinkInterface $link Link Object
+	 * @return $this
+	 */
+	public function setLink(LinkInterface $link);
 
-    public function getId();
+	public function getId();
 
-    /**
-     * @param string $id
-     * @return $this
-     */
-    public function setId($id);
+	/**
+	 * @param string $id
+	 * @return $this
+	 */
+	public function setId($id);
 
-    /**
-     * @return bool
-     */
-    public function isActive();
+	/**
+	 * @return bool
+	 */
+	public function isActive();
 
-    /**
-     * @param bool $isActive Sets the active status
-     */
-    public function setActive($isActive);
+	/**
+	 * @param bool $isActive Sets the active status
+	 * @return $this
+	 */
+	public function setActive($isActive);
 
-    /**
-     * Sets the visibility of the item
-     *
-     * @param bool $isVisible Is visible or not
-     */
-    public function setVisibility($isVisible);
+	/**
+	 * @return bool
+	 */
+	public function isVisible();
 
-    public function isVisible();
+	/**
+	 * Sets the visibility of the item
+	 *
+	 * @param bool $isVisible Is visible or not
+	 * @return $this
+	 */
+	public function setVisibility($isVisible);
 
-    public function add(ItemInterface $item);
+	/**
+	 * @param \Cake\Menu\ItemInterface $item
+	 * @return $this
+	 */
+	public function add(ItemInterface $item);
 
-    /**
-     * @param string $name
-     * @param mixed $value
-     * @return $this
-     */
-    public function setData($name, $value);
+	/**
+	 * @param string $name
+	 * @param mixed $value
+	 * @return $this
+	 */
+	public function setData($name, $value);
 
-    /**
-     * @param string|null
-     * @return mixed
-     */
-    public function getData($name = null);
+	/**
+	 * @param string|null $name
+	 * @return mixed
+	 */
+	public function getData($name = null);
 
-    /**
-     * @param string $name
-     * @param string $value
-     * @return $this
-     */
-    public function setAttribute($name, $value);
+	/**
+	 * Sets a single attribute.
+	 *
+	 * @param string $name
+	 * @param string $value
+	 * @return $this
+	 */
+	public function setAttribute($name, $value);
 
-    /**
-     * @param array $attributes
-     * @return $this
-     */
-    public function setAttributes(array $attributes);
+	/**
+	 * Replaces all attributes completely.
+	 *
+	 * @param array $attributes
+	 * @return $this
+	 */
+	public function setAttributes(array $attributes);
 
-    /**
-     * @return array
-     */
-    public function getAttributes();
+	/**
+	 * @return array
+	 */
+	public function getAttributes();
 
-    /**
-     * @return bool
-     */
-    public function hasParent();
+	/**
+	 * @return bool
+	 */
+	public function hasParent();
 
-    public function setParent(ItemInterface $item);
+	/**
+	 * @param \Cake\Menu\ItemInterface $item
+	 * @return $this
+	 */
+	public function setParent(ItemInterface $item);
 
-    public function getParent();
+	/**
+	 * @return \Cake\Menu\ItemInterface
+	 */
+	public function getParent();
+
 }

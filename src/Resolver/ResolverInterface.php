@@ -5,8 +5,8 @@ namespace Cake\Menu\Resolver;
 
 use Cake\Menu\ItemInterface;
 
-interface ResolverInterface
-{
+interface ResolverInterface {
 
-    public function resolve(ItemInterface $item);
+	public function resolve(ItemInterface $item);
+
 }
