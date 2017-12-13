@@ -38,11 +38,11 @@ interface ItemInterface {
 	public function getTitle();
 
 	/**
-	 * @param \Cake\Menu\LinkInterface $link Link Object
+	 * @param \Cake\Menu\LinkInterface|null $link Link Object
 	 *
 	 * @return $this
 	 */
-	public function setLink(LinkInterface $link);
+	public function setLink(?LinkInterface $link);
 
 	/**
 	 * @return \Cake\Menu\LinkInterface

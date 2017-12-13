@@ -46,7 +46,7 @@ class Item implements ItemInterface {
 	protected $_data;
 
 	/**
-	 * @var string|null
+	 * @var string|array|null
 	 */
 	protected $_raw;
 
@@ -96,25 +96,25 @@ class Item implements ItemInterface {
 	}
 
 	/**
-	 * @param \Cake\Menu\LinkInterface $link
+	 * @param \Cake\Menu\LinkInterface|null $link
 	 *
 	 * @return $this
 	 */
-	public function setLink(LinkInterface $link) {
+	public function setLink(?LinkInterface $link) {
 		$this->_link = $link;
 
 		return $this;
 	}
 
 	/**
-	 * @return \Cake\Menu\LinkInterface
+	 * @return \Cake\Menu\LinkInterface|null
 	 */
 	public function getLink() {
 		return $this->_link;
 	}
 
 	/**
-	 * @param string $title
+	 * @param string|null $title
 	 *
 	 * @return $this
 	 */
@@ -132,7 +132,7 @@ class Item implements ItemInterface {
 	}
 
 	/**
-	 * @param string $data
+	 * @param string|array $data
 	 *
 	 * @return $this
 	 */
@@ -144,7 +144,7 @@ class Item implements ItemInterface {
 	}
 
 	/**
-	 * @return string|array
+	 * @return string|array|null
 	 */
 	public function getRaw() {
 		return $this->_raw;
@@ -210,7 +210,7 @@ class Item implements ItemInterface {
 	}
 
 	/**
-	 * @return string
+	 * @return string|null
 	 */
 	public function getTitle() {
 		return $this->_title;
@@ -297,7 +297,7 @@ class Item implements ItemInterface {
 	}
 
 	/**
-	 * @return \Cake\Menu\ItemInterface
+	 * @return \Cake\Menu\ItemInterface|null
 	 */
 	public function getParent() {
 		return $this->_parent;

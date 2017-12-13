@@ -64,7 +64,7 @@ class Link implements LinkInterface {
 	}
 
 	/**
-	 * @return string
+	 * @return string|array
 	 */
 	public function getRawUrl() {
 		return $this->_url;
