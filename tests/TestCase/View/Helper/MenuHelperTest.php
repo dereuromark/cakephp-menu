@@ -3,8 +3,8 @@ declare(strict_types = 1);
 
 namespace Cake\Menu\TestCase\Menu;
 
-use Cake\Menu\Item;
-use Cake\Menu\Link;
+use Cake\Menu\Item\Item;
+use Cake\Menu\Link\Link;
 use Cake\Menu\Menu;
 use Cake\Menu\View\Helper\MenuHelper;
 use Cake\TestSuite\TestCase;

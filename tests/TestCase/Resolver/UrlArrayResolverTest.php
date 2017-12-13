@@ -4,8 +4,8 @@ declare(strict_types = 1);
 namespace Cake\Menu\TestCase\Resolver;
 
 use Cake\Http\ServerRequestFactory;
-use Cake\Menu\Item;
-use Cake\Menu\Link;
+use Cake\Menu\Item\Item;
+use Cake\Menu\Link\Link;
 use Cake\Menu\Resolver\UrlArrayResolver;
 use Cake\TestSuite\TestCase;
 

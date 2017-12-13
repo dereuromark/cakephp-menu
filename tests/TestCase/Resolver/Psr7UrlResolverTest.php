@@ -3,8 +3,8 @@ declare(strict_types = 1);
 
 namespace Cake\Menu\TestCase\Resolver;
 
-use Cake\Menu\Item;
-use Cake\Menu\Link;
+use Cake\Menu\Item\Item;
+use Cake\Menu\Link\Link;
 use Cake\Menu\Resolver\Psr7UrlResolver;
 use Cake\TestSuite\TestCase;
 use Zend\Diactoros\Request;

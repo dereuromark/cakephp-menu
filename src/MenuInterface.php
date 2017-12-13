@@ -3,13 +3,24 @@ declare(strict_types = 1);
 
 namespace Cake\Menu;
 
+use Cake\Menu\Item\ItemInterface;
+
 interface MenuInterface {
 
 	const SORT_ASC = 'asc';
 	const SORT_DESC = 'desc';
 
+	/**
+	 * @param \Cake\Menu\Item\ItemInterface $item
+	 *
+	 * @return $this
+	 */
 	public function add(ItemInterface $item);
 
+	/**
+	 * @param string $itemId
+	 * @return $this
+	 */
 	public function remove($itemId);
 
 	/**

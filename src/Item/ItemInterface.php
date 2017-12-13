@@ -1,7 +1,9 @@
 <?php
 declare(strict_types = 1);
 
-namespace Cake\Menu;
+namespace Cake\Menu\Item;
+
+use Cake\Menu\Link\LinkInterface;
 
 /**
  * Item Interface
@@ -38,14 +40,14 @@ interface ItemInterface {
 	public function getTitle();
 
 	/**
-	 * @param \Cake\Menu\LinkInterface|null $link Link Object
+	 * @param \Cake\Menu\Link\LinkInterface|null $link Link Object
 	 *
 	 * @return $this
 	 */
 	public function setLink(?LinkInterface $link);
 
 	/**
-	 * @return \Cake\Menu\LinkInterface
+	 * @return \Cake\Menu\Link\LinkInterface
 	 */
 	public function getLink();
 
@@ -88,7 +90,7 @@ interface ItemInterface {
 	public function setVisibility($isVisible);
 
 	/**
-	 * @param \Cake\Menu\ItemInterface $item
+	 * @param \Cake\Menu\Item\ItemInterface $item
 	 *
 	 * @return $this
 	 */
@@ -139,14 +141,14 @@ interface ItemInterface {
 	public function hasParent();
 
 	/**
-	 * @param \Cake\Menu\ItemInterface $item
+	 * @param \Cake\Menu\Item\ItemInterface $item
 	 *
 	 * @return $this
 	 */
 	public function setParent(ItemInterface $item);
 
 	/**
-	 * @return \Cake\Menu\ItemInterface
+	 * @return \Cake\Menu\Item\ItemInterface
 	 */
 	public function getParent();
 

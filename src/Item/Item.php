@@ -1,7 +1,10 @@
 <?php
 declare(strict_types = 1);
 
-namespace Cake\Menu;
+namespace Cake\Menu\Item;
+
+use Cake\Menu\Link\LinkInterface;
+use Cake\Menu\MenuInterface;
 
 class Item implements ItemInterface {
 
@@ -51,18 +54,18 @@ class Item implements ItemInterface {
 	protected $_raw;
 
 	/**
-	 * @var \Cake\Menu\LinkInterface|null
+	 * @var \Cake\Menu\Link\LinkInterface|null
 	 */
 	protected $_link;
 
 	/**
-	 * @var \Cake\Menu\ItemInterface|null
+	 * @var \Cake\Menu\Item\ItemInterface|null
 	 */
 	protected $_parent;
 
 	/**
 	 * @param string|null $title
-	 * @param \Cake\Menu\LinkInterface|null $link
+	 * @param \Cake\Menu\Link\LinkInterface|null $link
 	 */
 	public function __construct($title = null, $link = null) {
 		$this->_id = str_replace('.', '', uniqid('id-', true));
@@ -96,7 +99,7 @@ class Item implements ItemInterface {
 	}
 
 	/**
-	 * @param \Cake\Menu\LinkInterface|null $link
+	 * @param \Cake\Menu\Link\LinkInterface|null $link
 	 *
 	 * @return $this
 	 */
@@ -107,7 +110,7 @@ class Item implements ItemInterface {
 	}
 
 	/**
-	 * @return \Cake\Menu\LinkInterface|null
+	 * @return \Cake\Menu\Link\LinkInterface|null
 	 */
 	public function getLink() {
 		return $this->_link;
@@ -151,7 +154,7 @@ class Item implements ItemInterface {
 	}
 
 	/**
-	 * @param \Cake\Menu\ItemInterface $item
+	 * @param \Cake\Menu\Item\ItemInterface $item
 	 *
 	 * @return $this
 	 */
@@ -286,7 +289,7 @@ class Item implements ItemInterface {
 	}
 
 	/**
-	 * @param \Cake\Menu\ItemInterface $item
+	 * @param \Cake\Menu\Item\ItemInterface $item
 	 *
 	 * @return $this
 	 */
@@ -297,7 +300,7 @@ class Item implements ItemInterface {
 	}
 
 	/**
-	 * @return \Cake\Menu\ItemInterface|null
+	 * @return \Cake\Menu\Item\ItemInterface|null
 	 */
 	public function getParent() {
 		return $this->_parent;

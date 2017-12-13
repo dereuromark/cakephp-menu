@@ -3,6 +3,9 @@ declare(strict_types = 1);
 
 namespace Cake\Menu;
 
+use Cake\Menu\Item\Item;
+use Cake\Menu\Item\ItemInterface;
+
 class Menu implements MenuInterface {
 
 	/**
@@ -21,7 +24,7 @@ class Menu implements MenuInterface {
 	protected $_itemClass = Item::class;
 
 	/**
-	 * @param \Cake\Menu\ItemInterface $item
+	 * @param \Cake\Menu\Item\ItemInterface $item
 	 *
 	 * @return $this
 	 */
@@ -47,13 +50,13 @@ class Menu implements MenuInterface {
 
 	/**
 	 * @param string $title
-	 * @param \Cake\Menu\LinkInterface|null $link
+	 * @param \Cake\Menu\Link\LinkInterface|null $link
 	 * @param array $attributes
 	 *
 	 * @return $this
 	 */
 	public function addRaw($title, $link = null, array $attributes = []) {
-		/** @var \Cake\Menu\ItemInterface $item */
+		/** @var \Cake\Menu\Item\ItemInterface $item */
 		$item = new $this->_itemClass();
 		$item
 			->setTitle($title);
@@ -108,6 +111,8 @@ class Menu implements MenuInterface {
 	 */
 	public function remove($itemId) {
 		// TODO: Implement remove() method.
+
+		return $this;
 	}
 
 	/**
@@ -125,6 +130,8 @@ class Menu implements MenuInterface {
 	 */
 	public function setAttribute($name, $value) {
 		// TODO: Implement setAttribute() method.
+
+		return $this;
 	}
 
 	/**

@@ -2,7 +2,7 @@
 namespace Cake\Menu\Resolver;
 
 use Cake\Core\InstanceConfigTrait;
-use Cake\Menu\ItemInterface;
+use Cake\Menu\Item\ItemInterface;
 use Psr\Http\Message\RequestInterface;
 
 class Psr7UrlResolver implements ResolverInterface {
@@ -30,7 +30,7 @@ class Psr7UrlResolver implements ResolverInterface {
 	}
 
 	/**
-	 * @param \Cake\Menu\ItemInterface $item
+	 * @param \Cake\Menu\Item\ItemInterface $item
 	 * @return void
 	 */
 	public function resolve(ItemInterface $item) {

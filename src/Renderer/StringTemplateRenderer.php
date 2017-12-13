@@ -4,7 +4,7 @@ declare(strict_types = 1);
 namespace Cake\Menu\Renderer;
 
 use Cake\Core\InstanceConfigTrait;
-use Cake\Menu\ItemInterface;
+use Cake\Menu\Item\ItemInterface;
 use Cake\Menu\Item\SelfRendererInterface;
 use Cake\Menu\MenuInterface;
 use Cake\View\StringTemplateTrait;
@@ -43,7 +43,7 @@ class StringTemplateRenderer {
 	}
 
 	/**
-	 * @param \Cake\Menu\ItemInterface $item
+	 * @param \Cake\Menu\Item\ItemInterface $item
 	 *
 	 * @return string
 	 */
