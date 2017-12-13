@@ -13,7 +13,7 @@ class Item implements ItemInterface {
 	/**
 	 * @var bool
 	 */
-	protected $_isRaw = true;
+	protected $_isRaw = false;
 
 	/**
 	 * @var bool
@@ -144,7 +144,7 @@ class Item implements ItemInterface {
 	}
 
 	/**
-	 * @return string
+	 * @return string|array
 	 */
 	public function getRaw() {
 		return $this->_raw;

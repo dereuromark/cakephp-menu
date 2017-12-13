@@ -33,10 +33,11 @@ class StringTemplateRenderer {
 
 	/**
 	 * @param \Cake\Menu\MenuInterface $menu
+	 * @param array $options
 	 *
 	 * @return string
 	 */
-	public function render(MenuInterface $menu) {
+	public function render(MenuInterface $menu, array $options = []) {
 	    //TODO
 	    return '';
 	}

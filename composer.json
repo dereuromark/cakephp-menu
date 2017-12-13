@@ -11,7 +11,8 @@
   "require-dev": {
     "cakephp/cakephp": "dev-master as 3.5",
     "phpunit/phpunit": "^6.0",
-    "fig-r/psr2r-sniffer": "dev-master"
+    "fig-r/psr2r-sniffer": "dev-master",
+    "phpstan/phpstan": "^0.9.1"
   },
   "autoload": {
     "psr-4": {

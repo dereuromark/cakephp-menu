@@ -1,10 +1,13 @@
 <?php
 namespace Cake\Menu\Resolver;
 
+use Cake\Core\InstanceConfigTrait;
 use Cake\Menu\ItemInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
 class UrlArrayResolver implements ResolverInterface {
+
+	use InstanceConfigTrait;
 
 	/**
 	 * @var \Psr\Http\Message\ServerRequestInterface
@@ -12,11 +15,18 @@ class UrlArrayResolver implements ResolverInterface {
 	protected $_request;
 
 	/**
+	 * @var array
+	 */
+	protected $_defaultConfig = [
+	];
+
+	/**
 	 * @param \Psr\Http\Message\ServerRequestInterface $request
 	 * @param array $options
 	 */
 	public function __construct(ServerRequestInterface $request, array $options = []) {
 		$this->_request = $request;
+		$this->setConfig($options);
 	}
 
 	/**
