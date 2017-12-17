@@ -69,7 +69,7 @@ interface ItemInterface {
 	public function isActive();
 
 	/**
-	 * @param bool $isActive Sets the active status
+	 * @param bool|callable $isActive Sets the active status
 	 *
 	 * @return $this
 	 */
@@ -152,4 +152,8 @@ interface ItemInterface {
 	 */
 	public function getParent();
 
+	/**
+	 * @return string|int
+	 */
+	public function getParentId();
 }

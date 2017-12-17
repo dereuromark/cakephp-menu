@@ -64,6 +64,11 @@ class Item implements ItemInterface {
 	protected $_parent;
 
 	/**
+	 * @var int|string
+	 */
+	protected $_parentId;
+
+	/**
 	 * @param string|null $title
 	 * @param \Cake\Menu\Link\LinkInterface|null $link
 	 */
@@ -241,7 +246,15 @@ class Item implements ItemInterface {
 	 * @return bool
 	 */
 	public function isActive() {
-		return $this->_isActive;
+		if (is_bool($this->_isActive)) {
+			return $this->_isActive;
+		}
+
+		if (is_callable($this->_isActive)) {
+			return $this->_isActive($this);
+		}
+
+		throw new \RuntimeException('Error getting the active status for item');
 	}
 
 	/**
@@ -295,6 +308,7 @@ class Item implements ItemInterface {
 	 */
 	public function setParent(ItemInterface $item) {
 		$this->_parent = $item;
+		$this->_parentId = $item->getId();
 
 		return $this;
 	}
@@ -306,4 +320,7 @@ class Item implements ItemInterface {
 		return $this->_parent;
 	}
 
+	public function getParentId() {
+		return $this->_parentId;
+	}
 }

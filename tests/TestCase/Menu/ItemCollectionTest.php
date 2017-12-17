@@ -7,19 +7,27 @@ use Cake\Menu\Item\Item;
 use Cake\Menu\ItemCollection;
 use Cake\TestSuite\TestCase;
 
+/**
+ * Item Collection Test
+ */
 class ItemCollectionTest extends TestCase {
 
+	/**
+	 * Testing the collection
+	 *
+	 * @return void
+	 */
 	public function testCollection() {
-		$collection = new ItemCollection([]);
-
 		$item1 = (new Item('Test1'))->setId(1);
 		$item2 = (new Item('Test2'))->setId(2);
 		$item2_1 = (new Item('Test2'))->setId(3)->setParent($item2);
 
-		$collection->addMany(compact('item1', 'item2', 'item2_1'));
+		$collection = new ItemCollection(compact('item1', 'item2', 'item2_1'));
 
 		$item = $collection->findById(3);
-		debug($item);
+		$this->assertEquals(3, $item->getId());
+
 		debug($collection->findByParent(3));
 	}
+
 }

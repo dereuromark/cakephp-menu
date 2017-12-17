@@ -8,10 +8,16 @@ use RuntimeException;
 use Cake\Collection\Collection;
 use Cake\Menu\Item\ItemInterface;
 
+/**
+ * Item Collection for a Menu
+ */
 class ItemCollection extends Collection {
 
 	/**
 	 * Adds an item to the collection
+	 *
+	 * @param \Cake\Menu\Item\ItemInterface $item Item
+	 * @return void;
 	 */
 	public function add(ItemInterface $item) {
 		$this->addMany([$item]);
@@ -19,6 +25,9 @@ class ItemCollection extends Collection {
 
 	/**
 	 * Adds many items to the collection
+	 *
+	 * @param array $items
+	 * @return void
 	 */
 	public function addMany(array $items = []) {
 		foreach ($items as $key => $item) {
@@ -34,16 +43,33 @@ class ItemCollection extends Collection {
 		$this->append($items);
 	}
 
+	/**
+	 * Find all items by parent id
+	 *
+	 * @param int|string|\Cake\Menu\Item\ItemInterface $parentId Parent Id or Item
+	 * @return array
+	 */
 	public function findByParent($parentId) {
-		return $this->filter(function($item, $key) use ($parentId) {
+		if ($parentId instanceof ItemInterface) {
+			$parentId = $parentId->getId();
+		}
+
+		return $this->filter(function($item) use ($parentId) {
 			return $item->getParentId() === $parentId;
 		});
 	}
 
+	/**
+	 * Finds a single item by its id
+	 *
+	 * @return null|string|int
+	 */
 	public function findById($id) {
-		return $this->filter(function($item, $key) use ($id) {
+		$result = $this->filter(function($item) use ($id) {
 			return $item->getId() === $id;
 		});
+
+		return $result->first();
 	}
 
 }
