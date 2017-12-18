@@ -11,6 +11,18 @@ use Cake\Menu\Link\LinkInterface;
 interface ItemInterface {
 
 	/**
+	 * @param string $key
+	 *
+	 * @return $this
+	 */
+	public function setKey($key);
+
+	/**
+	 * @return string
+	 */
+	public function getKey();
+
+	/**
 	 * @return bool
 	 */
 	public function isRaw();

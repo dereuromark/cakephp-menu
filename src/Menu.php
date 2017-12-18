@@ -24,6 +24,15 @@ class Menu implements MenuInterface {
 	protected $_itemClass = Item::class;
 
 	/**
+	 * Convenience method to get a new item
+	 *
+	 * @return \Cake\Menu\Item\ItemInterface
+	 */
+	public function newItem() {
+		return new $this->_itemClass();
+	}
+
+	/**
 	 * @param \Cake\Menu\Item\ItemInterface $item
 	 *
 	 * @return $this

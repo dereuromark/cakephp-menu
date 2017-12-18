@@ -28,6 +28,18 @@ class ItemCollectionTest extends TestCase {
 		$this->assertEquals(3, $item->getId());
 
 		debug($collection->findByParent(3));
+
+		$menu->add('1');
+		$menu->add('2');
+		$menu->add('3');
+		$menu->add('3.1')->setParent($menu->get('3'));
+		$menu->add('3.2')->setParent($menu->get('3'));
+
+		$three = $menu->get(3);
+		$three->addChildren([
+			new Item('3.1'),
+			new Item('3.2')
+		]);
 	}
 
 }

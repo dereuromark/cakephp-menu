@@ -4,6 +4,7 @@ declare(strict_types = 1);
 namespace Cake\Menu;
 
 use Cake\Menu\Item\ItemInterface;
+use SebastianBergmann\CodeCoverage\Report\Html\Dashboard;
 
 interface MenuInterface {
 
@@ -52,6 +53,14 @@ interface MenuInterface {
 	public function setAttribute($name, $value);
 
 	/**
+	 * Sets multiple HTML attributes
+	 *
+	 * @param array $attributes Attributes
+	 * @param bool $merge Merge them or not
+	 */
+	public function setAttributes(array $attributes, $merge = false);
+
+	/**
 	 * @param callable|string $by
 	 * @param array $options
 	 *
@@ -68,3 +77,10 @@ interface MenuInterface {
 	public function sortBy($name, $direction = self::SORT_DESC);
 
 }
+
+/*
+$menu = new Menu();
+$menu->setAttribute(['id' => 'menu']);
+$menu->setAttribute(['id' => 'menu']);
+
+

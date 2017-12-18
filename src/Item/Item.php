@@ -69,11 +69,17 @@ class Item implements ItemInterface {
 	protected $_parentId;
 
 	/**
+	 * @var string
+	 */
+	protected $_key = '';
+
+	/**
 	 * @param string|null $title
 	 * @param \Cake\Menu\Link\LinkInterface|null $link
 	 */
 	public function __construct($title = null, $link = null) {
 		$this->_id = str_replace('.', '', uniqid('id-', true));
+		$this->_key = strtolower(str_replace(' ', '-', $title));
 
 		$this->setTitle($title);
 		if ($link instanceof LinkInterface) {
@@ -112,6 +118,19 @@ class Item implements ItemInterface {
 		$this->_link = $link;
 
 		return $this;
+	}
+
+	/**
+	 *
+	 */
+	public function setkey($key) {
+		$this->_key = $key;
+
+		return $this;
+	}
+
+	public function getKey() {
+		return $this->_key;
 	}
 
 	/**
