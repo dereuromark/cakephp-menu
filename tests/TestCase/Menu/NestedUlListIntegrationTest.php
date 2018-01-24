@@ -11,7 +11,7 @@ use Cake\TestSuite\TestCase;
 /**
  * This tests builds a complete bootstrap3 like nested menu
  */
-class MenuTest extends TestCase {
+class NestedUlListIntegrationTest extends TestCase {
 
 	/**
 	 * testMenu
