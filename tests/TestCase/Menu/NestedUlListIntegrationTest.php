@@ -3,7 +3,6 @@ declare(strict_types = 1);
 
 namespace Cake\Menu\TestCase\Menu;
 
-use Cake\Menu\Item\Item;
 use Cake\Menu\Link\Link;
 use Cake\Menu\Menu;
 use Cake\TestSuite\TestCase;
@@ -14,7 +13,7 @@ use Cake\TestSuite\TestCase;
 class NestedUlListIntegrationTest extends TestCase {
 
 	/**
-	 * testMenu
+	 * @return void
 	 */
 	public function testMenu() {
 		$expected = '
@@ -62,4 +61,5 @@ class NestedUlListIntegrationTest extends TestCase {
 			$menu->newItem('')
 		]);
 	}
+
 }

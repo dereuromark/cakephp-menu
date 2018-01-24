@@ -4,7 +4,6 @@ declare(strict_types = 1);
 namespace Cake\Menu;
 
 use Cake\Menu\Item\ItemInterface;
-use SebastianBergmann\CodeCoverage\Report\Html\Dashboard;
 
 interface MenuInterface {
 
@@ -57,6 +56,8 @@ interface MenuInterface {
 	 *
 	 * @param array $attributes Attributes
 	 * @param bool $merge Merge them or not
+	 *
+	 * @return void
 	 */
 	public function setAttributes(array $attributes, $merge = false);
 

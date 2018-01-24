@@ -3,10 +3,9 @@ declare(strict_types = 1);
 
 namespace Cake\Menu;
 
-use RuntimeException;
-
 use Cake\Collection\Collection;
 use Cake\Menu\Item\ItemInterface;
+use RuntimeException;
 
 /**
  * Item Collection for a Menu

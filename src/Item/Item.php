@@ -5,6 +5,7 @@ namespace Cake\Menu\Item;
 
 use Cake\Menu\Link\LinkInterface;
 use Cake\Menu\MenuInterface;
+use RuntimeException;
 
 class Item implements ItemInterface {
 
@@ -273,7 +274,7 @@ class Item implements ItemInterface {
 			return $this->_isActive($this);
 		}
 
-		throw new \RuntimeException('Error getting the active status for item');
+		throw new RuntimeException('Error getting the active status for item');
 	}
 
 	/**
@@ -342,4 +343,5 @@ class Item implements ItemInterface {
 	public function getParentId() {
 		return $this->_parentId;
 	}
+
 }
