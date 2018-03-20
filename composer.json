@@ -16,14 +16,12 @@
   },
   "autoload": {
     "psr-4": {
-      "Cake\\Menu\\": "src/"
+      "Menu\\": "src/"
     }
   },
   "autoload-dev": {
     "psr-4": {
-      "Cake\\Menu\\Test\\": "tests/",
-      "Cake\\Test\\": "vendor/cakephp/cakephp/tests/",
-      "Cake\\": "vendor/cakephp/cakephp/src"
+      "Menu\\Test\\": "tests/"
     }
   },
   "minimum-stability": "beta",
@@ -31,8 +29,8 @@
   "scripts": {
     "test": "phpunit",
     "test-coverage": "phpunit --log-junit webroot/coverage/unitreport.xml --coverage-html webroot/coverage --coverage-clover webroot/coverage/coverage.xml",
-    "cs-check": "phpcs -v -p --standard=vendor/fig-r/psr2r-sniffer/PSR2R/ruleset.xml --ignore=/vendor/,/tmp/,/logs/ --extensions=php ./",
-    "cs-fix": "phpcbf -v --standard=vendor/fig-r/psr2r-sniffer/PSR2R/ruleset.xml --ignore=/vendor/,/tmp/,/logs/ --extensions=php ./",
+    "cs-check": "phpcs -v -p --standard=vendor/fig-r/psr2r-sniffer/PSR2R/ruleset.xml --extensions=php src/ tests/",
+    "cs-fix": "phpcbf -v --standard=vendor/fig-r/psr2r-sniffer/PSR2R/ruleset.xml --extensions=php src/ tests/",
     "phpstan": "phpstan analyze src/ -l 7"
   }
 }

@@ -1,14 +1,14 @@
 <?php
 declare(strict_types = 1);
 
-namespace Cake\Menu\TestCase\Menu;
+namespace Menu\TestCase\Menu;
 
-use Cake\Menu\Item\Item;
-use Cake\Menu\Link\Link;
-use Cake\Menu\Menu;
-use Cake\Menu\View\Helper\MenuHelper;
 use Cake\TestSuite\TestCase;
 use Cake\View\View;
+use Menu\Item\Item;
+use Menu\Link\Link;
+use Menu\Menu;
+use Menu\View\Helper\MenuHelper;
 
 class MenuHelperTest extends TestCase {
 
@@ -19,12 +19,12 @@ class MenuHelperTest extends TestCase {
 		$menuHelper = new MenuHelper(new View());
 
 		$item = (new Item())
-			->setTitle('First')
-			->setLink(new Link());
+			->setLabel('First')
+			->setLink((new Link())->setUrl('/x'));
 
 		$item2 = (new Item())
-			->setTitle('Second')
-			->setLink(new Link());
+			->setLabel('Second')
+			->setLink((new Link())->setUrl('/y'));
 
 		$menu = new Menu();
 		$menu->add($item)
@@ -32,8 +32,8 @@ class MenuHelperTest extends TestCase {
 
 		$html = $menuHelper->render($menu);
 
-		debug($html);
-		//$this->assertHtml($expected, $html);
+		$expected = '<a href="/x">First</a><a href="/y">Second</a>';
+		$this->assertSame($expected, $html);
 	}
 
 }

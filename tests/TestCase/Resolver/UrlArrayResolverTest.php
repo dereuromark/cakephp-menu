@@ -1,13 +1,13 @@
 <?php
 declare(strict_types = 1);
 
-namespace Cake\Menu\TestCase\Resolver;
+namespace Menu\TestCase\Resolver;
 
 use Cake\Http\ServerRequestFactory;
-use Cake\Menu\Item\Item;
-use Cake\Menu\Link\Link;
-use Cake\Menu\Resolver\UrlArrayResolver;
 use Cake\TestSuite\TestCase;
+use Menu\Item\Item;
+use Menu\Link\Link;
+use Menu\Resolver\UrlArrayResolver;
 
 class UrlArrayResolverTest extends TestCase {
 

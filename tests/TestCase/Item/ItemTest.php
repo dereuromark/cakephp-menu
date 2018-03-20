@@ -1,26 +1,43 @@
 <?php
 declare(strict_types = 1);
 
-namespace Cake\Menu\TestCase\Item;
+namespace Menu\TestCase\Item;
 
-use Cake\Menu\Item\Item;
-use Cake\Menu\Link\Link;
-use Cake\Menu\Renderer\StringTemplateRenderer;
 use Cake\TestSuite\TestCase;
+use Menu\Item\Item;
+use Menu\Link\Link;
+use Menu\Renderer\StringTemplateRenderer;
 
 class ItemTest extends TestCase {
-
 	/**
 	 * @return void
 	 */
 	public function testItem() {
 		$item = (new Item())
-			->setTitle('First')
+			->setLabel('First<>')
 			->setLink(new Link());
-		debug($item);
+
+		$item2 = (new Item())
+			->setLabel('Se<b>co</b>nd', true)
+			->setLink(new Link());
+
+		$this->assertSame('First&lt;&gt;', $item->getLabel());
+		$this->assertSame('Se<b>co</b>nd', $item2->getLabel());
+	}
+
+	/**
+	 * @return void
+	 */
+	public function testItemRender() {
+		$item = (new Item())
+			->setLabel('First')
+			->setLink(Link::create('/abc'));
 
 		$renderer = new StringTemplateRenderer();
-		debug($renderer->renderItem($item));
+
+		$expected = '<a href="/abc">First</a>';
+		$result = $renderer->renderItem($item);
+		$this->assertSame($expected, $result);
 	}
 
 }

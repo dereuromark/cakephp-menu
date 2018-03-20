@@ -1,11 +1,11 @@
 <?php
 declare(strict_types = 1);
 
-namespace Cake\Menu\View\Helper;
+namespace Menu\View\Helper;
 
-use Cake\Menu\Menu;
-use Cake\Menu\Renderer\StringTemplateRenderer;
 use Cake\View\Helper;
+use Menu\MenuInterface;
+use Menu\Renderer\StringTemplateRenderer;
 
 /**
  * Menu Helper
@@ -24,19 +24,19 @@ class MenuHelper extends Helper {
 	/**
 	 * Renders a menu
 	 *
-	 * @param \Cake\Menu\Menu $menu
+	 * @param \Menu\MenuInterface $menu
 	 * @param array $options Options
 	 *
 	 * @return string
 	 */
-	public function render(Menu $menu, array $options = []) {
+	public function render(MenuInterface $menu, array $options = []) {
 		$renderer = $this->getRenderer();
 
 		return $renderer->render($menu, $options);
 	}
 
 	/**
-	 * @return \Cake\Menu\Renderer\RendererInterface
+	 * @return \Menu\Renderer\RendererInterface
 	 */
 	protected function getRenderer() {
 		$className = $this->getConfig('renderer');

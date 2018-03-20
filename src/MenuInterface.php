@@ -1,9 +1,9 @@
 <?php
 declare(strict_types = 1);
 
-namespace Cake\Menu;
+namespace Menu;
 
-use Cake\Menu\Item\ItemInterface;
+use Menu\Item\ItemInterface;
 
 interface MenuInterface {
 
@@ -11,7 +11,7 @@ interface MenuInterface {
 	const SORT_DESC = 'desc';
 
 	/**
-	 * @param \Cake\Menu\Item\ItemInterface $item
+	 * @param \Menu\Item\ItemInterface $item
 	 *
 	 * @return $this
 	 */
@@ -22,6 +22,11 @@ interface MenuInterface {
 	 * @return $this
 	 */
 	public function remove($itemId);
+
+	/**
+	 * @return \Menu\Item\ItemInterface[]
+	 */
+	public function getItems();
 
 	/**
 	 * @param string $name
@@ -78,10 +83,3 @@ interface MenuInterface {
 	public function sortBy($name, $direction = self::SORT_DESC);
 
 }
-
-/*
-$menu = new Menu();
-$menu->setAttribute(['id' => 'menu']);
-$menu->setAttribute(['id' => 'menu']);
-
-

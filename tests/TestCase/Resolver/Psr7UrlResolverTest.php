@@ -1,12 +1,12 @@
 <?php
 declare(strict_types = 1);
 
-namespace Cake\Menu\TestCase\Resolver;
+namespace Menu\TestCase\Resolver;
 
-use Cake\Menu\Item\Item;
-use Cake\Menu\Link\Link;
-use Cake\Menu\Resolver\Psr7UrlResolver;
 use Cake\TestSuite\TestCase;
+use Menu\Item\Item;
+use Menu\Link\Link;
+use Menu\Resolver\Psr7UrlResolver;
 use Zend\Diactoros\Request;
 
 class Psr7UrlResolverTest extends TestCase {

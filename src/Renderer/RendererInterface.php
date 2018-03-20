@@ -1,14 +1,14 @@
 <?php
 declare(strict_types = 1);
 
-namespace Cake\Menu\Renderer;
+namespace Menu\Renderer;
 
-use Cake\Menu\MenuInterface;
+use Menu\MenuInterface;
 
 interface RendererInterface {
 
 	/**
-	 * @param \Cake\Menu\MenuInterface $menu
+	 * @param \Menu\MenuInterface $menu
 	 * @param array $options
 	 *
 	 * @return string

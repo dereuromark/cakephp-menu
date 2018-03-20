@@ -1,10 +1,10 @@
 <?php
 declare(strict_types = 1);
 
-namespace Cake\Menu;
+namespace Menu;
 
 use Cake\Collection\Collection;
-use Cake\Menu\Item\ItemInterface;
+use Menu\Item\ItemInterface;
 use RuntimeException;
 
 /**
@@ -15,8 +15,8 @@ class ItemCollection extends Collection {
 	/**
 	 * Adds an item to the collection
 	 *
-	 * @param \Cake\Menu\Item\ItemInterface $item Item
-	 * @return void;
+	 * @param \Menu\Item\ItemInterface $item Item
+	 * @return void
 	 */
 	public function add(ItemInterface $item) {
 		$this->addMany([$item]);
@@ -45,7 +45,7 @@ class ItemCollection extends Collection {
 	/**
 	 * Find all items by parent id
 	 *
-	 * @param int|string|\Cake\Menu\Item\ItemInterface $parentId Parent Id or Item
+	 * @param int|string|\Menu\Item\ItemInterface $parentId Parent Id or Item
 	 * @return array
 	 */
 	public function findByParent($parentId) {
@@ -61,10 +61,11 @@ class ItemCollection extends Collection {
 	/**
 	 * Finds a single item by its id
 	 *
+	 * @param string $id
 	 * @return null|string|int
 	 */
 	public function findById($id) {
-		$result = $this->filter(function($item) use ($id) {
+		$result = $this->filter(function(ItemInterface $item) use ($id) {
 			return $item->getId() === $id;
 		});
 

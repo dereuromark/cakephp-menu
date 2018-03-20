@@ -1,13 +1,13 @@
 <?php
 declare(strict_types = 1);
 
-namespace Cake\Menu\Renderer;
+namespace Menu\Renderer;
 
 use Cake\Core\InstanceConfigTrait;
-use Cake\Menu\Item\ItemInterface;
-use Cake\Menu\Item\SelfRendererInterface;
-use Cake\Menu\MenuInterface;
 use Cake\View\StringTemplateTrait;
+use Menu\Item\ItemInterface;
+use Menu\Item\SelfRendererInterface;
+use Menu\MenuInterface;
 
 class StringTemplateRenderer {
 
@@ -32,18 +32,22 @@ class StringTemplateRenderer {
 	];
 
 	/**
-	 * @param \Cake\Menu\MenuInterface $menu
+	 * @param \Menu\MenuInterface $menu
 	 * @param array $options
 	 *
 	 * @return string
 	 */
 	public function render(MenuInterface $menu, array $options = []) {
-	    //TODO
-	    return '';
+		$result = '';
+	    foreach ($menu->getItems() as $item) {
+	    	$result .= $this->renderItem($item);
+		}
+
+		return $result;
 	}
 
 	/**
-	 * @param \Cake\Menu\Item\ItemInterface $item
+	 * @param \Menu\Item\ItemInterface $item
 	 *
 	 * @return string
 	 */
@@ -61,9 +65,14 @@ class StringTemplateRenderer {
 			$attr[] = $name . '="' . $value . '"';
 		}
 
+		$attributes = implode(' ', $attr);
+		if ($attributes) {
+			$attributes = ' ' . $attributes;
+		}
+
 		return $this->templater()->format('link', [
-			'attributes' => implode(' ', $attr),
-			'title' => $item->getTitle(),
+			'attributes' => $attributes,
+			'title' => $item->getLabel(),
 		]);
 	}
 

@@ -1,5 +1,5 @@
 <?php
-namespace Cake\Menu\Resolver;
+namespace Menu\Resolver;
 
 interface ResolverCollectionInterface {
 }

@@ -1,8 +1,8 @@
 <?php
-namespace Cake\Menu\Resolver;
+namespace Menu\Resolver;
 
 use Cake\Core\InstanceConfigTrait;
-use Cake\Menu\Item\ItemInterface;
+use Menu\Item\ItemInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
 class UrlArrayResolver implements ResolverInterface {
@@ -30,7 +30,7 @@ class UrlArrayResolver implements ResolverInterface {
 	}
 
 	/**
-	 * @param \Cake\Menu\Item\ItemInterface $item
+	 * @param \Menu\Item\ItemInterface $item
 	 * @return void
 	 */
 	public function resolve(ItemInterface $item) {

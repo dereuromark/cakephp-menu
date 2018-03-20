@@ -1,10 +1,10 @@
 <?php
 declare(strict_types = 1);
 
-namespace Cake\Menu\Item;
+namespace Menu\Item;
 
-use Cake\Menu\Link\LinkInterface;
-use Cake\Menu\MenuInterface;
+use Menu\Link\LinkInterface;
+use Menu\MenuInterface;
 use RuntimeException;
 
 class Item implements ItemInterface {
@@ -42,7 +42,7 @@ class Item implements ItemInterface {
 	/**
 	 * @var string|null
 	 */
-	protected $_title;
+	protected $_label;
 
 	/**
 	 * @var string|null
@@ -55,12 +55,12 @@ class Item implements ItemInterface {
 	protected $_raw;
 
 	/**
-	 * @var \Cake\Menu\Link\LinkInterface|null
+	 * @var \Menu\Link\LinkInterface|null
 	 */
 	protected $_link;
 
 	/**
-	 * @var \Cake\Menu\Item\ItemInterface|null
+	 * @var \Menu\Item\ItemInterface|null
 	 */
 	protected $_parent;
 
@@ -76,13 +76,15 @@ class Item implements ItemInterface {
 
 	/**
 	 * @param string|null $title
-	 * @param \Cake\Menu\Link\LinkInterface|null $link
+	 * @param \Menu\Link\LinkInterface|null $link
 	 */
 	public function __construct($title = null, $link = null) {
 		$this->_id = str_replace('.', '', uniqid('id-', true));
 		$this->_key = strtolower(str_replace(' ', '-', $title));
 
-		$this->setTitle($title);
+		if ($title !== null) {
+			$this->setLabel($title);
+		}
 		if ($link instanceof LinkInterface) {
 			$this->setLink($link);
 		}
@@ -111,7 +113,7 @@ class Item implements ItemInterface {
 	}
 
 	/**
-	 * @param \Cake\Menu\Link\LinkInterface|null $link
+	 * @param \Menu\Link\LinkInterface|null $link
 	 *
 	 * @return $this
 	 */
@@ -122,9 +124,10 @@ class Item implements ItemInterface {
 	}
 
 	/**
-	 *
+	 * @param string $key
+	 * @return \Menu\Item\Item
 	 */
-	public function setkey($key) {
+	public function setKey($key) {
 		$this->_key = $key;
 
 		return $this;
@@ -135,19 +138,20 @@ class Item implements ItemInterface {
 	}
 
 	/**
-	 * @return \Cake\Menu\Link\LinkInterface|null
+	 * @return \Menu\Link\LinkInterface|null
 	 */
 	public function getLink() {
 		return $this->_link;
 	}
 
 	/**
-	 * @param string|null $title
+	 * @param string $title
+	 * @param bool $html
 	 *
 	 * @return $this
 	 */
-	public function setTitle($title) {
-		$this->_title = $title;
+	public function setLabel($title, $html = false) {
+		$this->_label = $html ? $title : (string)h($title);
 
 		return $this;
 	}
@@ -179,7 +183,7 @@ class Item implements ItemInterface {
 	}
 
 	/**
-	 * @param \Cake\Menu\Item\ItemInterface $item
+	 * @param \Menu\Item\ItemInterface $item
 	 *
 	 * @return $this
 	 */
@@ -191,14 +195,14 @@ class Item implements ItemInterface {
 	}
 
 	/**
-	 * @return \Cake\Menu\MenuInterface
+	 * @return \Menu\MenuInterface
 	 */
 	public function getSubMenu() {
 		//TODO
 	}
 
 	/**
-	 * @param \Cake\Menu\MenuInterface $menu
+	 * @param \Menu\MenuInterface $menu
 	 *
 	 * @return $this
 	 */
@@ -240,8 +244,8 @@ class Item implements ItemInterface {
 	/**
 	 * @return string|null
 	 */
-	public function getTitle() {
-		return $this->_title;
+	public function getLabel() {
+		return $this->_label;
 	}
 
 	/**
@@ -271,7 +275,8 @@ class Item implements ItemInterface {
 		}
 
 		if (is_callable($this->_isActive)) {
-			return $this->_isActive($this);
+			$isActive = $this->_isActive;
+			return $isActive($this);
 		}
 
 		throw new RuntimeException('Error getting the active status for item');
@@ -322,7 +327,7 @@ class Item implements ItemInterface {
 	}
 
 	/**
-	 * @param \Cake\Menu\Item\ItemInterface $item
+	 * @param \Menu\Item\ItemInterface $item
 	 *
 	 * @return $this
 	 */
@@ -334,7 +339,7 @@ class Item implements ItemInterface {
 	}
 
 	/**
-	 * @return \Cake\Menu\Item\ItemInterface|null
+	 * @return \Menu\Item\ItemInterface|null
 	 */
 	public function getParent() {
 		return $this->_parent;

@@ -1,9 +1,10 @@
 <?php
 declare(strict_types = 1);
 
-namespace Cake\Menu\Link;
+namespace Menu\Link;
 
 use Cake\Routing\Router;
+use LogicException;
 
 class Link implements LinkInterface {
 
@@ -13,9 +14,14 @@ class Link implements LinkInterface {
 	protected $_attributes = [];
 
 	/**
-	 * @var string|array
+	 * @var string|array|null
 	 */
 	protected $_url;
+
+	/**
+	 * @var bool
+	 */
+	protected $_external = false;
 
 	/**
 	 * @var string
@@ -23,12 +29,35 @@ class Link implements LinkInterface {
 	protected $_title;
 
 	/**
+	 * Convenience factory method
+	 *
+	 * @param string|array|null $url
+	 * @param bool $external
+	 *
+	 * @return static
+	 */
+	public static function create($url = null, $external = false) {
+		$link = new static();
+		if ($url !== null) {
+			$link->setUrl($url, $external);
+		}
+
+		return $link;
+	}
+
+	/**
 	 * @param string|array $url
+	 * @param bool $external
 	 *
 	 * @return $this
 	 */
-	public function setUrl($url) {
+	public function setUrl($url, $external = false) {
+		if ($external && is_array($url)) {
+			throw new LogicException('URL array must always be an internal link, otherwise transform into string manually before passing.');
+		}
+
 		$this->_url = $url;
+		$this->_external = $external;
 
 		return $this;
 	}
@@ -64,19 +93,19 @@ class Link implements LinkInterface {
 	}
 
 	/**
-	 * @return string|array
+	 * @return string|array|null
 	 */
 	public function getRawUrl() {
 		return $this->_url;
 	}
 
 	/**
-	 * @return string
+	 * @return string|null
 	 */
 	public function getUrl() {
 		$rawUrl = $this->getRawUrl();
-		if (is_string($rawUrl)) {
-			return $rawUrl;
+		if ($rawUrl === null) {
+			return null;
 		}
 
 		return $this->_builder($rawUrl);
@@ -88,8 +117,7 @@ class Link implements LinkInterface {
 	 * @return string
 	 */
 	protected function _builder($rawUrl) {
-	    // Really good? What about string relative ones?
-		if (is_string($rawUrl)) {
+		if ($this->_external) {
 			return $rawUrl;
 		}
 

@@ -1,7 +1,7 @@
 <?php
-namespace Cake\Menu\Resolver;
+namespace Menu\Resolver;
 
-use Cake\Menu\Item\ItemInterface;
+use Menu\Item\ItemInterface;
 
 class LoggedInResolver implements ResolverInterface {
 
@@ -18,7 +18,7 @@ class LoggedInResolver implements ResolverInterface {
 	}
 
 	/**
-	 * @param \Cake\Menu\Item\ItemInterface $item
+	 * @param \Menu\Item\ItemInterface $item
 	 * @return void
 	 */
 	public function resolve(ItemInterface $item) {

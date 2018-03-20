@@ -1,7 +1,7 @@
 <?php
 declare(strict_types = 1);
 
-namespace Cake\Menu\Item;
+namespace Menu\Item;
 
 interface SelfRendererInterface {
 

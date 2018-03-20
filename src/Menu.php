@@ -1,15 +1,15 @@
 <?php
 declare(strict_types = 1);
 
-namespace Cake\Menu;
+namespace Menu;
 
-use Cake\Menu\Item\Item;
-use Cake\Menu\Item\ItemInterface;
+use Menu\Item\Item;
+use Menu\Item\ItemInterface;
 
 class Menu implements MenuInterface {
 
 	/**
-	 * @var array
+	 * @var \Menu\Item\ItemInterface[]
 	 */
 	protected $_itemCollection;
 
@@ -24,16 +24,33 @@ class Menu implements MenuInterface {
 	protected $_itemClass = Item::class;
 
 	/**
-	 * Convenience method to get a new item
+	 * Convenience factory method
 	 *
-	 * @return \Cake\Menu\Item\ItemInterface
+	 * @return static
 	 */
-	public function newItem() {
-		return new $this->_itemClass();
+	public static function create() {
+		return new static();
 	}
 
 	/**
-	 * @param \Cake\Menu\Item\ItemInterface $item
+	 * Convenience method to get a new item
+	 *
+	 * @param string|null $label
+	 *
+	 * @return \Menu\Item\ItemInterface
+	 */
+	public function newItem($label = null) {
+		/** @var \Menu\Item\ItemInterface $item */
+		$item = new $this->_itemClass();
+		if ($label !== null) {
+			$item->setLabel($label);
+		}
+
+		return $item;
+	}
+
+	/**
+	 * @param \Menu\Item\ItemInterface $item
 	 *
 	 * @return $this
 	 */
@@ -42,6 +59,13 @@ class Menu implements MenuInterface {
 		$this->_itemCollection[] = $item;
 
 		return $this;
+	}
+
+	/**
+	 * @return \Menu\Item\ItemInterface[]
+	 */
+	public function getItems() {
+		return $this->_itemCollection;
 	}
 
 	/**
@@ -59,17 +83,16 @@ class Menu implements MenuInterface {
 
 	/**
 	 * @param string $title
-	 * @param \Cake\Menu\Link\LinkInterface|null $link
+	 * @param \Menu\Link\LinkInterface|null $link
 	 * @param array $attributes
 	 *
 	 * @return $this
 	 */
 	public function addRaw($title, $link = null, array $attributes = []) {
-		/** @var \Cake\Menu\Item\ItemInterface $item */
+		/** @var \Menu\Item\ItemInterface $item */
 		$item = new $this->_itemClass();
-		$item
-			->setTitle($title);
-		if ($link) {
+		$item->setLabel($title);
+		if ($link !== null) {
 			$item->setLink($link);
 		}
 		if ($attributes) {
@@ -132,13 +155,31 @@ class Menu implements MenuInterface {
 	}
 
 	/**
+	 * Sets multiple HTML attributes
+	 *
+	 * @param array $attributes Attributes
+	 * @param bool $merge Merge them or not
+	 *
+	 * @return void
+	 */
+	public function setAttributes(array $attributes, $merge = false) {
+		if ($merge) {
+			$this->_attributes = $attributes + $this->_attributes;
+
+			return;
+		}
+
+		$this->_attributes = $attributes;
+	}
+
+	/**
 	 * @param string $name
 	 * @param mixed $value
 	 *
 	 * @return $this
 	 */
 	public function setAttribute($name, $value) {
-		// TODO: Implement setAttribute() method.
+		$this->_attributes[$name] = $value;
 
 		return $this;
 	}
