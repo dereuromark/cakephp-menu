@@ -1,7 +1,6 @@
 {
-  "name": "friendsofcake/menu",
+  "name": "dereuromark/cakephp-menu",
   "description": "CakePHP Menu Plugin",
-  "homepage": "http://cakephp.org",
   "type": "cakephp-plugin",
   "license": "MIT",
   "require": {
