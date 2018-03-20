@@ -8,7 +8,6 @@
     "cakephp/cakephp": "^3.5"
   },
   "require-dev": {
-    "cakephp/cakephp": "dev-master as 3.5",
     "cakephp/chronos": "^1.0.1",
     "phpunit/phpunit": "^6.0",
     "fig-r/psr2r-sniffer": "dev-master",
