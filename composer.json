@@ -3,6 +3,18 @@
   "description": "CakePHP Menu Plugin",
   "type": "cakephp-plugin",
   "license": "MIT",
+  "authors": [
+    {
+      "name": "Mark Scherer",
+      "homepage": "http://www.dereuromark.de",
+      "role": "Maintainer"
+    },
+    {
+      "name": "Florian Krämer",
+      "homepage": "https://github.com/burzum/",
+      "role": "Maintainer"
+    }
+  ],
   "require": {
     "php": ">=7.1",
     "cakephp/cakephp": "^3.5"
