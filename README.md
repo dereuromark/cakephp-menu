@@ -1,5 +1,7 @@
 # CakePHP Menu Plugin
 
+[![License](https://poser.pugx.org/dereuromark/cakephp-menu/license.svg)](https://packagist.org/packages/dereuromark/cakephp-menu)
+
 A powerful menu builder for CakePHP apps.
 
 **WORK IN PROGRESS!**
@@ -17,7 +19,3 @@ We've tried to keep this as agnostic as possible to third party libraries
 
 ## Documentation
 See [Docs](docs).
-
-## License
-
-The MIT License (MIT)
