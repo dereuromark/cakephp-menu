@@ -40,7 +40,7 @@ before_script:
 
 script:
   - if [[ $DEFAULT == 1 ]]; then vendor/bin/phpunit; fi
-  - if [[ $PHPCS == 1 ]]; then phpstan cs-check ; fi
+  - if [[ $PHPCS == 1 ]]; then composer cs-check ; fi
   - if [[ $PHPSTAN == 1 ]]; then composer phpstan ; fi
 
   - if [[ $CODECOVERAGE == 1 ]]; then vendor/bin/phpunit --coverage-clover=clover.xml || true; fi
