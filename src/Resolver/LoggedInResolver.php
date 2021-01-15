@@ -1,4 +1,5 @@
 <?php
+
 namespace Menu\Resolver;
 
 use Menu\Item\ItemInterface;

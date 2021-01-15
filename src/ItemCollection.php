@@ -55,14 +55,14 @@ class ItemCollection extends Collection {
 
 		return $this->filter(function($item) use ($parentId) {
 			return $item->getParentId() === $parentId;
-		});
+		})->toArray();
 	}
 
 	/**
 	 * Finds a single item by its id
 	 *
 	 * @param string $id
-	 * @return null|string|int
+	 * @return int|string|null
 	 */
 	public function findById($id) {
 		$result = $this->filter(function(ItemInterface $item) use ($id) {

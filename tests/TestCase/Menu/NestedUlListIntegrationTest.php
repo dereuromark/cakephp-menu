@@ -62,7 +62,7 @@ class NestedUlListIntegrationTest extends TestCase {
 		$subMenu->addChildren([
 			$menu->newItem(''),
 			$menu->newItem(''),
-			$menu->newItem('')
+			$menu->newItem(''),
 		]);
 		$menu->getChild('x')->setSubMenu($subMenu);
 	}

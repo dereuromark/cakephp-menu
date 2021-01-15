@@ -9,6 +9,7 @@ use Menu\Link\Link;
 use Menu\Renderer\StringTemplateRenderer;
 
 class ItemTest extends TestCase {
+
 	/**
 	 * @return void
 	 */

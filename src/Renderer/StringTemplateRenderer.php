@@ -21,8 +21,8 @@ class StringTemplateRenderer {
 		'templates' => [
 			'menuWrapper' => '<ul>{{items}}</ul>',
 			'item' => '<li{{attributes}}>{{before}}{{item}}{{after}}</li>',
-			'link' => '<a{{attributes}}>{{title}}</a>'
-		]
+			'link' => '<a{{attributes}}>{{title}}</a>',
+		],
 	];
 
 	/**

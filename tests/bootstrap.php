@@ -1,5 +1,4 @@
 <?php
-use Cake\Routing\DispatcherFactory;
 
 if (!defined('DS')) {
 	define('DS', DIRECTORY_SEPARATOR);
@@ -28,33 +27,31 @@ Cake\Core\Configure::write('App', [
 Cake\Core\Configure::write('debug', true);
 $cache = [
 	'default' => [
-		'engine' => 'File'
+		'engine' => 'File',
 	],
 	'_cake_core_' => [
 		'className' => 'File',
 		'prefix' => 'crud_myapp_cake_core_',
 		'path' => CACHE . 'persistent/',
 		'serialize' => true,
-		'duration' => '+10 seconds'
+		'duration' => '+10 seconds',
 	],
 	'_cake_model_' => [
 		'className' => 'File',
 		'prefix' => 'crud_my_app_cake_model_',
 		'path' => CACHE . 'models/',
 		'serialize' => 'File',
-		'duration' => '+10 seconds'
-	]
+		'duration' => '+10 seconds',
+	],
 ];
-Cake\Cache\Cache::config($cache);
-Cake\Core\Plugin::load('Menu', ['path' => ROOT . DS, 'autoload' => true]);
-DispatcherFactory::add('Routing');
-DispatcherFactory::add('ControllerFactory');
+Cake\Cache\Cache::setConfig($cache);
+
 // Ensure default test connection is defined
 if (!getenv('db_class')) {
 	putenv('db_class=Cake\Database\Driver\Sqlite');
 	putenv('db_dsn=sqlite::memory:');
 }
-Cake\Datasource\ConnectionManager::config('test', [
+Cake\Datasource\ConnectionManager::setConfig('test', [
 	'className' => 'Cake\Database\Connection',
 	'driver' => getenv('db_class'),
 	'dsn' => getenv('db_dsn'),

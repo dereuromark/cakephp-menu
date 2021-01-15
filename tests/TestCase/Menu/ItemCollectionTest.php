@@ -4,8 +4,8 @@ declare(strict_types = 1);
 namespace Menu\TestCase\Menu;
 
 use Cake\TestSuite\TestCase;
-use Menu\ItemCollection;
 use Menu\Item\Item;
+use Menu\ItemCollection;
 use Menu\Menu;
 
 /**
@@ -44,7 +44,7 @@ class ItemCollectionTest extends TestCase {
 		$three = $menu->get(3);
 		$three->addChildren([
 			new Item('3.1'),
-			new Item('3.2')
+			new Item('3.2'),
 		]);
 	}
 

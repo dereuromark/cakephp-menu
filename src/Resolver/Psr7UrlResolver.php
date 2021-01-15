@@ -1,4 +1,5 @@
 <?php
+
 namespace Menu\Resolver;
 
 use Cake\Core\InstanceConfigTrait;

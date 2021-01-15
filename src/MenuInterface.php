@@ -7,8 +7,8 @@ use Menu\Item\ItemInterface;
 
 interface MenuInterface {
 
-	const SORT_ASC = 'asc';
-	const SORT_DESC = 'desc';
+	public const SORT_ASC = 'asc';
+	public const SORT_DESC = 'desc';
 
 	/**
 	 * @param \Menu\Item\ItemInterface $item

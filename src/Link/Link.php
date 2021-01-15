@@ -5,6 +5,7 @@ namespace Menu\Link;
 
 use Cake\Routing\Router;
 use LogicException;
+use RuntimeException;
 
 class Link implements LinkInterface {
 
@@ -118,6 +119,10 @@ class Link implements LinkInterface {
 	 */
 	protected function _builder($rawUrl) {
 		if ($this->_external) {
+			if (is_array($rawUrl)) {
+				throw new RuntimeException('Cannot use an array URL as external one');
+			}
+
 			return $rawUrl;
 		}
 

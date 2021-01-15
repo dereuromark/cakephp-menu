@@ -13,6 +13,9 @@ use Menu\Menu;
  */
 class MenuTest extends TestCase {
 
+	/**
+	 * @return void
+	 */
 	public function testGetAttributes() {
 		$menu = Menu::create();
 		$menu->setAttributes(['foo' => 'bar']);
@@ -25,6 +28,9 @@ class MenuTest extends TestCase {
 		$this->assertSame($expected, $attributes);
 	}
 
+	/**
+	 * @return void
+	 */
 	public function testGetAttributesMerge() {
 		$menu = Menu::create();
 		$menu->setAttributes(['foo' => 'bar']);
@@ -33,7 +39,7 @@ class MenuTest extends TestCase {
 		$attributes = $menu->getAttributes();
 		$expected = [
 			'fo' => 'ba',
-			'foo' => 'bar'
+			'foo' => 'bar',
 		];
 		$this->assertSame($expected, $attributes);
 	}

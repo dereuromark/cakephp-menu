@@ -18,7 +18,7 @@ class UrlArrayResolverTest extends TestCase {
 		$link = new Link();
 		$link->setUrl([
 			'controller' => 'FooBar',
-			'action' => 'edit'
+			'action' => 'edit',
 		]);
 		$item = new Item('User Listing', $link);
 
@@ -39,7 +39,7 @@ class UrlArrayResolverTest extends TestCase {
 
 		$link->setUrl([
 			'controller' => 'FooBar',
-			'action' => 'add'
+			'action' => 'add',
 		]);
 		$item = new Item('User Listing', $link);
 		$this->assertFalse($item->isActive());

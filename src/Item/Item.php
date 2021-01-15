@@ -30,7 +30,7 @@ class Item implements ItemInterface {
 	protected $_isVisible = true;
 
 	/**
-	 * @var bool
+	 * @var bool|callable
 	 */
 	protected $_isActive = false;
 
@@ -80,7 +80,7 @@ class Item implements ItemInterface {
 	 */
 	public function __construct($title = null, $link = null) {
 		$this->_id = str_replace('.', '', uniqid('id-', true));
-		$this->_key = strtolower(str_replace(' ', '-', $title));
+		$this->_key = strtolower(str_replace(' ', '-', (string)$title));
 
 		if ($title !== null) {
 			$this->setLabel($title);
@@ -102,7 +102,7 @@ class Item implements ItemInterface {
 	}
 
 	/**
-	 * @param bool $isActive
+	 * @param bool|callable $isActive
 	 *
 	 * @return $this
 	 */
@@ -133,6 +133,9 @@ class Item implements ItemInterface {
 		return $this;
 	}
 
+	/**
+	 * @return string
+	 */
 	public function getKey() {
 		return $this->_key;
 	}
@@ -276,6 +279,7 @@ class Item implements ItemInterface {
 
 		if (is_callable($this->_isActive)) {
 			$isActive = $this->_isActive;
+
 			return $isActive($this);
 		}
 
@@ -345,6 +349,9 @@ class Item implements ItemInterface {
 		return $this->_parent;
 	}
 
+	/**
+	 * @return int|string
+	 */
 	public function getParentId() {
 		return $this->_parentId;
 	}
