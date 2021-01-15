@@ -96,9 +96,6 @@ jobs:
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.json') }}
           restore-keys: ${{ runner.os }}-composer-
 
-      - name: Composer Install
-        run: composer stan-setup
-
       - name: Run phpstan
         run: composer stan
 
