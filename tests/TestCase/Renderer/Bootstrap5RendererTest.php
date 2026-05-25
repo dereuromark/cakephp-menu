@@ -35,6 +35,30 @@ class Bootstrap5RendererTest extends TestCase
         $this->assertStringNotContainsString('Array', $secondResult);
     }
 
+    public function testFrameworkClassesAndToggleAttributeAreConfigurable(): void
+    {
+        $menu = Menu::create();
+        $menu->addItem('Home', '/');
+        $parent = $menu->addItem('Account', '#');
+        $parent->getSubMenu()->addItem('Profile', '/profile');
+
+        $result = (new Bootstrap5Renderer())->render($menu, [
+            'linkClass' => 'menu-link',
+            'childLinkClass' => 'menu-sublink',
+            'toggleClass' => 'menu-toggle',
+            'toggleAttribute' => 'data-toggle',
+        ]);
+
+        $this->assertStringContainsString('class="menu-link"', $result);
+        $this->assertStringContainsString('menu-toggle', $result);
+        $this->assertStringContainsString('menu-sublink', $result);
+        $this->assertStringContainsString('data-toggle="dropdown"', $result);
+        // Bootstrap defaults are fully replaced, not appended.
+        $this->assertStringNotContainsString('data-bs-toggle', $result);
+        $this->assertStringNotContainsString('nav-link', $result);
+        $this->assertStringNotContainsString('dropdown-item', $result);
+    }
+
     public function testRendersArrayLinkClassWithoutCorruption(): void
     {
         $menu = Menu::create();

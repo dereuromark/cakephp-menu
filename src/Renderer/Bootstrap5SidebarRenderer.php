@@ -50,8 +50,16 @@ class Bootstrap5SidebarRenderer extends StringTemplateRenderer
         'toggleClass' => 'nav-link d-flex justify-content-between align-items-center',
         // Toggle button used when a branch also has a real URL (link + separate toggle).
         'toggleButtonClass' => 'btn btn-link nav-link border-0 p-0 ms-2',
+        // Framework-specific bits, defaulting to Bootstrap 5; override for BS4/other.
+        'collapseClass' => 'collapse',
+        'expandedClass' => 'show',
+        'toggleAttribute' => 'data-bs-toggle',
+        'toggleValue' => 'collapse',
+        'targetAttribute' => 'data-bs-target',
         // Append a small open/closed indicator to branch toggles; set false to omit.
         'caret' => true,
+        'caretOpen' => '&#9662;',
+        'caretClosed' => '&#9656;',
     ];
 
     /**
@@ -195,7 +203,13 @@ class Bootstrap5SidebarRenderer extends StringTemplateRenderer
 
         $collapse = sprintf(
             '<div%s>%s</div>',
-            $this->renderAttributes(['class' => array_filter(['collapse', $expanded ? 'show' : null]), 'id' => $id]),
+            $this->renderAttributes([
+                'class' => array_filter([
+                    $this->getStringOption($options, 'collapseClass'),
+                    $expanded ? $this->getStringOption($options, 'expandedClass') : null,
+                ]),
+                'id' => $id,
+            ]),
             $this->renderMenu($item->getSubMenu(), $options, $level + 1),
         );
 
@@ -214,18 +228,23 @@ class Bootstrap5SidebarRenderer extends StringTemplateRenderer
             $classes[] = $this->getStringOption($options, 'activeClass');
         }
 
+        $attributes = ['class' => $classes];
+        $toggleAttribute = $this->getStringOption($options, 'toggleAttribute');
+        if ($toggleAttribute !== '') {
+            $attributes[$toggleAttribute] = $this->getStringOption($options, 'toggleValue');
+        }
+        $attributes += [
+            'role' => 'button',
+            'href' => '#' . $id,
+            'aria-controls' => $id,
+            'aria-expanded' => $expanded ? 'true' : 'false',
+        ];
+
         return sprintf(
             '<a%s>%s%s</a>',
-            $this->renderAttributes([
-                'class' => $classes,
-                'data-bs-toggle' => 'collapse',
-                'role' => 'button',
-                'href' => '#' . $id,
-                'aria-controls' => $id,
-                'aria-expanded' => $expanded ? 'true' : 'false',
-            ]),
+            $this->renderAttributes($attributes),
             $label,
-            $this->getBooleanOption($options, 'caret', true) ? $this->caret($expanded) : '',
+            $this->getBooleanOption($options, 'caret', true) ? $this->caret($options, $expanded) : '',
         );
     }
 
@@ -256,26 +275,40 @@ class Bootstrap5SidebarRenderer extends StringTemplateRenderer
         }
 
         $anchor = sprintf('<a%s>%s</a>', $this->renderAttributes($linkAttributes), $label);
-        $button = sprintf(
-            '<button%s>%s</button>',
-            $this->renderAttributes([
-                'class' => array_filter([$this->getStringOption($options, 'toggleButtonClass'), $expanded ? $this->getStringOption($options, 'activeClass') : null]),
-                'type' => 'button',
-                'data-bs-toggle' => 'collapse',
-                'data-bs-target' => '#' . $id,
-                'aria-controls' => $id,
-                'aria-expanded' => $expanded ? 'true' : 'false',
-                'aria-label' => 'Toggle section',
-            ]),
-            $this->caret($expanded),
-        );
+
+        $buttonAttributes = [
+            'class' => array_filter([$this->getStringOption($options, 'toggleButtonClass'), $expanded ? $this->getStringOption($options, 'activeClass') : null]),
+            'type' => 'button',
+        ];
+        $toggleAttribute = $this->getStringOption($options, 'toggleAttribute');
+        if ($toggleAttribute !== '') {
+            $buttonAttributes[$toggleAttribute] = $this->getStringOption($options, 'toggleValue');
+        }
+        $targetAttribute = $this->getStringOption($options, 'targetAttribute');
+        if ($targetAttribute !== '') {
+            $buttonAttributes[$targetAttribute] = '#' . $id;
+        }
+        $buttonAttributes += [
+            'aria-controls' => $id,
+            'aria-expanded' => $expanded ? 'true' : 'false',
+            'aria-label' => 'Toggle section',
+        ];
+
+        $button = sprintf('<button%s>%s</button>', $this->renderAttributes($buttonAttributes), $this->caret($options, $expanded));
 
         return sprintf('<div class="d-flex justify-content-between align-items-center">%s%s</div>', $anchor, $button);
     }
 
-    protected function caret(bool $expanded): string
+    /**
+     * @phpstan-param array<string, mixed> $options
+     */
+    protected function caret(array $options, bool $expanded): string
     {
-        return sprintf('<span class="menu-caret ms-2" aria-hidden="true">%s</span>', $expanded ? '&#9662;' : '&#9656;');
+        $glyph = $expanded
+            ? $this->getStringOption($options, 'caretOpen')
+            : $this->getStringOption($options, 'caretClosed');
+
+        return sprintf('<span class="menu-caret ms-2" aria-hidden="true">%s</span>', $glyph);
     }
 
     /**

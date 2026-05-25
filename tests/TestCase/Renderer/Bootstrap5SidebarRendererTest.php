@@ -118,6 +118,28 @@ class Bootstrap5SidebarRendererTest extends TestCase
         $this->assertStringNotContainsString('Array', $result);
     }
 
+    public function testFrameworkHooksAreConfigurable(): void
+    {
+        $menu = Menu::create();
+        $branch = $menu->addItem('Group', '#', ['id' => 'group']);
+        $branch->getSubMenu()->addItem('Child', '/child', ['active' => true]);
+
+        $result = (new Bootstrap5SidebarRenderer())->render($menu, [
+            'collapseClass' => 'accordion-collapse',
+            'expandedClass' => 'is-open',
+            'toggleAttribute' => 'data-toggle',
+            'caretOpen' => 'v',
+            'caretClosed' => '>',
+        ]);
+
+        // Active branch open, using the overridden collapse/expanded classes.
+        $this->assertStringContainsString('class="accordion-collapse is-open"', $result);
+        $this->assertStringContainsString('data-toggle="collapse"', $result);
+        $this->assertStringContainsString('>v</span>', $result);
+        // Bootstrap defaults replaced, not appended.
+        $this->assertStringNotContainsString('data-bs-toggle', $result);
+    }
+
     public function testHideEmptyBranchesDropsChildlessBranch(): void
     {
         $menu = Menu::create();

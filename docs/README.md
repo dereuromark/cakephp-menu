@@ -384,7 +384,15 @@ it accepts:
 | `linkClass` | `nav-link` | Class on leaf links. |
 | `toggleClass` | `nav-link d-flex justify-content-between align-items-center` | Class on toggle-only branch links. |
 | `toggleButtonClass` | `btn btn-link nav-link border-0 p-0 ms-2` | Class on the separate toggle button used for navigable branches. |
+| `collapseClass` | `collapse` | Class on the branch wrapper element. |
+| `expandedClass` | `show` | Class added to the wrapper when the branch is open. |
+| `toggleAttribute` | `data-bs-toggle` | Toggle attribute on the branch control (value `toggleValue`). Set to `''` to omit (e.g. when wiring your own JS). |
+| `toggleValue` | `collapse` | Value for `toggleAttribute`. |
+| `targetAttribute` | `data-bs-target` | Attribute pointing the navigable-branch toggle button at its wrapper id. |
 | `caret` | `true` | Append a small open/closed indicator (`<span class="menu-caret">`) to branch toggles; set `false` to omit. |
+| `caretOpen` / `caretClosed` | `▾` / `▸` | Glyphs for the open/closed caret. |
+
+The framework-specific keys default to Bootstrap 5; override them (e.g. `toggleAttribute => 'data-toggle'`, `expandedClass => 'is-open'`) to target Bootstrap 4 or another setup without subclassing.
 
 You can override templates per render call:
 
@@ -405,6 +413,11 @@ constructor config when instantiating a renderer directly.
 `Bootstrap5Renderer` overrides some of these defaults: `ancestorClass` → `active`,
 `branchClass` / `submenuClass` → `dropdown`, `nestedMenuClass` → `dropdown-menu`, and
 `addAriaExpanded` → `false` (it emits `aria-expanded` on the toggle link instead).
+
+`Bootstrap5Renderer` also exposes its link-level Bootstrap bits as config (defaults shown), so
+BS4/other setups work without subclassing: `linkClass` (`nav-link`, top-level links),
+`childLinkClass` (`dropdown-item`, nested links), `toggleClass` (`dropdown-toggle`, branch links),
+`toggleAttribute` (`data-bs-toggle`) and `toggleValue` (`dropdown`).
 
 | Option | Default | Description |
 | --- | --- | --- |

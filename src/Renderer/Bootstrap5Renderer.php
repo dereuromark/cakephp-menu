@@ -22,6 +22,12 @@ class Bootstrap5Renderer extends StringTemplateRenderer
         'firstClass' => null,
         'lastClass' => null,
         'currentAsLink' => true,
+        // Framework-specific bits, defaulting to Bootstrap 5; override for BS4/other.
+        'linkClass' => 'nav-link',
+        'childLinkClass' => 'dropdown-item',
+        'toggleClass' => 'dropdown-toggle',
+        'toggleAttribute' => 'data-bs-toggle',
+        'toggleValue' => 'dropdown',
         'templates' => [
             'menuWrapper' => '<ul{{attributes}}>{{items}}</ul>',
             'item' => '<li{{attributes}}>{{content}}</li>',
@@ -57,11 +63,16 @@ class Bootstrap5Renderer extends StringTemplateRenderer
 
         $attributes = $link->getAttributes();
         $attributes['href'] = $link->getUrl() ?? '#';
-        $baseLinkClass = $item->hasParent() ? 'dropdown-item' : 'nav-link';
+        $baseLinkClass = $item->hasParent()
+            ? $this->getStringOption($options, 'childLinkClass')
+            : $this->getStringOption($options, 'linkClass');
         $attributes = $this->appendClass($attributes, $baseLinkClass);
         if ($item->hasSubMenu()) {
-            $attributes = $this->appendClass($attributes, 'dropdown-toggle');
-            $attributes['data-bs-toggle'] = 'dropdown';
+            $attributes = $this->appendClass($attributes, $this->getStringOption($options, 'toggleClass'));
+            $toggleAttribute = $this->getStringOption($options, 'toggleAttribute');
+            if ($toggleAttribute !== '') {
+                $attributes[$toggleAttribute] = $this->getStringOption($options, 'toggleValue');
+            }
             $attributes['role'] = $attributes['role'] ?? 'button';
             $attributes['aria-expanded'] = $item->isExpanded() || $item->isActive() || $this->hasActiveDescendant($item)
                 ? 'true'
