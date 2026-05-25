@@ -9,6 +9,7 @@ use Cake\Http\ServerRequest;
 use Cake\Routing\Route\Route;
 use Cake\TestSuite\TestCase;
 use Cake\View\View;
+use InvalidArgumentException;
 use Menu\Item\Item;
 use Menu\Item\ItemInterface;
 use Menu\Item\SelfRendererInterface;
@@ -336,5 +337,16 @@ class MenuHelperTest extends TestCase
         $this->assertStringContainsString('Articles', $html);
         // ...and the additional resolver hides the flagged item.
         $this->assertStringNotContainsString('Secret', $html);
+    }
+
+    public function testAdditionalResolversRejectInvalidEntries(): void
+    {
+        $menuHelper = $this->createHelper(new ServerRequest());
+        $menu = Menu::create();
+        $menu->addItem('Home', '/');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('additionalResolvers');
+        $menuHelper->render($menu, ['additionalResolvers' => ['not-a-resolver']]);
     }
 }

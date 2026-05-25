@@ -402,6 +402,8 @@ class MenuHelper extends Helper
 
     /**
      * @phpstan-param array<string, mixed> $options
+     *
+     * @throws \InvalidArgumentException When `additionalResolvers` contains a non-resolver entry.
      */
     protected function createDefaultResolver(array $options): ResolverCollectionInterface
     {
@@ -422,8 +424,15 @@ class MenuHelper extends Helper
             ));
 
         $additional = $options['additionalResolvers'] ?? [];
-        if (is_array($additional) && $additional !== []) {
-            $collection->addMany($additional);
+        if (is_array($additional)) {
+            foreach ($additional as $resolver) {
+                if (!$resolver instanceof ResolverInterface) {
+                    throw new InvalidArgumentException(
+                        'Each additionalResolvers entry must implement ' . ResolverInterface::class . '.',
+                    );
+                }
+                $collection->add($resolver);
+            }
         }
 
         return $collection;
