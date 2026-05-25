@@ -11,6 +11,7 @@ use Menu\Item\StateResetInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use function array_filter;
 use function array_intersect_key;
+use function array_key_exists;
 use function array_merge;
 use function array_walk;
 use function is_array;
@@ -116,7 +117,73 @@ class UrlArrayResolver implements ContextAwareResolverInterface
             return array_intersect_key($normalizedRequestParams, $normalizedRoute) === $normalizedRoute;
         }
 
-        return $normalizedRequestParams === $normalizedRoute;
+        $exactRoute = $this->canonicalizeForExactMatch($normalizedRoute);
+        $exactRequest = $this->canonicalizeForExactMatch($normalizedRequestParams);
+
+        // Transport meta is always present on the request but rarely on a link, so only
+        // enforce host/method when the route explicitly constrains them.
+        foreach (['_host', '_method'] as $meta) {
+            if (!array_key_exists($meta, $exactRoute)) {
+                unset($exactRequest[$meta]);
+            }
+        }
+
+        return $exactRequest === $exactRoute;
+    }
+
+    /**
+     * Reduces a normalized parameter set to its addressable URL parts so that exact
+     * (non-fuzzy) matching compares like with like.
+     *
+     * The query string is kept as an explicit `?` bucket and *also* exposed at the top level
+     * (consistently for both route and request). Keeping the bucket means a query parameter
+     * whose name collides with a routing key (e.g. `?action=edit`) still participates in the
+     * comparison instead of being masked by the top-level routing value. An absent optional
+     * segment (`plugin`/`prefix`/`_ext`) shows up as `null`; a link targeting the application
+     * root specifies none of these, so they are folded away to let an exact `===` comparison
+     * succeed. Truthy values (e.g. an actual plugin name) are kept, so they still differentiate
+     * routes.
+     *
+     * @param array<string, mixed> $params
+     *
+     * @return array<string, mixed>
+     */
+    protected function canonicalizeForExactMatch(array $params): array
+    {
+        $query = isset($params['?']) && is_array($params['?']) ? $params['?'] : [];
+        $params['?'] = $query;
+        $params += $query;
+
+        foreach (['plugin', 'prefix', '_ext'] as $key) {
+            if (array_key_exists($key, $params) && $params[$key] === null) {
+                unset($params[$key]);
+            }
+        }
+
+        ksort($params, SORT_STRING);
+
+        return $params;
+    }
+
+    /**
+     * Collapses the "empty" forms of optional routing segments to `null`, so that a link
+     * using `plugin => false` matches a request that reports `plugin => null` (and likewise
+     * for `prefix`/`_ext`). The key is preserved, so an explicit `plugin => false` still does
+     * not match a request that is inside a plugin.
+     *
+     * @param array<string, mixed> $params
+     *
+     * @return array<string, mixed>
+     */
+    protected function normalizeEmptyRoutingValues(array $params): array
+    {
+        foreach (['plugin', 'prefix', '_ext'] as $key) {
+            if (array_key_exists($key, $params) && ($params[$key] === false || $params[$key] === '')) {
+                $params[$key] = null;
+            }
+        }
+
+        return $params;
     }
 
     /**
@@ -158,7 +225,7 @@ class UrlArrayResolver implements ContextAwareResolverInterface
         $params = array_merge($params, $pass);
         $params += $params['?'];
 
-        return $this->normalizeParams($params);
+        return $this->normalizeEmptyRoutingValues($this->normalizeParams($params));
     }
 
     /**
@@ -178,7 +245,7 @@ class UrlArrayResolver implements ContextAwareResolverInterface
         );
 
         /** @var array<string, mixed> $route */
-        return $this->normalizeParams($route);
+        return $this->normalizeEmptyRoutingValues($this->normalizeParams($route));
     }
 
     /**
