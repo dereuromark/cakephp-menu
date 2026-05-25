@@ -13,16 +13,12 @@ Composable menu builder and renderer for CakePHP applications.
 
 This branch is for **CakePHP 5.3+**. See the [version map](https://github.com/dereuromark/cakephp-menu/wiki#cakephp-version-map) for details.
 
-This plugin provides a small menu tree API with:
+Features:
 
-- nested menu items and submenus
-- string and Cake-style array URLs
-- alternate match routes, named routes, and fuzzy route matching
-- renderer abstraction with a Cake `StringTemplate` implementation
-- breadcrumb rendering and Cake `BreadcrumbsHelper` integration
-- request-aware active item resolution
-- callback and authorization resolvers for app-specific rules
-- named-menu Cake view helper integration
+- nested menu trees with string and Cake-style array URLs
+- active-state matching with alternate routes, named routes, and fuzzy matching
+- helper-managed named menus and breadcrumb integration
+- extensible resolvers and renderers for app-specific rules
 
 ## Installation
 
@@ -68,125 +64,6 @@ $account->add($menu->newItem('Profile', ['controller' => 'Users', 'action' => 'p
 $account->add($menu->newItem('Logout', ['controller' => 'Users', 'action' => 'logout']));
 
 echo $this->Menu->render($menu);
-```
-
-## Helper Workflow
-
-For view-driven menus you can let the helper manage named menus and active-state resolution:
-
-```php
-$menu = $this->Menu->create('main', [
-    'menuAttributes' => ['class' => 'nav'],
-]);
-$menu->addItem('Home', '/');
-$menu->addItem('Articles', ['controller' => 'Articles', 'action' => 'index'], [
-    'matchRoutes' => [
-        ['controller' => 'Articles', 'action' => 'view'],
-    ],
-    'fuzzy' => true,
-]);
-
-echo $this->Menu->render('main');
-```
-
-The helper also manages named menu lifecycle and breadcrumb generation:
-
-```php
-$menu = $this->Menu->getOrCreate('main');
-
-if (!$this->Menu->has('account')) {
-    $account = $menu->addItem('Account', '/account');
-    $account->getSubMenu()->addItem('Profile', '/account/profile');
-}
-
-echo $this->Menu->renderBreadcrumbs('main');
-```
-
-## Resolvers
-
-Resolvers let you decorate menu items after construction:
-
-- `Psr7UrlResolver`: marks string URL items active based on the current request URI
-- `UrlArrayResolver`: marks Cake array URL items active from request params, including fuzzy and named-route matching
-- `LoggedInResolver`: hides items marked with `auth = loggedIn|loggedOut`
-- `AuthorizationResolver`: hides or shows items via an app-provided authorization callback
-- `CallbackResolver`: generic resolver hook for section matching, metadata-driven visibility, or other custom rules
-- `ResolverCollection`: applies multiple resolvers in order
-
-Example:
-
-```php
-use Menu\Resolver\LoggedInResolver;
-use Menu\Resolver\ResolverCollection;
-use Menu\Resolver\UrlArrayResolver;
-
-$menu->addItem('Login', ['controller' => 'Users', 'action' => 'login'], [
-    'data' => ['auth' => 'loggedOut'],
-]);
-
-$menu->resolve(
-    (new ResolverCollection())
-        ->add(new UrlArrayResolver($this->request))
-        ->add(new LoggedInResolver($this->Authentication->getIdentity() !== null))
-);
-```
-
-Authorization example:
-
-```php
-use Menu\Item\ItemInterface;
-use Menu\Resolver\AuthorizationResolver;
-use Menu\Resolver\ResolverContext;
-
-$menu->resolve(new AuthorizationResolver(
-    static function (ItemInterface $item, ResolverContext $context): ?bool {
-        if ($item->getData('permission') === null) {
-            return null;
-        }
-
-        return $authorization->can($identity, (string)$item->getData('permission'));
-    }
-));
-```
-
-## Rendering
-
-The default renderer is `Menu\Renderer\StringTemplateRenderer`.
-
-It outputs nested `<ul>` / `<li>` markup and supports:
-
-- root menu attributes
-- item attributes
-- `before` / `after` inline markup
-- dividers
-- raw HTML items
-- active and active-ancestor CSS classes
-- first/last/branch/leaf/menu-level classes
-- `aria-current` and `aria-expanded` output
-- rendering the active item as text instead of a link
-
-The plugin also includes `Menu\Renderer\BreadcrumbRenderer` for rendering the active menu path as breadcrumb markup.
-
-You can override templates through helper options/config and limit automatic resolution depth via `resolveDepth`.
-
-## Breadcrumbs
-
-You can feed CakePHP's built-in `BreadcrumbsHelper` directly from the active menu path:
-
-```php
-$crumbs = $this->Menu->getBreadcrumbs('main');
-$this->Menu->populateBreadcrumbs('main');
-
-echo $this->Breadcrumbs->render();
-```
-
-Or render breadcrumbs in one step:
-
-```php
-echo $this->Menu->renderBreadcrumbs('main');
-echo $this->Menu->renderBreadcrumbs('main', [
-    'renderer' => \Menu\Renderer\BreadcrumbRenderer::class,
-]);
 ```
 
 ## Documentation
