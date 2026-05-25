@@ -102,4 +102,28 @@ class StringTemplateRendererTest extends TestCase
 
         $this->assertStringContainsString('aria-current="page"', $result);
     }
+
+    public function testHideEmptyBranchesSkipsBranchWithoutVisibleChildren(): void
+    {
+        $menu = Menu::create();
+        $group = $menu->addItem('Admin', '#');
+        $group->getSubMenu()->addItem('Users', '/admin/users')->setVisibility(false);
+        $menu->addItem('Home', '/');
+
+        $result = (new StringTemplateRenderer())->render($menu, ['hideEmptyBranches' => true]);
+
+        $this->assertStringNotContainsString('Admin', $result);
+        $this->assertStringContainsString('Home', $result);
+    }
+
+    public function testEmptyBranchesRenderByDefault(): void
+    {
+        $menu = Menu::create();
+        $group = $menu->addItem('Admin', '#');
+        $group->getSubMenu()->addItem('Users', '/admin/users')->setVisibility(false);
+
+        $result = (new StringTemplateRenderer())->render($menu);
+
+        $this->assertStringContainsString('Admin', $result);
+    }
 }
