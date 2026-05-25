@@ -43,7 +43,7 @@ class StringTemplateRendererTest extends TestCase
         ]))->render($menu);
 
         $this->assertStringContainsString('class="active-ancestor has-children"', $result);
-        $this->assertStringContainsString('<span>View</span>', $result);
+        $this->assertStringContainsString('<span aria-current="page">View</span>', $result);
         $this->assertStringNotContainsString('<a href="/articles/view">View</a>', $result);
     }
 
@@ -80,6 +80,26 @@ class StringTemplateRendererTest extends TestCase
 
         $this->assertStringContainsString('<ul aria-label="Main navigation">', $result);
         $this->assertStringContainsString('aria-expanded="true"', $result);
+        $this->assertStringContainsString('aria-current="page"', $result);
+    }
+
+    public function testActiveItemRenderedAsSpanGetsAriaCurrent(): void
+    {
+        $menu = Menu::create();
+        $menu->addItem('Home', '/', ['active' => true]);
+
+        $result = (new StringTemplateRenderer())->render($menu, ['currentAsLink' => false]);
+
+        $this->assertStringContainsString('<span aria-current="page">Home</span>', $result);
+    }
+
+    public function testActiveItemWithoutLinkGetsAriaCurrent(): void
+    {
+        $menu = Menu::create();
+        $menu->addItem('Section', null, ['active' => true]);
+
+        $result = (new StringTemplateRenderer())->render($menu);
+
         $this->assertStringContainsString('aria-current="page"', $result);
     }
 }

@@ -15,7 +15,7 @@ class Bootstrap5Renderer extends StringTemplateRenderer
         'activeClass' => 'active',
         'ancestorClass' => 'active',
         'branchClass' => 'dropdown',
-        'submenuClass' => 'dropdown',
+        'submenuClass' => null,
         'addAriaExpanded' => false,
         'nestedMenuClass' => 'dropdown-menu',
         'menuLevelClass' => null,
@@ -45,6 +45,9 @@ class Bootstrap5Renderer extends StringTemplateRenderer
         if ($link === null || ($item->isActive() && !$this->getBooleanOption($options, 'currentAsLink', true))) {
             $attributes = $link?->getAttributes() ?? [];
             unset($attributes['href']);
+            if ($item->isActive() && $this->getBooleanOption($options, 'addAriaCurrent', true)) {
+                $attributes['aria-current'] = 'page';
+            }
 
             return $this->templater()->format('label', [
                 'attributes' => $this->renderAttributes($attributes),

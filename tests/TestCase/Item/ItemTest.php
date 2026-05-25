@@ -61,4 +61,22 @@ class ItemTest extends TestCase
         $this->assertTrue($item->getIgnoreQueryString());
         $this->assertTrue($item->isFuzzyMatch());
     }
+
+    public function testGetKeyDoesNotPersistDerivedSlug(): void
+    {
+        $item = new Item('Some Label');
+
+        $this->assertSame('some-label', $item->getKey());
+        // A label-derived key is not promoted to an explicit key, and is not exported as one.
+        $this->assertFalse($item->hasExplicitKey());
+        $this->assertNull($item->toArray()['key']);
+    }
+
+    public function testGetKeyDoesNotMutateFrozenItem(): void
+    {
+        $item = (new Item('Some Label'))->freeze();
+
+        $this->assertSame('some-label', $item->getKey());
+        $this->assertNull($item->toArray()['key']);
+    }
 }
