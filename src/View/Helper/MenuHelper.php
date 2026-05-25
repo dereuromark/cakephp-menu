@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Menu\View\Helper;
 
 use Cake\View\Helper;
+use Closure;
 use InvalidArgumentException;
 use Menu\Item\ItemInterface;
 use Menu\Item\StateResetInterface;
@@ -18,6 +19,7 @@ use Menu\Resolver\ResolverCollection;
 use Menu\Resolver\ResolverCollectionInterface;
 use Menu\Resolver\ResolverInterface;
 use Menu\Resolver\UrlArrayResolver;
+use ReflectionFunction;
 
 /**
  * @extends \Cake\View\Helper<\Cake\View\View>
@@ -99,7 +101,7 @@ class MenuHelper extends Helper
 
     /**
      * @param string $name
-     * @param callable(\Menu\MenuInterface, self): void $callback
+     * @param callable(\Menu\MenuInterface): void|callable(\Menu\MenuInterface, self): void $callback
      * @param array<string, mixed> $options
      */
     public function register(string $name, callable $callback, array $options = []): MenuInterface
@@ -112,13 +114,13 @@ class MenuHelper extends Helper
             $options['overwrite'] = true;
             $menu = $this->create($name, $options);
 
-            $callback($menu, $this);
+            $this->invokeRegisterCallback($callback, $menu);
 
             return $menu;
         }
 
         $menu = $this->getOrCreate($name, $options);
-        $callback($menu, $this);
+        $this->invokeRegisterCallback($callback, $menu);
 
         return $menu;
     }
@@ -339,6 +341,18 @@ class MenuHelper extends Helper
 
         $menu->resetState();
         $menu->resolve($resolver);
+    }
+
+    protected function invokeRegisterCallback(callable $callback, MenuInterface $menu): void
+    {
+        $reflectionFunction = new ReflectionFunction(Closure::fromCallable($callback));
+        if ($reflectionFunction->getNumberOfParameters() <= 1) {
+            $callback($menu);
+
+            return;
+        }
+
+        $callback($menu, $this);
     }
 
     /**

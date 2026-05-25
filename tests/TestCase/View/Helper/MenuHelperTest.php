@@ -200,6 +200,18 @@ class MenuHelperTest extends TestCase
         $this->assertCount(1, $menu->getItems());
     }
 
+    public function testRegisterSupportsMenuAndHelperCallbackSignature(): void
+    {
+        $menuHelper = $this->createHelper(new ServerRequest());
+
+        $menu = $menuHelper->register('main', static function ($menu, MenuHelper $helper): void {
+            $menu->addItem('Articles', '/articles');
+            $helper->has('main');
+        });
+
+        $this->assertCount(1, $menu->getItems());
+    }
+
     public function testRegisterCanRebuildExistingMenu(): void
     {
         $menuHelper = $this->createHelper(new ServerRequest());

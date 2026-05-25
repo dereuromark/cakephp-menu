@@ -16,6 +16,7 @@ class Bootstrap5Renderer extends StringTemplateRenderer
         'ancestorClass' => 'active',
         'branchClass' => 'dropdown',
         'submenuClass' => 'dropdown',
+        'addAriaExpanded' => false,
         'nestedMenuClass' => 'dropdown-menu',
         'menuLevelClass' => null,
         'firstClass' => null,
