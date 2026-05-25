@@ -325,8 +325,9 @@ valid top-level entry when its submenu is truncated by `depth`, so it is kept.
 
 When several items match the current URL (e.g. a parent and a child both pointing at the same
 route), `getActiveItem()` and breadcrumbs follow the first match in document order. Enable
-`singleActive` to keep only the **best** match active — the deepest item in the tree, breaking ties
-by document order — so the active trail is unambiguous:
+`singleActive` to keep only the **best** match active — the deepest *visible* item that actually
+renders (items hidden, or under hidden ancestors, are skipped), breaking ties by document order — so
+the active trail is unambiguous:
 
 ```php
 echo $this->Menu->render('main', [
@@ -609,18 +610,30 @@ echo $this->Menu->render('admin');
 
 ### Icons and Badges
 
-Icons and badges are first-class: `setIcon()` and `setBadge()` (or the `icon`/`badge`/`badgeType`
-options) are escaped for you and rendered around the label.
+Icons and badges are first-class: the `icon`/`badge`/`badgeType` options are escaped for you and
+rendered around the label.
 
 ```php
-$menu->addItem('Dashboard', ['controller' => 'Dashboard', 'action' => 'index'])
-    ->setIcon('fa fa-gauge');
+$menu->addItem('Dashboard', ['controller' => 'Dashboard', 'action' => 'index'], [
+    'icon' => 'fa fa-gauge',
+]);
 
-$menu->addItem('Inbox', ['controller' => 'Messages', 'action' => 'index'])
-    ->setBadge($unread, 'bg-danger');
+$menu->addItem('Inbox', ['controller' => 'Messages', 'action' => 'index'], [
+    'icon' => 'fa fa-inbox',
+    'badge' => $unread,
+    'badgeType' => 'bg-danger',
+]);
+```
 
-// Same via options:
-$menu->addItem('Profile', '/profile', ['icon' => 'fa fa-user', 'badge' => 'new']);
+The fluent `setIcon()` / `setBadge()` setters are also available on a concrete `Item`
+(`Menu::addItem()` / `newItem()` are typed to return `ItemInterface`, so prefer the options above for
+the common case):
+
+```php
+use Menu\Item\Item;
+
+$item = (new Item('Profile', '/profile'))->setIcon('fa fa-user')->setBadge('new');
+$menu->add($item);
 ```
 
 The markup is overridable per render with the `iconTemplate` / `badgeTemplate` options

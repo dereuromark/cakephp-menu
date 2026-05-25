@@ -392,4 +392,19 @@ class MenuHelperTest extends TestCase
 
         $this->assertSame('Visible', $menuHelper->getCurrentItem($menu, ['singleActive' => true])?->getLabel());
     }
+
+    public function testSingleActiveAffectsBreadcrumbs(): void
+    {
+        $menuHelper = $this->createHelper(new ServerRequest(['url' => '/articles']));
+        $menu = Menu::create();
+        $parent = $menu->addItem('Section', '/articles');
+        $parent->getSubMenu()->addItem('Articles', '/articles');
+
+        $crumbs = $menuHelper->getBreadcrumbs($menu, ['singleActive' => true]);
+
+        // Breadcrumbs follow the deepest match's trail, not just the first match.
+        $this->assertCount(2, $crumbs);
+        $this->assertSame('Section', $crumbs[0]['title']);
+        $this->assertSame('Articles', $crumbs[1]['title']);
+    }
 }

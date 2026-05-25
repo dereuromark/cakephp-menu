@@ -246,7 +246,8 @@ class StringTemplateRenderer implements RendererInterface
     }
 
     /**
-     * Wraps a (already escaped) label with the item's icon and badge, if any.
+     * Wraps the rendered label (escaped, unless the item opts out of escaping) with the item's
+     * icon and badge, if any.
      *
      * @phpstan-param array<string, mixed> $options
      */
