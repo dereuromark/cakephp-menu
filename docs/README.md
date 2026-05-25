@@ -364,6 +364,35 @@ echo $this->Menu->render($menu, [
 ]);
 ```
 
+## Renderer Options
+
+These options are accepted by `StringTemplateRenderer` (the default) and `Bootstrap5Renderer`.
+The **Default** column below is for `StringTemplateRenderer`; pass options per render call or as
+constructor config when instantiating a renderer directly.
+
+`Bootstrap5Renderer` overrides some of these defaults: `ancestorClass` → `active`,
+`branchClass` / `submenuClass` → `dropdown`, `nestedMenuClass` → `dropdown-menu`, and
+`addAriaExpanded` → `false` (it emits `aria-expanded` on the toggle link instead).
+
+| Option | Default | Description |
+| --- | --- | --- |
+| `activeClass` | `active` | Class added to the active item's `<li>`. |
+| `ancestorClass` | `active-ancestor` | Class for items on the active trail. |
+| `branchClass` | `has-children` | Class for items that have a submenu. |
+| `submenuClass` | `null` | Extra class for branch items, in addition to `branchClass`. |
+| `leafClass` | `null` | Class for items without a submenu. |
+| `dividerClass` | `divider` | Class for divider items. |
+| `nestedMenuClass` | `submenu` | Class added to nested `<ul>` elements. |
+| `menuLevelClass` | `null` | Prefix for a per-level class (e.g. `level-` produces `level-1`, `level-2`). |
+| `firstClass` / `lastClass` | `null` | Class for the first / last item in a list. |
+| `depth` | `null` | Maximum number of levels to render (`null` = unlimited). |
+| `hideEmptyBranches` | `false` | Skip branches with no visible, renderable children. |
+| `currentAsLink` | `true` | Render the active item as a link; `false` renders a plain label. |
+| `addAriaCurrent` | `true` | Emit `aria-current="page"` on the active item. |
+| `addAriaExpanded` | `true` | Emit `aria-expanded` on branch items. |
+| `ariaLabel` | `null` | `aria-label` for the root `<ul>`. |
+| `templates` | see above | Override the `menuWrapper`, `item`, `link`, `label`, and `divider` strings. |
+
 ## Notes
 
 - Item labels are escaped by default.
@@ -416,4 +445,122 @@ $this->Menu->register('main', static function ($menu): void {
 
 echo $this->Menu->render('main');
 echo $this->Menu->renderBreadcrumbs('main');
+```
+
+### Role-Based Menus (TinyAuth)
+
+[TinyAuth](https://github.com/dereuromark/cakephp-tinyauth) exposes
+`$this->AuthUser->hasAccess($url)`, which returns whether the current user may access a CakePHP URL.
+Combined with `additionalResolvers` (which keeps the default active-state matching) and
+`hideEmptyBranches`, items the user cannot reach are hidden automatically. The same recipe works
+whether TinyAuth's ACL is INI- or DB-backed (e.g. via
+[tinyauth-backend](https://github.com/dereuromark/cakephp-tinyauth-backend)), because `hasAccess()`
+abstracts the adapter.
+
+```php
+use Menu\Item\ItemInterface;
+use Menu\Resolver\AuthorizationResolver;
+
+// In a template/view where the TinyAuth.AuthUser helper is loaded.
+$menu = $this->Menu->create('admin');
+$menu->addItem('Articles', ['prefix' => 'Admin', 'controller' => 'Articles', 'action' => 'index']);
+$menu->addItem('Users', ['prefix' => 'Admin', 'controller' => 'Users', 'action' => 'index']);
+
+echo $this->Menu->render('admin', [
+    'hideEmptyBranches' => true,
+    'additionalResolvers' => [
+        new AuthorizationResolver(function (ItemInterface $item): ?bool {
+            $url = $item->getLink()?->getRawUrl();
+
+            return is_array($url) ? $this->AuthUser->hasAccess($url) : null;
+        }),
+    ],
+]);
+```
+
+Prefer explicit role tags? Tag items with `data` and check `hasRoles()` instead:
+
+```php
+$menu->addItem('Settings', ['prefix' => 'Admin', 'controller' => 'Settings', 'action' => 'index'], [
+    'data' => ['roles' => ['admin']],
+]);
+
+new AuthorizationResolver(function (ItemInterface $item): ?bool {
+    $roles = $item->getData('roles');
+
+    return $roles === null ? null : $this->AuthUser->hasRoles((array)$roles);
+});
+```
+
+Returning `null` from the callback leaves the item untouched, so items without a URL/role tag stay
+visible.
+
+### Icons and Badges
+
+`before`, `after`, and `raw` are emitted as trusted markup, so they are handy for icon fonts and
+counters:
+
+```php
+$menu->addItem('Dashboard', ['controller' => 'Dashboard', 'action' => 'index'], [
+    'before' => '<i class="fa fa-gauge"></i> ',
+]);
+
+$menu->addItem('Inbox', ['controller' => 'Messages', 'action' => 'index'], [
+    'after' => ' <span class="badge">' . (int)$unread . '</span>',
+]);
+```
+
+Because `before`/`after`/`raw` are emitted verbatim, cast or escape any dynamic value you put in
+them (here `(int)$unread`).
+
+## Custom Renderers
+
+Implement `Menu\Renderer\RendererInterface` (or extend `StringTemplateRenderer`) and pass the class
+name or an instance as the `renderer` option:
+
+```php
+use Menu\Item\ItemInterface;
+use Menu\MenuInterface;
+use Menu\Renderer\RendererInterface;
+
+class NavRenderer implements RendererInterface
+{
+    public function render(MenuInterface $menu, array $options = []): string
+    {
+        // ...build markup from $menu->getItems()...
+        return '';
+    }
+
+    public function renderItem(ItemInterface $item, array $options = []): string
+    {
+        // ...
+        return '';
+    }
+}
+
+echo $this->Menu->render('main', ['renderer' => NavRenderer::class]);
+```
+
+A single item can also render itself by implementing `Menu\Item\SelfRendererInterface::render()`,
+which the built-in renderers call directly.
+
+## Custom Resolvers
+
+Implement `Menu\Resolver\ResolverInterface` (or `ContextAwareResolverInterface` for depth/parent
+awareness) and add it via `additionalResolvers` or a `ResolverCollection`:
+
+```php
+use Menu\Item\ItemInterface;
+use Menu\Resolver\ResolverInterface;
+
+class FeatureFlagResolver implements ResolverInterface
+{
+    public function resolve(ItemInterface $item): void
+    {
+        $feature = $item->getData('feature');
+        if ($feature !== null && !Features::enabled((string)$feature)) {
+            $item->setVisibility(false);
+        }
+    }
+}
 ```
