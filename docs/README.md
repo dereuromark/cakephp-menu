@@ -354,6 +354,38 @@ echo $this->Menu->render($menu, [
 ]);
 ```
 
+Collapsible Bootstrap 5 sidebar — a vertical `nav` whose branches are Bootstrap `collapse` regions:
+
+```php
+echo $this->Menu->render('sidebar', [
+    'renderer' => \Menu\Renderer\Bootstrap5SidebarRenderer::class,
+]);
+```
+
+The branch containing the active item is expanded (`collapse show`, `aria-expanded="true"`), all
+other branches start collapsed, and the active leaf gets the active class plus `aria-current="page"`.
+Each branch is wired to its `collapse` element through a unique id, so it works with the standard
+Bootstrap bundle and needs no custom JavaScript. Item and submenu attributes from the menu
+definition are preserved on the `<li>` and nested `<ul>`.
+
+A branch that only groups children (placeholder link `#`/none) renders a single toggle. A branch
+that *also* has a real URL stays navigable: it renders the link plus a separate collapse toggle
+button (`data-bs-target`), so the destination is reachable and its link attributes are kept.
+
+Besides the shared `activeClass`, `currentAsLink`, `addAriaCurrent` and `hideEmptyBranches` options,
+it accepts:
+
+| Option | Default | Purpose |
+| --- | --- | --- |
+| `idPrefix` | `menu-collapse-` | Prefix for the generated collapse ids. Use a distinct value per sidebar on a page to avoid id collisions. |
+| `navClass` | `nav flex-column` | Class on the root `<ul>`. |
+| `nestedNavClass` | `nav flex-column ms-3` | Class on the nested `<ul>` inside each collapse. |
+| `itemClass` | `nav-item` | Class added to each `<li>` (on top of the item's own attributes). |
+| `linkClass` | `nav-link` | Class on leaf links. |
+| `toggleClass` | `nav-link d-flex justify-content-between align-items-center` | Class on toggle-only branch links. |
+| `toggleButtonClass` | `btn btn-link nav-link border-0 p-0 ms-2` | Class on the separate toggle button used for navigable branches. |
+| `caret` | `true` | Append a small open/closed indicator (`<span class="menu-caret">`) to branch toggles; set `false` to omit. |
+
 You can override templates per render call:
 
 ```php
