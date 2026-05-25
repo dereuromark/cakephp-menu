@@ -98,6 +98,24 @@ class Bootstrap5SidebarRendererTest extends TestCase
         $this->assertStringContainsString('<button', $result);
         $this->assertStringContainsString('data-bs-target="#menu-collapse-products"', $result);
         $this->assertStringContainsString('id="menu-collapse-products"', $result);
+        // The toggle button names its section for screen readers.
+        $this->assertStringContainsString('aria-label="Toggle Products"', $result);
+    }
+
+    public function testGeneratesUniqueCollapseIdsForCollidingSlugs(): void
+    {
+        $menu = Menu::create();
+        $a = $menu->addItem('A', '#', ['id' => 'a b']);
+        $a->getSubMenu()->addItem('A1', '/a1');
+        $b = $menu->addItem('B', '#', ['id' => 'a-b']);
+        $b->getSubMenu()->addItem('B1', '/b1');
+
+        $result = (new Bootstrap5SidebarRenderer())->render($menu);
+
+        // Both item ids slugify to "a-b"; the second collapse id must be disambiguated.
+        $this->assertStringContainsString('id="menu-collapse-a-b"', $result);
+        $this->assertStringContainsString('id="menu-collapse-a-b-2"', $result);
+        $this->assertStringContainsString('href="#menu-collapse-a-b-2"', $result);
     }
 
     public function testPreservesLinkAttributesAndMergesClasses(): void

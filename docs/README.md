@@ -390,7 +390,7 @@ it accepts:
 | `toggleValue` | `collapse` | Value for `toggleAttribute`. |
 | `targetAttribute` | `data-bs-target` | Attribute pointing the navigable-branch toggle button at its wrapper id. |
 | `caret` | `true` | Append a small open/closed indicator (`<span class="menu-caret">`) to branch toggles; set `false` to omit. |
-| `caretOpen` / `caretClosed` | `▾` / `▸` | Glyphs for the open/closed caret. |
+| `caretOpen` / `caretClosed` | `▾` / `▸` | Open/closed caret markup (trusted; pass an icon element like a FontAwesome `<i>` if you prefer). |
 
 The framework-specific keys default to Bootstrap 5; override them (e.g. `toggleAttribute => 'data-toggle'`, `expandedClass => 'is-open'`) to target Bootstrap 4 or another setup without subclassing.
 

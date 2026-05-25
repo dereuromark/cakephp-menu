@@ -57,9 +57,10 @@ class Bootstrap5SidebarRenderer extends StringTemplateRenderer
         'toggleValue' => 'collapse',
         'targetAttribute' => 'data-bs-target',
         // Append a small open/closed indicator to branch toggles; set false to omit.
+        // caretOpen/caretClosed are rendered as trusted markup (use an icon tag if you like).
         'caret' => true,
-        'caretOpen' => '&#9662;',
-        'caretClosed' => '&#9656;',
+        'caretOpen' => '▾',
+        'caretClosed' => '▸',
     ];
 
     /**
@@ -70,20 +71,22 @@ class Bootstrap5SidebarRenderer extends StringTemplateRenderer
     protected int $autoId = 0;
 
     /**
-     * @phpstan-param array<string, mixed> $options
+     * Collapse ids already used in the current render, to guarantee uniqueness.
+     *
+     * @var array<string, true>
      */
-    public function render(MenuInterface $menu, array $options = []): string
-    {
-        $this->autoId = 0;
-
-        return $this->renderMenu($menu, $options, 1);
-    }
+    protected array $usedIds = [];
 
     /**
      * @phpstan-param array<string, mixed> $options
      */
     protected function renderMenu(MenuInterface $menu, array $options, int $level): string
     {
+        if ($level === 1) {
+            $this->autoId = 0;
+            $this->usedIds = [];
+        }
+
         $items = [];
         foreach ($menu->getItems() as $item) {
             if (!$item->isVisible()) {
@@ -291,7 +294,7 @@ class Bootstrap5SidebarRenderer extends StringTemplateRenderer
         $buttonAttributes += [
             'aria-controls' => $id,
             'aria-expanded' => $expanded ? 'true' : 'false',
-            'aria-label' => 'Toggle section',
+            'aria-label' => trim('Toggle ' . (string)$item->getLabel()),
         ];
 
         $button = sprintf('<button%s>%s</button>', $this->renderAttributes($buttonAttributes), $this->caret($options, $expanded));
@@ -300,6 +303,9 @@ class Bootstrap5SidebarRenderer extends StringTemplateRenderer
     }
 
     /**
+     * The caret glyph is renderer config (not menu data) and is emitted as trusted markup,
+     * so an icon element (e.g. a FontAwesome `<i>`) can be used.
+     *
      * @phpstan-param array<string, mixed> $options
      */
     protected function caret(array $options, bool $expanded): string
@@ -318,7 +324,17 @@ class Bootstrap5SidebarRenderer extends StringTemplateRenderer
     {
         $slug = preg_replace('/[^A-Za-z0-9_-]+/', '-', $item->getId());
         $slug = trim((string)$slug, '-');
+        $base = $this->getStringOption($options, 'idPrefix') . ($slug !== '' ? $slug : (string)(++$this->autoId));
 
-        return $this->getStringOption($options, 'idPrefix') . ($slug !== '' ? $slug : (string)(++$this->autoId));
+        // Distinct item ids can slugify to the same value; keep collapse ids unique per render.
+        $id = $base;
+        $suffix = 1;
+        while (isset($this->usedIds[$id])) {
+            $suffix++;
+            $id = $base . '-' . $suffix;
+        }
+        $this->usedIds[$id] = true;
+
+        return $id;
     }
 }
