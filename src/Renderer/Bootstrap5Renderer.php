@@ -58,7 +58,9 @@ class Bootstrap5Renderer extends StringTemplateRenderer
             $attributes['class'] = array_filter([$baseLinkClass, 'dropdown-toggle', $attributes['class'] ?? null]);
             $attributes['data-bs-toggle'] = 'dropdown';
             $attributes['role'] = $attributes['role'] ?? 'button';
-            $attributes['aria-expanded'] = $item->isExpanded() || $item->isActive() ? 'true' : 'false';
+            $attributes['aria-expanded'] = $item->isExpanded() || $item->isActive() || $this->hasActiveDescendant($item)
+                ? 'true'
+                : 'false';
         } else {
             $attributes['class'] = array_filter([$baseLinkClass, $attributes['class'] ?? null]);
         }
