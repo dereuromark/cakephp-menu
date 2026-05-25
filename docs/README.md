@@ -495,6 +495,57 @@ new AuthorizationResolver(function (ItemInterface $item): ?bool {
 Returning `null` from the callback leaves the item untouched, so items without a URL/role tag stay
 visible.
 
+### Caching Role-Based Menus
+
+Access checks are cheap, but for a large ACL menu you can resolve visibility once per role-set and
+cache the filtered tree. Active-state is request-specific, so cache the *structure*, not the HTML:
+
+```php
+use Cake\Cache\Cache;
+use Menu\Item\ItemInterface;
+use Menu\Menu;
+use Menu\Resolver\AuthorizationResolver;
+
+$cacheKey = 'menu_main_' . implode('-', $this->AuthUser->roles());
+$tree = Cache::read($cacheKey);
+if ($tree === null) {
+    $menu = $this->Menu->create('main');
+    // ...addItem() calls...
+
+    $menu->resolve(new AuthorizationResolver(function (ItemInterface $item): ?bool {
+        $url = $item->getLink()?->getRawUrl();
+
+        return is_array($url) ? $this->AuthUser->hasAccess($url) : null;
+    }));
+    $menu->filter(static fn (ItemInterface $item): bool => $item->isVisible());
+
+    $tree = $menu->toArray();
+    Cache::write($cacheKey, $tree);
+}
+
+// Rendering re-resolves active-state for the current request.
+echo $this->Menu->render(Menu::fromArray($tree));
+```
+
+### TinyAuth Backend Navigation
+
+`tinyauth-backend` exposes `$this->TinyAuth->getNavigationItems()` — its feature-gated admin
+sections (Dashboard, Roles, Resources, ...) as `['name', 'label', 'route']` arrays (already filtered
+to the enabled features). Turn it into a menu:
+
+```php
+$menu = $this->Menu->create('admin');
+foreach ($this->TinyAuth->getNavigationItems() as $item) {
+    $menu->addItem(
+        __($item['label']),
+        ['plugin' => 'TinyAuthBackend', 'prefix' => 'Admin'] + $item['route'],
+        ['key' => $item['name']],
+    );
+}
+
+echo $this->Menu->render('admin');
+```
+
 ### Icons and Badges
 
 `before`, `after`, and `raw` are emitted as trusted markup, so they are handy for icon fonts and
@@ -512,6 +563,52 @@ $menu->addItem('Inbox', ['controller' => 'Messages', 'action' => 'index'], [
 
 Because `before`/`after`/`raw` are emitted verbatim, cast or escape any dynamic value you put in
 them (here `(int)$unread`).
+
+### Defining a Menu in Config
+
+`Menu::fromArray()` accepts the same shape `toArray()` produces, so a menu can live in a config file:
+
+```php
+// config/menu.php
+return [
+    'attributes' => ['class' => 'nav'],
+    'items' => [
+        ['label' => 'Home', 'link' => '/'],
+        ['label' => 'Articles', 'link' => ['controller' => 'Articles', 'action' => 'index']],
+    ],
+];
+```
+
+```php
+use Menu\Menu;
+
+$menu = Menu::fromArray(require CONFIG . 'menu.php');
+echo $this->Menu->render($menu);
+```
+
+### Building Menus Once in AppView
+
+`register()` is idempotent, so define named menus once in `AppView::initialize()` and render them
+from any template:
+
+```php
+// src/View/AppView.php
+public function initialize(): void
+{
+    parent::initialize();
+    $this->loadHelper('Menu.Menu');
+
+    $this->Menu->register('main', function ($menu): void {
+        $menu->addItem('Home', '/');
+        $menu->addItem('Articles', ['controller' => 'Articles', 'action' => 'index']);
+    });
+}
+```
+
+```php
+// any template
+echo $this->Menu->render('main');
+```
 
 ## Custom Renderers
 
@@ -563,4 +660,23 @@ class FeatureFlagResolver implements ResolverInterface
         }
     }
 }
+```
+
+## Testing Menus
+
+A menu is plain PHP, so its structure and resolved state are easy to assert without rendering:
+
+```php
+use Cake\Http\ServerRequest;
+use Menu\Menu;
+use Menu\Resolver\Psr7UrlResolver;
+
+$menu = Menu::create();
+$menu->addItem('Home', '/');
+$menu->addItem('Articles', '/articles');
+
+$menu->resolve(new Psr7UrlResolver(new ServerRequest(['url' => '/articles'])));
+
+$this->assertSame('Articles', $menu->getActiveItem()?->getLabel());
+$this->assertCount(2, $menu->collect());
 ```
