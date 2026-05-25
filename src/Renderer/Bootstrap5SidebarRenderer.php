@@ -154,15 +154,15 @@ class Bootstrap5SidebarRenderer extends StringTemplateRenderer
     protected function renderLeaf(ItemInterface $item, array $options, string $label): string
     {
         $active = $item->isActive();
-        $classes = [$this->getStringOption($options, 'linkClass')];
-        if ($active) {
-            $classes[] = $this->getStringOption($options, 'activeClass');
-        }
-
         $link = $item->getLink();
         $asLabel = $link === null || ($active && !$this->getBooleanOption($options, 'currentAsLink', true));
-        $attributes = $link !== null && !$asLabel ? $link->getAttributes() : [];
-        $attributes['class'] = $classes;
+
+        // Keep the link's own attributes (title, data-*, custom classes) and merge our classes in.
+        $attributes = $link?->getAttributes() ?? [];
+        $attributes = $this->appendClass($attributes, $this->getStringOption($options, 'linkClass'));
+        if ($active) {
+            $attributes = $this->appendClass($attributes, $this->getStringOption($options, 'activeClass'));
+        }
         if ($active && $this->getBooleanOption($options, 'addAriaCurrent', true)) {
             $attributes['aria-current'] = 'page';
         }
@@ -245,12 +245,11 @@ class Bootstrap5SidebarRenderer extends StringTemplateRenderer
     ): string {
         /** @var \Menu\Link\LinkInterface $link */
         $link = $item->getLink();
-        $linkClasses = [$this->getStringOption($options, 'linkClass')];
+        // Keep the link's own attributes and merge our classes in (do not overwrite).
+        $linkAttributes = $this->appendClass($link->getAttributes(), $this->getStringOption($options, 'linkClass'));
         if ($item->isActive()) {
-            $linkClasses[] = $this->getStringOption($options, 'activeClass');
+            $linkAttributes = $this->appendClass($linkAttributes, $this->getStringOption($options, 'activeClass'));
         }
-        $linkAttributes = $link->getAttributes();
-        $linkAttributes['class'] = $linkClasses;
         $linkAttributes['href'] = $url;
         if ($item->isActive() && $this->getBooleanOption($options, 'addAriaCurrent', true)) {
             $linkAttributes['aria-current'] = 'page';

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Menu\Test\TestCase\Renderer;
 
 use Cake\TestSuite\TestCase;
+use Menu\Link\Link;
 use Menu\Menu;
 use Menu\Renderer\Bootstrap5SidebarRenderer;
 
@@ -97,6 +98,24 @@ class Bootstrap5SidebarRendererTest extends TestCase
         $this->assertStringContainsString('<button', $result);
         $this->assertStringContainsString('data-bs-target="#menu-collapse-products"', $result);
         $this->assertStringContainsString('id="menu-collapse-products"', $result);
+    }
+
+    public function testPreservesLinkAttributesAndMergesClasses(): void
+    {
+        $menu = Menu::create();
+        $menu->addItem('Home', Link::create('/home', ['class' => 'text-danger', 'title' => 'Go home']));
+        $menu->addItem('Current', Link::create('/current', ['title' => 'Here']), ['active' => true]);
+
+        $result = (new Bootstrap5SidebarRenderer())->render($menu, ['currentAsLink' => false]);
+
+        // The link keeps its own class (merged with nav-link) and its title.
+        $this->assertStringContainsString('text-danger', $result);
+        $this->assertStringContainsString('nav-link', $result);
+        $this->assertStringContainsString('title="Go home"', $result);
+        // The active item rendered as a label keeps its attributes (title) and has no href.
+        $this->assertStringContainsString('title="Here"', $result);
+        $this->assertMatchesRegularExpression('/<span[^>]*class="nav-link active"[^>]*>Current<\/span>/', $result);
+        $this->assertStringNotContainsString('Array', $result);
     }
 
     public function testHideEmptyBranchesDropsChildlessBranch(): void
