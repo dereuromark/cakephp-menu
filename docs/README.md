@@ -261,6 +261,25 @@ $menu->resolve(
 );
 ```
 
+### Adding Resolvers to the Defaults
+
+Passing a `resolver` replaces the built-in URL resolvers (so you lose automatic active-state
+matching). To **keep** the defaults and add your own (for example a visibility resolver), use
+`additionalResolvers` instead — they run after the URL resolvers:
+
+```php
+use Menu\Item\ItemInterface;
+use Menu\Resolver\AuthorizationResolver;
+
+echo $this->Menu->render('main', [
+    'additionalResolvers' => [
+        new AuthorizationResolver(static function (ItemInterface $item): ?bool {
+            return $item->getData('adminOnly') ? $isAdmin : null;
+        }),
+    ],
+]);
+```
+
 ### Depth-Limited Resolution
 
 When rendering through the helper, you can limit how deep automatic URL resolution should scan:
@@ -283,6 +302,21 @@ You can also fetch the resolved active item and extract its path:
 $current = $this->Menu->getCurrentItem('main');
 $path = $current ? $this->Menu->extractPath($current) : [];
 ```
+
+### Hiding Empty Branches
+
+When a resolver hides all of a branch's children (for example access filtering), the parent would
+otherwise render as an empty dropdown. Enable `hideEmptyBranches` to skip any branch with no
+visible, renderable descendants:
+
+```php
+echo $this->Menu->render('main', [
+    'hideEmptyBranches' => true,
+]);
+```
+
+This looks at child *visibility*, not the `depth` cutoff: a branch with visible children is still a
+valid top-level entry when its submenu is truncated by `depth`, so it is kept.
 
 ### Breadcrumb Integration
 
