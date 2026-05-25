@@ -37,6 +37,7 @@ class StringTemplateRenderer implements RendererInterface
         'leafClass' => null,
         // Extra class for branch <li>s, in addition to `branchClass`; off by default.
         'submenuClass' => null,
+        'hideEmptyBranches' => false,
         'nestedMenuClass' => 'submenu',
         'menuLevelClass' => null,
         'firstClass' => null,
@@ -159,6 +160,13 @@ class StringTemplateRenderer implements RendererInterface
 
         $attributes = $item->getAttributes();
         $hasSubMenu = $item->hasSubMenu();
+        if (
+            $hasSubMenu
+            && $this->getBooleanOption($options, 'hideEmptyBranches', false)
+            && !$this->hasRenderableChild($item, $options)
+        ) {
+            return '';
+        }
         if ($item->isActive()) {
             $attributes = $this->appendConfiguredClass($attributes, $options, 'activeClass');
         } elseif ($this->hasActiveDescendant($item)) {
@@ -233,6 +241,35 @@ class StringTemplateRenderer implements RendererInterface
         }
 
         return htmlspecialchars($label, ENT_QUOTES, 'UTF-8');
+    }
+
+    /**
+     * Whether a branch has at least one descendant that would actually render, honoring
+     * `hideEmptyBranches` recursively (so a branch containing only hidden/empty branches counts
+     * as empty too).
+     *
+     * @phpstan-param array<string, mixed> $options
+     */
+    protected function hasRenderableChild(ItemInterface $item, array $options): bool
+    {
+        $hideEmptyBranches = $this->getBooleanOption($options, 'hideEmptyBranches', false);
+        foreach ($item->getSubMenu()->getItems() as $child) {
+            if (!$child->isVisible()) {
+                continue;
+            }
+            if ($child instanceof SelfRendererInterface) {
+                // A self-rendering item always emits markup, regardless of its submenu.
+                return true;
+            }
+            if (!$child->hasSubMenu()) {
+                return true;
+            }
+            if (!$hideEmptyBranches || $this->hasRenderableChild($child, $options)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     protected function hasActiveDescendant(ItemInterface $item): bool
