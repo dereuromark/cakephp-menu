@@ -332,9 +332,13 @@ echo $this->Menu->render($menu, [
 
 ## Renderer Options
 
-These options are accepted by `StringTemplateRenderer` (the default) and `Bootstrap5Renderer`
-(which extends it with its own defaults). Pass them per render call, or as constructor config when
-instantiating a renderer directly.
+These options are accepted by `StringTemplateRenderer` (the default) and `Bootstrap5Renderer`.
+The **Default** column below is for `StringTemplateRenderer`; pass options per render call or as
+constructor config when instantiating a renderer directly.
+
+`Bootstrap5Renderer` overrides some of these defaults: `ancestorClass` → `active`,
+`branchClass` / `submenuClass` → `dropdown`, `nestedMenuClass` → `dropdown-menu`, and
+`addAriaExpanded` → `false` (it emits `aria-expanded` on the toggle link instead).
 
 | Option | Default | Description |
 | --- | --- | --- |
@@ -468,9 +472,12 @@ $menu->addItem('Dashboard', ['controller' => 'Dashboard', 'action' => 'index'], 
 ]);
 
 $menu->addItem('Inbox', ['controller' => 'Messages', 'action' => 'index'], [
-    'after' => ' <span class="badge">' . $unread . '</span>',
+    'after' => ' <span class="badge">' . (int)$unread . '</span>',
 ]);
 ```
+
+Because `before`/`after`/`raw` are emitted verbatim, cast or escape any dynamic value you put in
+them (here `(int)$unread`).
 
 ## Custom Renderers
 
@@ -487,11 +494,13 @@ class NavRenderer implements RendererInterface
     public function render(MenuInterface $menu, array $options = []): string
     {
         // ...build markup from $menu->getItems()...
+        return '';
     }
 
     public function renderItem(ItemInterface $item, array $options = []): string
     {
         // ...
+        return '';
     }
 }
 
