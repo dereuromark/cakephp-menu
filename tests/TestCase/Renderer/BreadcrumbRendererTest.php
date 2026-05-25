@@ -23,4 +23,17 @@ class BreadcrumbRendererTest extends TestCase
         $this->assertStringContainsString('<a href="/articles">Articles</a>', $result);
         $this->assertStringContainsString('<li class="breadcrumb-item active"><span>View</span></li>', $result);
     }
+
+    public function testEscapesAriaLabel(): void
+    {
+        $menu = Menu::create();
+        $menu->addItem('Home', '/', ['active' => true]);
+
+        $result = (new BreadcrumbRenderer())->render($menu, [
+            'ariaLabel' => 'x" onload="alert(1)',
+        ]);
+
+        $this->assertStringNotContainsString('onload="alert(1)"', $result);
+        $this->assertStringContainsString('aria-label="x&quot; onload=&quot;alert(1)"', $result);
+    }
 }

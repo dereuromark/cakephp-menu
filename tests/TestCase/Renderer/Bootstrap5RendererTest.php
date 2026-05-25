@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Menu\Test\TestCase\Renderer;
 
 use Cake\TestSuite\TestCase;
+use Menu\Link\Link;
 use Menu\Menu;
 use Menu\Renderer\Bootstrap5Renderer;
 
@@ -32,5 +33,18 @@ class Bootstrap5RendererTest extends TestCase
         $this->assertStringContainsString('class="dropdown-item"', $result);
         $this->assertSame($result, $secondResult);
         $this->assertStringNotContainsString('Array', $secondResult);
+    }
+
+    public function testRendersArrayLinkClassWithoutCorruption(): void
+    {
+        $menu = Menu::create();
+        $menu->addItem('Home', Link::create('/', ['class' => ['text-primary', 'fw-bold']]));
+
+        $result = (new Bootstrap5Renderer())->render($menu);
+
+        $this->assertStringNotContainsString('Array', $result);
+        $this->assertStringContainsString('nav-link', $result);
+        $this->assertStringContainsString('text-primary', $result);
+        $this->assertStringContainsString('fw-bold', $result);
     }
 }

@@ -6,7 +6,9 @@ namespace Menu\Renderer;
 
 use Menu\Item\ItemInterface;
 use Menu\MenuInterface;
+use function htmlspecialchars;
 use function implode;
+use const ENT_QUOTES;
 
 class BreadcrumbRenderer extends StringTemplateRenderer
 {
@@ -62,8 +64,10 @@ class BreadcrumbRenderer extends StringTemplateRenderer
 
         $attributes = $this->appendClass([], (string)($options['menuClass'] ?? $this->getConfig('menuClass')));
 
+        $ariaLabel = (string)($options['ariaLabel'] ?? $this->getConfig('ariaLabel'));
+
         return $this->templater()->format('menuWrapper', [
-            'ariaLabel' => $options['ariaLabel'] ?? $this->getConfig('ariaLabel'),
+            'ariaLabel' => htmlspecialchars($ariaLabel, ENT_QUOTES, 'UTF-8'),
             'attributes' => $this->renderAttributes($attributes),
             'items' => implode('', $items),
         ]);

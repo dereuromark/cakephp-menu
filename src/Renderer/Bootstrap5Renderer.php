@@ -55,15 +55,14 @@ class Bootstrap5Renderer extends StringTemplateRenderer
         $attributes = $link->getAttributes();
         $attributes['href'] = $link->getUrl() ?? '#';
         $baseLinkClass = $item->hasParent() ? 'dropdown-item' : 'nav-link';
+        $attributes = $this->appendClass($attributes, $baseLinkClass);
         if ($item->hasSubMenu()) {
-            $attributes['class'] = array_filter([$baseLinkClass, 'dropdown-toggle', $attributes['class'] ?? null]);
+            $attributes = $this->appendClass($attributes, 'dropdown-toggle');
             $attributes['data-bs-toggle'] = 'dropdown';
             $attributes['role'] = $attributes['role'] ?? 'button';
             $attributes['aria-expanded'] = $item->isExpanded() || $item->isActive() || $this->hasActiveDescendant($item)
                 ? 'true'
                 : 'false';
-        } else {
-            $attributes['class'] = array_filter([$baseLinkClass, $attributes['class'] ?? null]);
         }
         if ($item->isActive() && $this->getBooleanOption($options, 'addAriaCurrent', true)) {
             $attributes['aria-current'] = 'page';
