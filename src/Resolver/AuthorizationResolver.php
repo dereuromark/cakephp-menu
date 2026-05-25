@@ -6,6 +6,7 @@ namespace Menu\Resolver;
 
 use Closure;
 use Menu\Item\ItemInterface;
+use Menu\Item\StateResetInterface;
 
 class AuthorizationResolver implements ContextAwareResolverInterface
 {
@@ -31,7 +32,11 @@ class AuthorizationResolver implements ContextAwareResolverInterface
     {
         $allowed = ($this->callback)($item, $context);
         if ($allowed !== null) {
-            $item->setVisibility($allowed);
+            if ($item instanceof StateResetInterface) {
+                $item->setRuntimeVisibility($allowed);
+            } else {
+                $item->setVisibility($allowed);
+            }
         }
     }
 }

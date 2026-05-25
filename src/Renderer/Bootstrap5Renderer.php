@@ -45,7 +45,8 @@ class Bootstrap5Renderer extends StringTemplateRenderer
                 $attributes['aria-expanded'] = $item->isExpanded() || $item->isActive() ? 'true' : 'false';
                 $link->setAttributes($attributes);
             } else {
-                $attributes['class'] = array_filter(['dropdown-item', $attributes['class'] ?? null]);
+                $linkClass = $item->hasParent() ? 'dropdown-item' : 'nav-link';
+                $attributes['class'] = array_filter([$linkClass, $attributes['class'] ?? null]);
                 $link->setAttributes($attributes);
             }
         }

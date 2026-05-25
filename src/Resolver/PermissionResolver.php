@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Menu\Resolver;
 
 use Menu\Item\ItemInterface;
+use Menu\Item\StateResetInterface;
 use ReflectionMethod;
 use function is_string;
 use function method_exists;
@@ -33,7 +34,11 @@ class PermissionResolver implements ContextAwareResolverInterface
 
         $allowed = $this->invokeAuthorizer($permission, $item, $context);
         if (is_bool($allowed)) {
-            $item->setVisibility($allowed);
+            if ($item instanceof StateResetInterface) {
+                $item->setRuntimeVisibility($allowed);
+            } else {
+                $item->setVisibility($allowed);
+            }
         }
     }
 

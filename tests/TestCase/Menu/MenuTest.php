@@ -7,6 +7,7 @@ namespace Menu\Test\TestCase\Menu;
 use Cake\Http\ServerRequest;
 use Cake\TestSuite\TestCase;
 use LogicException;
+use Menu\Item\Item;
 use Menu\Menu;
 use Menu\Resolver\CallbackResolver;
 use Menu\Resolver\UrlArrayResolver;
@@ -177,5 +178,21 @@ class MenuTest extends TestCase
         $menu = Menu::create();
         $menu->addItem('Articles', '/articles', ['key' => 'content']);
         $menu->addItem('Pages', '/pages', ['key' => 'content']);
+    }
+
+    public function testSetItemsReparentsMovedSubmenuItems(): void
+    {
+        $menu = Menu::create();
+        $firstParent = $menu->addItem('First', '/first', ['id' => 'first']);
+        $secondParent = $menu->addItem('Second', '/second', ['id' => 'second']);
+        $child = (new Item('Child', '/child'))->setId('child');
+
+        $firstParent->getSubMenu()->setItems([$child]);
+        $this->assertSame($firstParent, $child->getParent());
+
+        $secondParent->getSubMenu()->setItems([$child]);
+
+        $this->assertSame($secondParent, $child->getParent());
+        $this->assertSame($child, $secondParent->getSubMenu()->get('child'));
     }
 }

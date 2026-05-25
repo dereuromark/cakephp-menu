@@ -89,11 +89,8 @@ class MenuHelperTest extends TestCase
         $currentItem = $menuHelper->getCurrentItem('main');
         $path = $menuHelper->extractPath($child);
 
-        $this->assertSame('View', $currentItem?->getLabel());
-        $this->assertSame(['Articles', 'View'], array_map(
-            static fn (ItemInterface $item): ?string => $item->getLabel(),
-            $path,
-        ));
+        $this->assertSame($child, $currentItem);
+        $this->assertSame([$parent, $child], $path);
     }
 
     public function testHelperLifecycleMethods(): void
@@ -185,7 +182,7 @@ class MenuHelperTest extends TestCase
         $this->assertCount(1, $menu->getItems());
     }
 
-    public function testRenderDoesNotLeakResolverStateIntoStoredMenu(): void
+    public function testRenderResetsResolverStateBetweenCalls(): void
     {
         $request = (new ServerRequest(['url' => '/articles']))
             ->withAttribute('params', [
@@ -201,7 +198,7 @@ class MenuHelperTest extends TestCase
             'data' => ['section' => ['controller' => 'Articles']],
         ]);
 
-        $menuHelper->render('main', [
+        $firstHtml = $menuHelper->render('main', [
             'resolver' => (new ResolverCollection())
                 ->add(new SectionResolver($request))
                 ->add(new AuthorizationResolver(static function (ItemInterface $item, ResolverContext $context): ?bool {
@@ -212,7 +209,14 @@ class MenuHelperTest extends TestCase
                     return null;
                 })),
         ]);
+        $secondHtml = $menuHelper->render('main', [
+            'resolver' => new ResolverCollection(),
+        ]);
 
+        $this->assertStringNotContainsString('Admin', $firstHtml);
+        $this->assertStringContainsString('class="active"', $firstHtml);
+        $this->assertStringContainsString('Admin', $secondHtml);
+        $this->assertStringNotContainsString('class="active"', $secondHtml);
         $this->assertTrue($menu->getItems()[0]->isVisible());
         $this->assertFalse($menu->getItems()[1]->isActive());
         $this->assertFalse($menu->getItems()[1]->isExpanded());

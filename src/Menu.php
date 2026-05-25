@@ -8,6 +8,7 @@ use InvalidArgumentException;
 use LogicException;
 use Menu\Item\Item;
 use Menu\Item\ItemInterface;
+use Menu\Item\StateResetInterface;
 use Menu\Link\Link;
 use Menu\Link\LinkInterface;
 use Menu\Resolver\ContextAwareResolverInterface;
@@ -250,6 +251,11 @@ class Menu implements MenuInterface
 
         $this->assertUniqueItems($validatedItems);
         $this->items = $validatedItems;
+        if ($this->ownerItem !== null) {
+            foreach ($this->items as $item) {
+                $item->setParent($this->ownerItem);
+            }
+        }
 
         return $this;
     }
@@ -462,6 +468,22 @@ class Menu implements MenuInterface
         foreach ($this->items as $item) {
             if (!$item->hasParent()) {
                 $item->setParent($ownerItem);
+            }
+        }
+
+        return $this;
+    }
+
+    public function resetState(): static
+    {
+        foreach ($this->items as $item) {
+            if ($item instanceof StateResetInterface) {
+                $item->resetState();
+            } else {
+                $item->setActive(false);
+            }
+            if ($item->hasSubMenu()) {
+                $item->getSubMenu()->resetState();
             }
         }
 

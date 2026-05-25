@@ -39,4 +39,22 @@ class PermissionResolverTest extends TestCase
 
         $this->assertFalse($item->isVisible());
     }
+
+    public function testSupportsFourArgumentCanMethod(): void
+    {
+        $item = (new Item('Admin', '/admin'))->setData('permission', 'admin.access');
+        $authorizer = new class {
+            public function can(mixed $identity, string $permission, Item $item, object $context): bool
+            {
+                return $identity === ['id' => 1]
+                    && $permission === 'admin.access'
+                    && $item->getLabel() === 'Admin'
+                    && method_exists($context, 'getDepth');
+            }
+        };
+
+        (new PermissionResolver($authorizer, ['id' => 1]))->resolve($item);
+
+        $this->assertTrue($item->isVisible());
+    }
 }

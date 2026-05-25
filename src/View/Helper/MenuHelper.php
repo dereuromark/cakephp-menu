@@ -154,7 +154,7 @@ class MenuHelper extends Helper
     public function render(MenuInterface|string|null $menu = null, array $options = []): string
     {
         [$menu, $resolvedOptions] = $this->resolveMenuAndOptions($menu, $options);
-        $menu = $this->applyResolvers($menu, $resolvedOptions);
+        $this->applyResolvers($menu, $resolvedOptions);
 
         return $this->getRenderer($resolvedOptions)->render($menu, $resolvedOptions);
     }
@@ -165,7 +165,7 @@ class MenuHelper extends Helper
     public function getCurrentItem(MenuInterface|string|null $menu = null, array $options = []): ?ItemInterface
     {
         [$menu, $resolvedOptions] = $this->resolveMenuAndOptions($menu, $options);
-        $menu = $this->applyResolvers($menu, $resolvedOptions);
+        $this->applyResolvers($menu, $resolvedOptions);
 
         return $menu->getActiveItem();
     }
@@ -193,7 +193,7 @@ class MenuHelper extends Helper
     public function getBreadcrumbs(MenuInterface|string|null $menu = null, array $options = []): array
     {
         [$menu, $resolvedOptions] = $this->resolveMenuAndOptions($menu, $options);
-        $menu = $this->applyResolvers($menu, $resolvedOptions);
+        $this->applyResolvers($menu, $resolvedOptions);
 
         $currentItem = $menu->getActiveItem();
         if ($currentItem === null) {
@@ -251,7 +251,7 @@ class MenuHelper extends Helper
         $renderer = $options['renderer'] ?? null;
         if ($renderer === BreadcrumbRenderer::class || $renderer instanceof BreadcrumbRenderer) {
             [$resolvedMenu, $resolvedOptions] = $this->resolveMenuAndOptions($menu, $options);
-            $resolvedMenu = $this->applyResolvers($resolvedMenu, $resolvedOptions);
+            $this->applyResolvers($resolvedMenu, $resolvedOptions);
             $activeItem = $resolvedMenu->getActiveItem();
             if ($activeItem === null) {
                 return '';
@@ -300,22 +300,19 @@ class MenuHelper extends Helper
      *
      * @throws \InvalidArgumentException
      */
-    protected function applyResolvers(MenuInterface $menu, array $options): MenuInterface
+    protected function applyResolvers(MenuInterface $menu, array $options): void
     {
         if (($options['resolve'] ?? true) !== true) {
-            return $menu;
+            return;
         }
 
-        $menu = $this->cloneMenu($menu);
         $resolver = $options['resolver'] ?? $this->createDefaultResolver($options);
         if (!$resolver instanceof ResolverInterface && !$resolver instanceof ResolverCollectionInterface) {
             throw new InvalidArgumentException('Resolver must implement ResolverInterface or ResolverCollectionInterface.');
         }
 
-        $menu->clearActive();
+        $menu->resetState();
         $menu->resolve($resolver);
-
-        return $menu;
     }
 
     /**
@@ -358,10 +355,5 @@ class MenuHelper extends Helper
 
         /** @var class-string<\Menu\Renderer\RendererInterface> $renderer */
         return new $renderer($options);
-    }
-
-    protected function cloneMenu(MenuInterface $menu): MenuInterface
-    {
-        return $menu::fromArray($menu->toArray());
     }
 }

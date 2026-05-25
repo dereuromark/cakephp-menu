@@ -107,6 +107,8 @@ interface MenuInterface
 
     public function resolve(ResolverInterface|ResolverCollectionInterface $resolver): static;
 
+    public function resetState(): static;
+
     public function freeze(): static;
 
     public function isFrozen(): bool;
