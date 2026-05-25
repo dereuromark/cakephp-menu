@@ -110,11 +110,14 @@ class Item implements ItemInterface, StateResetInterface
 
     public function getKey(): string
     {
-        if ($this->key === '' && $this->label !== null) {
-            $this->key = strtolower((string)Text::slug($this->label));
+        if ($this->key !== '') {
+            return $this->key;
+        }
+        if ($this->label !== null) {
+            return strtolower((string)Text::slug($this->label));
         }
 
-        return $this->key;
+        return '';
     }
 
     public function hasExplicitKey(): bool
