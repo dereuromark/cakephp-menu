@@ -112,10 +112,6 @@ You can override templates through helper options/config.
 ## Documentation
 
 - [Usage Guide](docs/README.md)
-- [Version Map](https://github.com/dereuromark/cakephp-menu/wiki#cakephp-version-map)
-- [Wiki](https://github.com/dereuromark/cakephp-menu/wiki)
-
-Full documentation: https://github.com/dereuromark/cakephp-menu/wiki
 
 ## Development
 
