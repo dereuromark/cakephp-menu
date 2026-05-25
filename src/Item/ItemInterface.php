@@ -42,6 +42,10 @@ interface ItemInterface
 
     public function isDivider(): bool;
 
+    public function setHeader(bool $header = true): static;
+
+    public function isHeader(): bool;
+
     public function setVisibility(bool $isVisible): static;
 
     public function isVisible(): bool;

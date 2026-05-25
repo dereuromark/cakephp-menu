@@ -79,4 +79,15 @@ class ItemTest extends TestCase
         $this->assertSame('some-label', $item->getKey());
         $this->assertNull($item->toArray()['key']);
     }
+
+    public function testHeaderFlag(): void
+    {
+        $item = (new Item('Account'))->setHeader();
+
+        $this->assertTrue($item->isHeader());
+        $this->assertTrue($item->toArray()['header']);
+
+        $item->setHeader(false);
+        $this->assertFalse($item->isHeader());
+    }
 }

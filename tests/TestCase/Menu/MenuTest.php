@@ -225,4 +225,13 @@ class MenuTest extends TestCase
         $this->assertSame('profile', $collection->findByKey('profile')?->getKey());
         $this->assertCount(2, $collection->findByParent($account));
     }
+
+    public function testAddHeader(): void
+    {
+        $menu = Menu::create();
+        $menu->addHeader('Section');
+
+        $this->assertTrue($menu->getItems()[0]->toArray()['header']);
+        $this->assertSame('Section', $menu->getItems()[0]->getLabel());
+    }
 }
