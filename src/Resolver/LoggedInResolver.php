@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace Menu\Resolver;
 
 use Menu\Item\ItemInterface;
-use Menu\Item\StateResetInterface;
 
 class LoggedInResolver implements ContextAwareResolverInterface
 {
+    use RuntimeStateTrait;
+
     public function __construct(protected bool $loggedIn)
     {
     }
@@ -22,17 +23,9 @@ class LoggedInResolver implements ContextAwareResolverInterface
     {
         $auth = $item->getData('auth');
         if ($auth === 'loggedIn') {
-            if ($item instanceof StateResetInterface) {
-                $item->setRuntimeVisibility($this->loggedIn);
-            } else {
-                $item->setVisibility($this->loggedIn);
-            }
+            $this->applyVisibility($item, $this->loggedIn);
         } elseif ($auth === 'loggedOut') {
-            if ($item instanceof StateResetInterface) {
-                $item->setRuntimeVisibility(!$this->loggedIn);
-            } else {
-                $item->setVisibility(!$this->loggedIn);
-            }
+            $this->applyVisibility($item, !$this->loggedIn);
         }
     }
 }

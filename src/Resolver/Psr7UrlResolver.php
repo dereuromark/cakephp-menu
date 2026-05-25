@@ -7,7 +7,6 @@ namespace Menu\Resolver;
 use Cake\Core\InstanceConfigTrait;
 use Menu\Item\Item;
 use Menu\Item\ItemInterface;
-use Menu\Item\StateResetInterface;
 use Psr\Http\Message\RequestInterface;
 use function array_filter;
 use function array_merge;
@@ -25,6 +24,7 @@ use const SORT_STRING;
 class Psr7UrlResolver implements ContextAwareResolverInterface
 {
     use InstanceConfigTrait;
+    use RuntimeStateTrait;
 
     /**
      * @var array<string, mixed>
@@ -87,11 +87,7 @@ class Psr7UrlResolver implements ContextAwareResolverInterface
                 continue;
             }
 
-            if ($item instanceof StateResetInterface) {
-                $item->setRuntimeActive(true);
-            } else {
-                $item->setActive(true);
-            }
+            $this->applyActive($item);
 
             return;
         }
