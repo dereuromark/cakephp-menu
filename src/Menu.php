@@ -8,6 +8,7 @@ use InvalidArgumentException;
 use LogicException;
 use Menu\Item\Item;
 use Menu\Item\ItemInterface;
+use Menu\Item\StateResetInterface;
 use Menu\Link\Link;
 use Menu\Link\LinkInterface;
 use Menu\Resolver\ContextAwareResolverInterface;
@@ -101,7 +102,7 @@ class Menu implements MenuInterface
             if (!empty($itemConfig['expanded'])) {
                 $item->setExpanded();
             }
-            if (!empty($itemConfig['submenu']['items'])) {
+            if (!empty($itemConfig['submenu']) && is_array($itemConfig['submenu'])) {
                 $item->setSubMenu(static::fromArray((array)$itemConfig['submenu']));
             }
 
@@ -250,6 +251,11 @@ class Menu implements MenuInterface
 
         $this->assertUniqueItems($validatedItems);
         $this->items = $validatedItems;
+        if ($this->ownerItem !== null) {
+            foreach ($this->items as $item) {
+                $item->setParent($this->ownerItem);
+            }
+        }
 
         return $this;
     }
@@ -298,7 +304,11 @@ class Menu implements MenuInterface
     public function clearActive(): static
     {
         foreach ($this->items as $item) {
-            $item->setActive(false);
+            if ($item instanceof StateResetInterface) {
+                $item->setRuntimeActive(false);
+            } else {
+                $item->setActive(false);
+            }
             if ($item->hasSubMenu()) {
                 $item->getSubMenu()->clearActive();
             }
@@ -459,6 +469,27 @@ class Menu implements MenuInterface
     {
         $this->assertMutable();
         $this->ownerItem = $ownerItem;
+        foreach ($this->items as $item) {
+            if (!$item->hasParent()) {
+                $item->setParent($ownerItem);
+            }
+        }
+
+        return $this;
+    }
+
+    public function resetState(): static
+    {
+        foreach ($this->items as $item) {
+            if ($item instanceof StateResetInterface) {
+                $item->resetState();
+            } else {
+                $item->setActive(false);
+            }
+            if ($item->hasSubMenu()) {
+                $item->getSubMenu()->resetState();
+            }
+        }
 
         return $this;
     }

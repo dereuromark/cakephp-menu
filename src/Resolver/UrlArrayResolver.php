@@ -7,6 +7,7 @@ namespace Menu\Resolver;
 use Cake\Core\InstanceConfigTrait;
 use Menu\Item\Item;
 use Menu\Item\ItemInterface;
+use Menu\Item\StateResetInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use function array_filter;
 use function array_intersect_key;
@@ -65,7 +66,11 @@ class UrlArrayResolver implements ContextAwareResolverInterface
         $requestParams = (array)$this->request->getAttribute('params');
         foreach ($this->extractRoutes($item, $linkArray) as $route) {
             if ($this->matches($requestParams, $route, $item)) {
-                $item->setActive(true);
+                if ($item instanceof StateResetInterface) {
+                    $item->setRuntimeActive(true);
+                } else {
+                    $item->setActive(true);
+                }
 
                 return;
             }

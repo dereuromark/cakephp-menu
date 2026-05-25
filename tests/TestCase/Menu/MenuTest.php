@@ -7,6 +7,7 @@ namespace Menu\Test\TestCase\Menu;
 use Cake\Http\ServerRequest;
 use Cake\TestSuite\TestCase;
 use LogicException;
+use Menu\Item\Item;
 use Menu\Menu;
 use Menu\Resolver\CallbackResolver;
 use Menu\Resolver\UrlArrayResolver;
@@ -90,6 +91,19 @@ class MenuTest extends TestCase
         $this->assertFalse($child->isActive());
     }
 
+    public function testClearActiveDoesNotDestroyResetStateBaseline(): void
+    {
+        $menu = Menu::create();
+        $parent = $menu->addItem('Articles', '/articles', ['id' => 'articles']);
+        $child = $parent->getSubMenu()->addItem('View', '/articles/view', ['id' => 'view', 'active' => true]);
+
+        $menu->clearActive();
+        $menu->resetState();
+
+        $this->assertSame($child, $menu->getActiveItem());
+        $this->assertTrue($child->isActive());
+    }
+
     public function testRejectsDuplicateIds(): void
     {
         $this->expectExceptionMessage('Duplicate menu item id `articles` detected.');
@@ -137,6 +151,16 @@ class MenuTest extends TestCase
                         ],
                     ],
                 ],
+                [
+                    'id' => 'account',
+                    'label' => 'Account',
+                    'link' => '#',
+                    'submenu' => [
+                        'attributes' => ['class' => 'dropdown-menu'],
+                        'data' => ['kind' => 'account'],
+                        'items' => [],
+                    ],
+                ],
             ],
         ]);
 
@@ -146,6 +170,8 @@ class MenuTest extends TestCase
         $this->assertSame('main', $export['data']['area']);
         $this->assertSame('articles', $export['items'][0]['id']);
         $this->assertSame('view', $export['items'][0]['submenu']['items'][0]['id']);
+        $this->assertSame('dropdown-menu', $export['items'][1]['submenu']['attributes']['class']);
+        $this->assertSame('account', $export['items'][1]['submenu']['data']['kind']);
     }
 
     public function testFreezePreventsStructuralMutation(): void
@@ -165,5 +191,21 @@ class MenuTest extends TestCase
         $menu = Menu::create();
         $menu->addItem('Articles', '/articles', ['key' => 'content']);
         $menu->addItem('Pages', '/pages', ['key' => 'content']);
+    }
+
+    public function testSetItemsReparentsMovedSubmenuItems(): void
+    {
+        $menu = Menu::create();
+        $firstParent = $menu->addItem('First', '/first', ['id' => 'first']);
+        $secondParent = $menu->addItem('Second', '/second', ['id' => 'second']);
+        $child = (new Item('Child', '/child'))->setId('child');
+
+        $firstParent->getSubMenu()->setItems([$child]);
+        $this->assertSame($firstParent, $child->getParent());
+
+        $secondParent->getSubMenu()->setItems([$child]);
+
+        $this->assertSame($secondParent, $child->getParent());
+        $this->assertSame($child, $secondParent->getSubMenu()->get('child'));
     }
 }

@@ -11,7 +11,7 @@ use Menu\Link\LinkInterface;
 use Menu\Menu;
 use Menu\MenuInterface;
 
-class Item implements ItemInterface
+class Item implements ItemInterface, StateResetInterface
 {
     protected string $id;
 
@@ -31,7 +31,11 @@ class Item implements ItemInterface
 
     protected bool $visible = true;
 
+    protected bool $defaultVisible = true;
+
     protected bool $active = false;
+
+    protected bool $defaultActive = false;
 
     protected string $before = '';
 
@@ -61,6 +65,8 @@ class Item implements ItemInterface
     protected bool $fuzzyMatch = false;
 
     protected bool $expanded = false;
+
+    protected bool $defaultExpanded = false;
 
     protected bool $frozen = false;
 
@@ -189,6 +195,7 @@ class Item implements ItemInterface
     public function setVisibility(bool $isVisible): static
     {
         $this->visible = $isVisible;
+        $this->defaultVisible = $isVisible;
 
         return $this;
     }
@@ -201,6 +208,7 @@ class Item implements ItemInterface
     public function setActive(bool $isActive): static
     {
         $this->active = $isActive;
+        $this->defaultActive = $isActive;
 
         return $this;
     }
@@ -399,6 +407,7 @@ class Item implements ItemInterface
     public function setExpanded(bool $expanded = true): static
     {
         $this->expanded = $expanded;
+        $this->defaultExpanded = $expanded;
 
         return $this;
     }
@@ -447,6 +456,36 @@ class Item implements ItemInterface
             'fuzzy' => $this->fuzzyMatch,
             'submenu' => $this->subMenu?->toArray(),
         ];
+    }
+
+    public function resetState(): static
+    {
+        $this->visible = $this->defaultVisible;
+        $this->active = $this->defaultActive;
+        $this->expanded = $this->defaultExpanded;
+
+        return $this;
+    }
+
+    public function setRuntimeVisibility(bool $isVisible): static
+    {
+        $this->visible = $isVisible;
+
+        return $this;
+    }
+
+    public function setRuntimeActive(bool $isActive): static
+    {
+        $this->active = $isActive;
+
+        return $this;
+    }
+
+    public function setRuntimeExpanded(bool $expanded = true): static
+    {
+        $this->expanded = $expanded;
+
+        return $this;
     }
 
     protected function assertMutable(): void

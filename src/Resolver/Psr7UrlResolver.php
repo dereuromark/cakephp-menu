@@ -7,6 +7,7 @@ namespace Menu\Resolver;
 use Cake\Core\InstanceConfigTrait;
 use Menu\Item\Item;
 use Menu\Item\ItemInterface;
+use Menu\Item\StateResetInterface;
 use Psr\Http\Message\RequestInterface;
 use function array_filter;
 use function array_merge;
@@ -60,7 +61,11 @@ class Psr7UrlResolver implements ContextAwareResolverInterface
             }
 
             if ($requestUri === $route) {
-                $item->setActive(true);
+                if ($item instanceof StateResetInterface) {
+                    $item->setRuntimeActive(true);
+                } else {
+                    $item->setActive(true);
+                }
 
                 return;
             }
@@ -71,7 +76,11 @@ class Psr7UrlResolver implements ContextAwareResolverInterface
 
             $routePath = parse_url($route, PHP_URL_PATH);
             if ($requestPath === $routePath) {
-                $item->setActive(true);
+                if ($item instanceof StateResetInterface) {
+                    $item->setRuntimeActive(true);
+                } else {
+                    $item->setActive(true);
+                }
 
                 return;
             }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Menu\Resolver;
 
 use Menu\Item\ItemInterface;
+use Menu\Item\StateResetInterface;
 
 class LoggedInResolver implements ContextAwareResolverInterface
 {
@@ -21,9 +22,17 @@ class LoggedInResolver implements ContextAwareResolverInterface
     {
         $auth = $item->getData('auth');
         if ($auth === 'loggedIn') {
-            $item->setVisibility($this->loggedIn);
+            if ($item instanceof StateResetInterface) {
+                $item->setRuntimeVisibility($this->loggedIn);
+            } else {
+                $item->setVisibility($this->loggedIn);
+            }
         } elseif ($auth === 'loggedOut') {
-            $item->setVisibility(!$this->loggedIn);
+            if ($item instanceof StateResetInterface) {
+                $item->setRuntimeVisibility(!$this->loggedIn);
+            } else {
+                $item->setVisibility(!$this->loggedIn);
+            }
         }
     }
 }

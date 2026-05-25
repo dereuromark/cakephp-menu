@@ -57,6 +57,8 @@ $this->Menu->register('main', static function ($menu): void {
 });
 ```
 
+`register()` is idempotent by default and returns the existing named menu on repeated calls. Pass `['rebuild' => true]` if you want to replace the existing named menu and rebuild its definition from scratch.
+
 ## Item Options
 
 `Menu::addItem()` and `Menu::newItem()` accept these options:
@@ -316,6 +318,8 @@ echo $this->Menu->render($menu, [
 - `before`, `after`, and `raw` are treated as trusted markup.
 - String URLs and array URLs are both supported.
 - Active matching is automatic in the helper by default and uses both array and string resolvers.
+- Each helper render/request-state lookup applies resolvers temporarily and restores the original `active`, `visible`, and `expanded` item state afterward.
+- Custom item classes should extend `Menu\Item\Item` or implement `Menu\Item\StateResetInterface` if you want `Menu::resetState()` to restore their original runtime defaults.
 - The default renderer emits `aria-current="page"` for the active link and `aria-expanded` for branch items.
 
 ## Recipes

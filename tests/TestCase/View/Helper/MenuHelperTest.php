@@ -9,16 +9,35 @@ use Cake\Http\ServerRequest;
 use Cake\Routing\Route\Route;
 use Cake\TestSuite\TestCase;
 use Cake\View\View;
+use Menu\Item\Item;
 use Menu\Item\ItemInterface;
+use Menu\Item\SelfRendererInterface;
 use Menu\Menu;
 use Menu\Renderer\BreadcrumbRenderer;
 use Menu\Resolver\AuthorizationResolver;
 use Menu\Resolver\ResolverCollection;
 use Menu\Resolver\ResolverContext;
+use Menu\Resolver\SectionResolver;
 use Menu\View\Helper\MenuHelper;
 
 class MenuHelperTest extends TestCase
 {
+    protected function createSelfRenderingItem(string $label, string $url, string $id): ItemInterface
+    {
+        return new class ($label, $url, $id) extends Item implements SelfRendererInterface {
+            public function __construct(string $label, string $url, string $id)
+            {
+                parent::__construct($label, $url);
+                $this->setId($id);
+            }
+
+            public function render(): string
+            {
+                return '<li class="custom-item">custom</li>';
+            }
+        };
+    }
+
     protected function createHelper(ServerRequest $request): MenuHelper
     {
         return new MenuHelper(new View(
@@ -172,8 +191,96 @@ class MenuHelperTest extends TestCase
             $menu->addItem('Articles', '/articles');
         });
 
+        $menuAgain = $menuHelper->register('main', static function ($menu): void {
+            $menu->addItem('Users', '/users');
+        });
+
         $this->assertSame($menu, $menuHelper->get('main'));
+        $this->assertSame($menuAgain, $menuHelper->get('main'));
         $this->assertCount(1, $menu->getItems());
+    }
+
+    public function testRegisterSupportsMenuAndHelperCallbackSignature(): void
+    {
+        $menuHelper = $this->createHelper(new ServerRequest());
+
+        $menu = $menuHelper->register('main', static function ($menu, MenuHelper $helper): void {
+            $menu->addItem('Articles', '/articles');
+            $helper->has('main');
+        });
+
+        $this->assertCount(1, $menu->getItems());
+    }
+
+    public function testRegisterCanRebuildExistingMenu(): void
+    {
+        $menuHelper = $this->createHelper(new ServerRequest());
+
+        $menuHelper->register('main', static function ($menu): void {
+            $menu->addItem('Articles', '/articles');
+        });
+        $rebuiltMenu = $menuHelper->register('main', static function ($menu): void {
+            $menu->addItem('Users', '/users');
+        }, ['rebuild' => true]);
+
+        $this->assertCount(1, $rebuiltMenu->getItems());
+        $this->assertSame('Users', $rebuiltMenu->getItems()[0]->getLabel());
+    }
+
+    public function testRenderResetsResolverStateBetweenCalls(): void
+    {
+        $request = (new ServerRequest(['url' => '/articles']))
+            ->withAttribute('params', [
+                'controller' => 'Articles',
+                'action' => 'index',
+            ])
+            ->withUri((new ServerRequest())->getUri()->withPath('/articles'));
+        $menuHelper = $this->createHelper($request);
+
+        $menu = $menuHelper->create('main');
+        $menu->addItem('Admin', '/admin', ['data' => ['role' => 'admin']]);
+        $menu->addItem('Articles', '/articles', [
+            'data' => ['section' => ['controller' => 'Articles']],
+        ]);
+
+        $firstHtml = $menuHelper->render('main', [
+            'resolver' => (new ResolverCollection())
+                ->add(new SectionResolver($request))
+                ->add(new AuthorizationResolver(static function (ItemInterface $item, ResolverContext $context): ?bool {
+                    if ($item->getData('role') === 'admin') {
+                        return false;
+                    }
+
+                    return null;
+                })),
+        ]);
+        $secondHtml = $menuHelper->render('main', [
+            'resolver' => new ResolverCollection(),
+        ]);
+
+        $this->assertStringNotContainsString('Admin', $firstHtml);
+        $this->assertStringContainsString('class="active"', $firstHtml);
+        $this->assertStringContainsString('Admin', $secondHtml);
+        $this->assertStringNotContainsString('class="active"', $secondHtml);
+        $this->assertTrue($menu->getItems()[0]->isVisible());
+        $this->assertFalse($menu->getItems()[1]->isActive());
+        $this->assertFalse($menu->getItems()[1]->isExpanded());
+    }
+
+    public function testRenderPreservesSelfRenderingCustomItems(): void
+    {
+        $request = (new ServerRequest(['url' => '/custom']))
+            ->withUri((new ServerRequest())->getUri()->withPath('/custom'));
+        $menuHelper = $this->createHelper($request);
+
+        $menu = $menuHelper->create('main');
+        $item = $this->createSelfRenderingItem('Custom', '/custom', 'custom');
+        $menu->add($item);
+
+        $html = $menuHelper->render('main');
+
+        $this->assertStringContainsString('<li class="custom-item">custom</li>', $html);
+        $this->assertSame($item, $menu->get('custom'));
     }
 
     public function testAuthorizationResolverAndDepthLimit(): void

@@ -5,11 +5,15 @@ declare(strict_types=1);
 namespace Menu\Resolver;
 
 use Menu\Item\ItemInterface;
+use Menu\Item\StateResetInterface;
+use ReflectionMethod;
 use function is_string;
 use function method_exists;
 
 class PermissionResolver implements ContextAwareResolverInterface
 {
+    protected ?int $parameterCount = null;
+
     public function __construct(
         protected object $authorizer,
         protected mixed $identity = null,
@@ -30,9 +34,29 @@ class PermissionResolver implements ContextAwareResolverInterface
             return;
         }
 
-        $allowed = $this->authorizer->{$this->method}($this->identity, $permission, $item, $context);
+        $allowed = $this->invokeAuthorizer($permission, $item, $context);
         if (is_bool($allowed)) {
-            $item->setVisibility($allowed);
+            if ($item instanceof StateResetInterface) {
+                $item->setRuntimeVisibility($allowed);
+            } else {
+                $item->setVisibility($allowed);
+            }
         }
+    }
+
+    protected function invokeAuthorizer(string $permission, ItemInterface $item, ResolverContext $context): mixed
+    {
+        if ($this->parameterCount === null) {
+            $reflectionMethod = new ReflectionMethod($this->authorizer, $this->method);
+            $this->parameterCount = $reflectionMethod->getNumberOfParameters();
+        }
+
+        return match (true) {
+            $this->parameterCount >= 4 => $this->authorizer->{$this->method}($this->identity, $permission, $item, $context),
+            $this->parameterCount === 3 => $this->authorizer->{$this->method}($this->identity, $permission, $item),
+            $this->parameterCount === 2 => $this->authorizer->{$this->method}($this->identity, $permission),
+            $this->parameterCount === 1 => $this->authorizer->{$this->method}($permission),
+            default => $this->authorizer->{$this->method}(),
+        };
     }
 }

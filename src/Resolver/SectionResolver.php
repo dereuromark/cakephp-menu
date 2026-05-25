@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Menu\Resolver;
 
 use Menu\Item\ItemInterface;
+use Menu\Item\StateResetInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use function array_is_list;
 use function is_array;
@@ -34,9 +35,17 @@ class SectionResolver implements ContextAwareResolverInterface
         $requestParams = (array)$this->request->getAttribute('params');
         foreach ($this->normalizeSections($sections) as $section) {
             if ($this->matchesSection($requestParams, $section)) {
-                $item->setActive(true);
+                if ($item instanceof StateResetInterface) {
+                    $item->setRuntimeActive(true);
+                } else {
+                    $item->setActive(true);
+                }
                 if ($this->expand) {
-                    $item->setExpanded();
+                    if ($item instanceof StateResetInterface) {
+                        $item->setRuntimeExpanded();
+                    } else {
+                        $item->setExpanded();
+                    }
                 }
 
                 return;

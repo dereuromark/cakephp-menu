@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Menu\View\Helper;
 
 use Cake\View\Helper;
+use Closure;
 use InvalidArgumentException;
 use Menu\Item\ItemInterface;
+use Menu\Item\StateResetInterface;
 use Menu\Menu;
 use Menu\MenuInterface;
 use Menu\Renderer\BreadcrumbRenderer;
@@ -17,6 +19,7 @@ use Menu\Resolver\ResolverCollection;
 use Menu\Resolver\ResolverCollectionInterface;
 use Menu\Resolver\ResolverInterface;
 use Menu\Resolver\UrlArrayResolver;
+use ReflectionFunction;
 
 /**
  * @extends \Cake\View\Helper<\Cake\View\View>
@@ -98,13 +101,26 @@ class MenuHelper extends Helper
 
     /**
      * @param string $name
-     * @param callable(\Menu\MenuInterface, self): void $callback
+     * @param callable(\Menu\MenuInterface): void|callable(\Menu\MenuInterface, self): void $callback
      * @param array<string, mixed> $options
      */
     public function register(string $name, callable $callback, array $options = []): MenuInterface
     {
+        if ($this->has($name) && empty($options['rebuild'])) {
+            return $this->get($name);
+        }
+
+        if (!empty($options['rebuild'])) {
+            $options['overwrite'] = true;
+            $menu = $this->create($name, $options);
+
+            $this->invokeRegisterCallback($callback, $menu);
+
+            return $menu;
+        }
+
         $menu = $this->getOrCreate($name, $options);
-        $callback($menu, $this);
+        $this->invokeRegisterCallback($callback, $menu);
 
         return $menu;
     }
@@ -146,9 +162,14 @@ class MenuHelper extends Helper
     public function render(MenuInterface|string|null $menu = null, array $options = []): string
     {
         [$menu, $resolvedOptions] = $this->resolveMenuAndOptions($menu, $options);
-        $this->applyResolvers($menu, $resolvedOptions);
+        $state = $this->captureItemState($menu);
+        try {
+            $this->applyResolvers($menu, $resolvedOptions);
 
-        return $this->getRenderer($resolvedOptions)->render($menu, $resolvedOptions);
+            return $this->getRenderer($resolvedOptions)->render($menu, $resolvedOptions);
+        } finally {
+            $this->restoreItemState($menu, $state);
+        }
     }
 
     /**
@@ -157,9 +178,14 @@ class MenuHelper extends Helper
     public function getCurrentItem(MenuInterface|string|null $menu = null, array $options = []): ?ItemInterface
     {
         [$menu, $resolvedOptions] = $this->resolveMenuAndOptions($menu, $options);
-        $this->applyResolvers($menu, $resolvedOptions);
+        $state = $this->captureItemState($menu);
+        try {
+            $this->applyResolvers($menu, $resolvedOptions);
 
-        return $menu->getActiveItem();
+            return $menu->getActiveItem();
+        } finally {
+            $this->restoreItemState($menu, $state);
+        }
     }
 
     /**
@@ -185,33 +211,38 @@ class MenuHelper extends Helper
     public function getBreadcrumbs(MenuInterface|string|null $menu = null, array $options = []): array
     {
         [$menu, $resolvedOptions] = $this->resolveMenuAndOptions($menu, $options);
-        $this->applyResolvers($menu, $resolvedOptions);
+        $state = $this->captureItemState($menu);
+        try {
+            $this->applyResolvers($menu, $resolvedOptions);
 
-        $currentItem = $menu->getActiveItem();
-        if ($currentItem === null) {
-            return [];
-        }
-
-        $path = $this->extractPath($currentItem);
-        $linkCurrent = (bool)($resolvedOptions['linkCurrent'] ?? false);
-
-        $crumbs = [];
-        foreach ($path as $index => $item) {
-            $isCurrent = $index === count($path) - 1;
-            $link = $item->getLink();
-            $optionsForCrumb = (array)($item->getData('breadcrumbOptions') ?? []);
-            if ($isCurrent) {
-                $optionsForCrumb['innerAttrs']['aria-current'] = 'page';
+            $currentItem = $menu->getActiveItem();
+            if ($currentItem === null) {
+                return [];
             }
 
-            $crumbs[] = [
-                'title' => (string)$item->getLabel(),
-                'url' => $link !== null && (!$isCurrent || $linkCurrent) ? $link->getRawUrl() : null,
-                'options' => $optionsForCrumb,
-            ];
-        }
+            $path = $this->extractPath($currentItem);
+            $linkCurrent = (bool)($resolvedOptions['linkCurrent'] ?? false);
 
-        return $crumbs;
+            $crumbs = [];
+            foreach ($path as $index => $item) {
+                $isCurrent = $index === count($path) - 1;
+                $link = $item->getLink();
+                $optionsForCrumb = (array)($item->getData('breadcrumbOptions') ?? []);
+                if ($isCurrent) {
+                    $optionsForCrumb['innerAttrs']['aria-current'] = 'page';
+                }
+
+                $crumbs[] = [
+                    'title' => (string)$item->getLabel(),
+                    'url' => $link !== null && (!$isCurrent || $linkCurrent) ? $link->getRawUrl() : null,
+                    'options' => $optionsForCrumb,
+                ];
+            }
+
+            return $crumbs;
+        } finally {
+            $this->restoreItemState($menu, $state);
+        }
     }
 
     /**
@@ -243,15 +274,20 @@ class MenuHelper extends Helper
         $renderer = $options['renderer'] ?? null;
         if ($renderer === BreadcrumbRenderer::class || $renderer instanceof BreadcrumbRenderer) {
             [$resolvedMenu, $resolvedOptions] = $this->resolveMenuAndOptions($menu, $options);
-            $this->applyResolvers($resolvedMenu, $resolvedOptions);
-            $activeItem = $resolvedMenu->getActiveItem();
-            if ($activeItem === null) {
-                return '';
+            $state = $this->captureItemState($resolvedMenu);
+            try {
+                $this->applyResolvers($resolvedMenu, $resolvedOptions);
+                $activeItem = $resolvedMenu->getActiveItem();
+                if ($activeItem === null) {
+                    return '';
+                }
+
+                $resolvedOptions['path'] = $this->extractPath($activeItem);
+
+                return $this->getRenderer(['renderer' => BreadcrumbRenderer::class] + $resolvedOptions)->render($resolvedMenu, $resolvedOptions);
+            } finally {
+                $this->restoreItemState($resolvedMenu, $state);
             }
-
-            $resolvedOptions['path'] = $this->extractPath($activeItem);
-
-            return $this->getRenderer(['renderer' => BreadcrumbRenderer::class] + $resolvedOptions)->render($resolvedMenu, $resolvedOptions);
         }
 
         $this->populateBreadcrumbs($menu, $options);
@@ -303,8 +339,65 @@ class MenuHelper extends Helper
             throw new InvalidArgumentException('Resolver must implement ResolverInterface or ResolverCollectionInterface.');
         }
 
-        $menu->clearActive();
+        $menu->resetState();
         $menu->resolve($resolver);
+    }
+
+    protected function invokeRegisterCallback(callable $callback, MenuInterface $menu): void
+    {
+        $reflectionFunction = new ReflectionFunction(Closure::fromCallable($callback));
+        if ($reflectionFunction->getNumberOfParameters() <= 1) {
+            $callback($menu);
+
+            return;
+        }
+
+        $callback($menu, $this);
+    }
+
+    /**
+     * @return array<int, array{visible: bool, active: bool, expanded: bool}>
+     */
+    protected function captureItemState(MenuInterface $menu): array
+    {
+        $state = [];
+        foreach ($menu->getItems() as $item) {
+            $state[spl_object_id($item)] = [
+                'visible' => $item->isVisible(),
+                'active' => $item->isActive(),
+                'expanded' => $item->isExpanded(),
+            ];
+            if ($item->hasSubMenu()) {
+                $state += $this->captureItemState($item->getSubMenu());
+            }
+        }
+
+        return $state;
+    }
+
+    /**
+     * @param \Menu\MenuInterface $menu
+     * @param array<int, array{visible: bool, active: bool, expanded: bool}> $state
+     */
+    protected function restoreItemState(MenuInterface $menu, array $state): void
+    {
+        foreach ($menu->getItems() as $item) {
+            $itemState = $state[spl_object_id($item)] ?? null;
+            if ($itemState !== null) {
+                if ($item instanceof StateResetInterface) {
+                    $item->setRuntimeVisibility($itemState['visible']);
+                    $item->setRuntimeActive($itemState['active']);
+                    $item->setRuntimeExpanded($itemState['expanded']);
+                } else {
+                    $item->setVisibility($itemState['visible']);
+                    $item->setActive($itemState['active']);
+                    $item->setExpanded($itemState['expanded']);
+                }
+            }
+            if ($item->hasSubMenu()) {
+                $this->restoreItemState($item->getSubMenu(), $state);
+            }
+        }
     }
 
     /**
