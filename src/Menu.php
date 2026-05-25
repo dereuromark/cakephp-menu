@@ -1,197 +1,317 @@
 <?php
-declare(strict_types = 1);
+
+declare(strict_types=1);
 
 namespace Menu;
 
+use InvalidArgumentException;
 use Menu\Item\Item;
 use Menu\Item\ItemInterface;
+use Menu\Link\LinkInterface;
+use Menu\Resolver\ResolverCollectionInterface;
+use Menu\Resolver\ResolverInterface;
 
-class Menu implements MenuInterface {
+class Menu implements MenuInterface
+{
+    /**
+     * @var list<\Menu\Item\ItemInterface>
+     */
+    protected array $items = [];
 
-	/**
-	 * @var \Menu\Item\ItemInterface[]
-	 */
-	protected $_itemCollection;
+    /**
+     * @var array<string, mixed>
+     */
+    protected array $attributes = [];
 
-	/**
-	 * @var array
-	 */
-	protected $_attributes = [];
+    /**
+     * @var array<string, mixed>
+     */
+    protected array $data = [];
 
-	/**
-	 * @var string
-	 */
-	protected $_itemClass = Item::class;
+    /**
+     * @var class-string<\Menu\Item\ItemInterface>
+     */
+    protected string $itemClass = Item::class;
 
-	/**
-	 * Convenience factory method
-	 *
-	 * @return static
-	 */
-	public static function create() {
-		return new static();
-	}
+    /**
+     * @phpstan-param array<string, mixed> $attributes
+     */
+    public static function create(array $attributes = []): static
+    {
+        $menu = new static();
+        if ($attributes) {
+            $menu->setAttributes($attributes);
+        }
 
-	/**
-	 * Convenience method to get a new item
-	 *
-	 * @param string|null $label
-	 *
-	 * @return \Menu\Item\ItemInterface
-	 */
-	public function newItem($label = null) {
-		/** @var \Menu\Item\ItemInterface $item */
-		$item = new $this->_itemClass();
-		if ($label !== null) {
-			$item->setLabel($label);
-		}
+        return $menu;
+    }
 
-		return $item;
-	}
+    public function add(ItemInterface $item): static
+    {
+        $this->items[] = $item;
 
-	/**
-	 * @param \Menu\Item\ItemInterface $item
-	 *
-	 * @return $this
-	 */
-	public function add(ItemInterface $item) {
-		//TODO: object?
-		$this->_itemCollection[] = $item;
+        return $this;
+    }
 
-		return $this;
-	}
+    /**
+     * @phpstan-param \Menu\Link\LinkInterface|array<string|int, mixed>|string|null $link
+     * @phpstan-param array<string, mixed> $options
+     */
+    public function addItem(
+        string $label,
+        LinkInterface|string|array|null $link = null,
+        array $options = [],
+    ): ItemInterface {
+        $item = $this->newItem($label, $link, $options);
+        $this->add($item);
 
-	/**
-	 * @return \Menu\Item\ItemInterface[]
-	 */
-	public function getItems() {
-		return $this->_itemCollection;
-	}
+        return $item;
+    }
 
-	/**
-	 * @param string $name
-	 *
-	 * @return mixed|null
-	 */
-	public function getData($name) {
-		if (!isset($this->_attributes[$name])) {
-			return null;
-		}
+    /**
+     * @phpstan-param array<string, mixed> $options
+     */
+    public function addRaw(string $html, array $options = []): ItemInterface
+    {
+        $item = $this->newItem(null, null, $options);
+        $item->setRaw($html);
+        $this->add($item);
 
-		return $this->_attributes[$name];
-	}
+        return $item;
+    }
 
-	/**
-	 * @param string $title
-	 * @param \Menu\Link\LinkInterface|null $link
-	 * @param array $attributes
-	 *
-	 * @return $this
-	 */
-	public function addRaw($title, $link = null, array $attributes = []) {
-		/** @var \Menu\Item\ItemInterface $item */
-		$item = new $this->_itemClass();
-		$item->setLabel($title);
-		if ($link !== null) {
-			$item->setLink($link);
-		}
-		if ($attributes) {
-		    $item->setAttributes($attributes);
-		}
+    /**
+     * @phpstan-param array<string, mixed> $options
+     */
+    public function addDivider(array $options = []): ItemInterface
+    {
+        $item = $this->newItem(null, null, $options);
+        $item->setDivider();
+        $this->add($item);
 
-		return $this;
-	}
+        return $item;
+    }
 
-	/**
-	 * @param string $name
-	 * @param mixed $value
-	 *
-	 * @return $this
-	 */
-	public function setData($name, $value) {
-		$this->_attributes[$name] = $value;
+    /**
+     * @phpstan-param \Menu\Link\LinkInterface|array<string|int, mixed>|string|null $link
+     * @phpstan-param array<string, mixed> $options
+     */
+    public function newItem(
+        ?string $label = null,
+        LinkInterface|string|array|null $link = null,
+        array $options = [],
+    ): ItemInterface {
+        $className = $this->itemClass;
+        $item = new $className($label, $link);
 
-		return $this;
-	}
+        if (isset($options['id'])) {
+            $item->setId((string)$options['id']);
+        }
+        if (isset($options['key'])) {
+            $item->setKey((string)$options['key']);
+        }
+        if (isset($options['escape'])) {
+            $item->setLabel($item->getLabel() ?? '', (bool)$options['escape']);
+        }
+        if (isset($options['before'])) {
+            $item->setBefore((string)$options['before']);
+        }
+        if (isset($options['after'])) {
+            $item->setAfter((string)$options['after']);
+        }
+        if (isset($options['attributes']) && is_array($options['attributes'])) {
+            $item->setAttributes($options['attributes']);
+        }
+        if (isset($options['data']) && is_array($options['data'])) {
+            foreach ($options['data'] as $name => $value) {
+                $item->setData((string)$name, $value);
+            }
+        }
+        if (isset($options['visible'])) {
+            $item->setVisibility((bool)$options['visible']);
+        }
+        if (isset($options['active'])) {
+            $item->setActive((bool)$options['active']);
+        }
+        if (isset($options['raw'])) {
+            $item->setRaw((string)$options['raw']);
+        }
+        if (!empty($options['divider'])) {
+            $item->setDivider();
+        }
+        if (isset($options['submenuAttributes']) && is_array($options['submenuAttributes'])) {
+            $item->getSubMenu()->setAttributes($options['submenuAttributes']);
+        }
 
-	/**
-	 * @param string $name
-	 * @param string $direction
-	 *
-	 * @return void
-	 */
-	public function sortBy($name, $direction = self::SORT_DESC) {
-		if (is_callable($name)) {
-			$name($this, $direction);
-		}
+        return $item;
+    }
 
-		$this->_sort($name, $direction);
-	}
+    public function getItems(): array
+    {
+        return $this->items;
+    }
 
-	/**
-	 * @param string $name
-	 * @param string $direction
-	 * @return void
-	 */
-	protected function _sort($name, $direction) {
-	}
+    /**
+     * @phpstan-param array<mixed> $items
+     *
+     * @throws \InvalidArgumentException
+     */
+    public function setItems(array $items): static
+    {
+        $validatedItems = [];
+        foreach ($items as $item) {
+            if (!$item instanceof ItemInterface) {
+                throw new InvalidArgumentException('All menu items must implement ' . ItemInterface::class);
+            }
+            $validatedItems[] = $item;
+        }
 
-	/**
-	 * @param string $itemId
-	 *
-	 * @return $this
-	 */
-	public function remove($itemId) {
-		// TODO: Implement remove() method.
+        $this->items = $validatedItems;
 
-		return $this;
-	}
+        return $this;
+    }
 
-	/**
-	 * @return array
-	 */
-	public function getAttributes() {
-		return $this->_attributes;
-	}
+    public function get(string $id): ?ItemInterface
+    {
+        foreach ($this->items as $item) {
+            if ($item->getId() === $id) {
+                return $item;
+            }
+            if ($item->hasSubMenu()) {
+                $found = $item->getSubMenu()->get($id);
+                if ($found !== null) {
+                    return $found;
+                }
+            }
+        }
 
-	/**
-	 * Sets multiple HTML attributes
-	 *
-	 * @param array $attributes Attributes
-	 * @param bool $merge Merge them or not
-	 *
-	 * @return void
-	 */
-	public function setAttributes(array $attributes, $merge = false) {
-		if ($merge) {
-			$this->_attributes = $attributes + $this->_attributes;
+        return null;
+    }
 
-			return;
-		}
+    public function has(string $id): bool
+    {
+        return $this->get($id) !== null;
+    }
 
-		$this->_attributes = $attributes;
-	}
+    public function remove(string $id): static
+    {
+        $items = [];
+        foreach ($this->items as $item) {
+            if ($item->getId() === $id) {
+                continue;
+            }
+            if ($item->hasSubMenu()) {
+                $item->getSubMenu()->remove($id);
+            }
+            $items[] = $item;
+        }
 
-	/**
-	 * @param string $name
-	 * @param mixed $value
-	 *
-	 * @return $this
-	 */
-	public function setAttribute($name, $value) {
-		$this->_attributes[$name] = $value;
+        $this->items = $items;
 
-		return $this;
-	}
+        return $this;
+    }
 
-	/**
-	 * @param callable|string $by
-	 * @param array $options
-	 *
-	 * @return void
-	 */
-	public function filter($by, array $options) {
-		// TODO: Implement filter() method.
-	}
+    public function setData(string $name, mixed $value): static
+    {
+        $this->data[$name] = $value;
 
+        return $this;
+    }
+
+    public function getData(?string $name = null): mixed
+    {
+        if ($name === null) {
+            return $this->data;
+        }
+
+        return $this->data[$name] ?? null;
+    }
+
+    /**
+     * @phpstan-return array<string, mixed>
+     */
+    public function getAttributes(): array
+    {
+        return $this->attributes;
+    }
+
+    public function setAttribute(string $name, mixed $value): static
+    {
+        $this->attributes[$name] = $value;
+
+        return $this;
+    }
+
+    /**
+     * @phpstan-param array<string, mixed> $attributes
+     */
+    public function setAttributes(array $attributes, bool $merge = false): static
+    {
+        $this->attributes = $merge ? $attributes + $this->attributes : $attributes;
+
+        return $this;
+    }
+
+    public function filter(callable $callback): static
+    {
+        $items = [];
+        foreach ($this->items as $item) {
+            if ($item->hasSubMenu()) {
+                $item->getSubMenu()->filter($callback);
+            }
+            if ($callback($item) !== false) {
+                $items[] = $item;
+            }
+        }
+
+        $this->items = $items;
+
+        return $this;
+    }
+
+    public function sortBy(callable|string $by, string $direction = self::SORT_ASC): static
+    {
+        usort($this->items, function (ItemInterface $left, ItemInterface $right) use ($by, $direction): int {
+            $leftValue = $this->extractSortValue($left, $by);
+            $rightValue = $this->extractSortValue($right, $by);
+
+            $result = $leftValue <=> $rightValue;
+
+            return $direction === self::SORT_DESC ? -$result : $result;
+        });
+
+        foreach ($this->items as $item) {
+            if ($item->hasSubMenu()) {
+                $item->getSubMenu()->sortBy($by, $direction);
+            }
+        }
+
+        return $this;
+    }
+
+    public function resolve(ResolverInterface|ResolverCollectionInterface $resolver): static
+    {
+        foreach ($this->items as $item) {
+            $resolver->resolve($item);
+            if ($item->hasSubMenu()) {
+                $item->getSubMenu()->resolve($resolver);
+            }
+        }
+
+        return $this;
+    }
+
+    protected function extractSortValue(ItemInterface $item, callable|string $by): mixed
+    {
+        if (is_callable($by)) {
+            return $by($item);
+        }
+
+        return match ($by) {
+            'id' => $item->getId(),
+            'key' => $item->getKey(),
+            'label' => $item->getLabel(),
+            default => $item->getData($by),
+        };
+    }
 }

@@ -1,70 +1,36 @@
 <?php
-declare(strict_types = 1);
 
-namespace Menu\TestCase\Menu;
+declare(strict_types=1);
+
+namespace Menu\Test\TestCase\Menu;
 
 use Cake\TestSuite\TestCase;
-use Menu\Link\Link;
 use Menu\Menu;
+use Menu\Renderer\StringTemplateRenderer;
 
-/**
- * This tests builds a complete bootstrap3 like nested menu
- */
-class NestedUlListIntegrationTest extends TestCase {
+class NestedUlListIntegrationTest extends TestCase
+{
+    public function testNestedMenuRendering(): void
+    {
+        $menu = Menu::create(['id' => 'menu1', 'class' => 'dropdown-menu']);
+        $menu->addItem('Dashboard', '/users/dashboard');
 
-	/**
-	 * @return void
-	 */
-	public function testMenu() {
-		$expected = '
-		<ul id="menu1" class="dropdown-menu">
-			<li><a href="/users/dashboard">Dashboard</a></li>
-			<li class="dropdown-submenu">
-				<a hef="#">Sub Menu</a>
-				<ul class="dropdown-submenu">
-					<li>2.1</li>
-					<li>2.2</li>
-					<li>
-						2.3
-						<ul>
-							<li>3.1</li>
-							<li>3.2</li>
-						</ul>
-					</li>
-				</ul>
-			<li>
-			<li class="divider"></li>
-			<li>
-				<i class="fa fa-sign-out" aria-hidden="true"></i>
-				<a href="/logout">Logout</a>
-			</li>
-		</ul>';
+        $subMenu = $menu->addItem('Sub Menu', '#', ['attributes' => ['class' => 'dropdown-submenu']]);
+        $subMenu->getSubMenu()->setAttributes(['class' => 'dropdown-submenu']);
+        $subMenu->add((new Menu())->newItem('Child 1', '/users/edit/1'));
+        $subMenu->add((new Menu())->newItem('Child 2', '/users/edit/2'));
 
-		$menu = new Menu();
+        $menu->addDivider();
+        $menu->addItem('Logout', '/logout', ['before' => '<i class="fa fa-sign-out"></i>']);
 
-		//TODO
-		return;
+        $renderer = new StringTemplateRenderer();
+        $result = $renderer->render($menu);
 
-		$menu->setAttributes(['id' => 'menu1', 'class' => 'dropdown-menu']);
-
-		$menu->addChildren([
-			$menu->newItem('Dashboard')
-				->setLink((new Link())->setUrl('/users/dashboard')),
-			$menu->newItem('Sub Menu')
-				->setLink((new Link())->setUrl('#')),
-			$menu->divider(),
-			$menu->newItem('Logout')
-				->before('<i class="fa fa-sign-out" aria-hidden="true"></i>')
-				->setLink((new Link())->setUrl('/logout')),
-		]);
-
-		$subMenu = $menu->newMenu('sub-menu');
-		$subMenu->addChildren([
-			$menu->newItem(''),
-			$menu->newItem(''),
-			$menu->newItem(''),
-		]);
-		$menu->getChild('x')->setSubMenu($subMenu);
-	}
-
+        $this->assertStringContainsString('<ul id="menu1" class="dropdown-menu">', $result);
+        $this->assertStringContainsString('<a href="/users/dashboard">Dashboard</a>', $result);
+        $this->assertStringContainsString('class="dropdown-submenu has-children"', $result);
+        $this->assertStringContainsString('<ul class="dropdown-submenu">', $result);
+        $this->assertStringContainsString('<li class="divider"></li>', $result);
+        $this->assertStringContainsString('<i class="fa fa-sign-out"></i><a href="/logout">Logout</a>', $result);
+    }
 }

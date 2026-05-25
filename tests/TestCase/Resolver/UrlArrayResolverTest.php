@@ -1,48 +1,34 @@
 <?php
-declare(strict_types = 1);
 
-namespace Menu\TestCase\Resolver;
+declare(strict_types=1);
 
-use Cake\Http\ServerRequestFactory;
+namespace Menu\Test\TestCase\Resolver;
+
+use Cake\Http\ServerRequest;
 use Cake\TestSuite\TestCase;
 use Menu\Item\Item;
-use Menu\Link\Link;
 use Menu\Resolver\UrlArrayResolver;
 
-class UrlArrayResolverTest extends TestCase {
+class UrlArrayResolverTest extends TestCase
+{
+    public function testMatchesControllerActionAndPass(): void
+    {
+        $item = new Item('View Article', [
+            'controller' => 'Articles',
+            'action' => 'view',
+            42,
+        ]);
 
-	/**
-	 * @return void
-	 */
-	public function testItemArray() {
-		$link = new Link();
-		$link->setUrl([
-			'controller' => 'FooBar',
-			'action' => 'edit',
-		]);
-		$item = new Item('User Listing', $link);
+        $request = new ServerRequest();
+        $request = $request->withAttribute('params', [
+            'controller' => 'Articles',
+            'action' => 'view',
+            'pass' => [42],
+        ]);
 
-		$server = [
-			'REQUEST_URI' => '...',
-		];
-		$request = ServerRequestFactory::fromGlobals($server);
-		$params = [
-			'controller' => 'FooBar',
-			'action' => 'edit',
-		];
-		$request = $request->withAttribute('params', $params);
+        $resolver = new UrlArrayResolver($request);
+        $resolver->resolve($item);
 
-		$resolver = new UrlArrayResolver($request);
-		$resolver->resolve($item);
-
-		$this->assertTrue($item->isActive());
-
-		$link->setUrl([
-			'controller' => 'FooBar',
-			'action' => 'add',
-		]);
-		$item = new Item('User Listing', $link);
-		$this->assertFalse($item->isActive());
-	}
-
+        $this->assertTrue($item->isActive());
+    }
 }

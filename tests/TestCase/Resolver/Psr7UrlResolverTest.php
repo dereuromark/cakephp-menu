@@ -1,28 +1,25 @@
 <?php
-declare(strict_types = 1);
 
-namespace Menu\TestCase\Resolver;
+declare(strict_types=1);
 
+namespace Menu\Test\TestCase\Resolver;
+
+use Cake\Http\ServerRequest;
 use Cake\TestSuite\TestCase;
 use Menu\Item\Item;
-use Menu\Link\Link;
 use Menu\Resolver\Psr7UrlResolver;
-use Zend\Diactoros\Request;
 
-class Psr7UrlResolverTest extends TestCase {
+class Psr7UrlResolverTest extends TestCase
+{
+    public function testResolvesCurrentStringUrl(): void
+    {
+        $item = new Item('User Listing', '/users?sort=desc');
+        $request = new ServerRequest(['url' => '/users?sort=desc']);
+        $request = $request->withUri($request->getUri()->withPath('/users')->withQuery('sort=desc'));
 
-	/**
-	 * @return void
-	 */
-	public function testItem() {
-		$link = new Link();
-		$link->setUrl('http://www.cakephp.org/users?sort=desc&name=florian');
-		$item = new Item('User Listing', $link);
-		$request = new Request('http://www.cakephp.org/users?sort=desc&name=florian');
-		$resolver = new Psr7UrlResolver($request);
-		$resolver->resolve($item);
+        $resolver = new Psr7UrlResolver($request);
+        $resolver->resolve($item);
 
-		$this->assertTrue($item->isActive());
-	}
-
+        $this->assertTrue($item->isActive());
+    }
 }

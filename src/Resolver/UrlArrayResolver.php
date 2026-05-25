@@ -1,64 +1,73 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Menu\Resolver;
 
 use Cake\Core\InstanceConfigTrait;
 use Menu\Item\ItemInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use function array_key_exists;
+use function is_array;
 
-class UrlArrayResolver implements ResolverInterface {
+class UrlArrayResolver implements ResolverInterface
+{
+    use InstanceConfigTrait;
 
-	use InstanceConfigTrait;
+    /**
+     * @var array<string, mixed>
+     */
+    protected array $_defaultConfig = [];
 
-	/**
-	 * @var \Psr\Http\Message\ServerRequestInterface
-	 */
-	protected $_request;
+    /**
+     * @phpstan-param array<string, mixed> $options
+     */
+    public function __construct(
+        protected ServerRequestInterface $request,
+        array $options = [],
+    ) {
+        $this->setConfig($options);
+    }
 
-	/**
-	 * @var array
-	 */
-	protected $_defaultConfig = [
-	];
+    public function resolve(ItemInterface $item): void
+    {
+        $link = $item->getLink();
+        if ($link === null) {
+            return;
+        }
 
-	/**
-	 * @param \Psr\Http\Message\ServerRequestInterface $request
-	 * @param array $options
-	 */
-	public function __construct(ServerRequestInterface $request, array $options = []) {
-		$this->_request = $request;
-		$this->setConfig($options);
-	}
+        $linkArray = $link->getRawUrl();
+        if (!is_array($linkArray)) {
+            return;
+        }
 
-	/**
-	 * @param \Menu\Item\ItemInterface $item
-	 * @return void
-	 */
-	public function resolve(ItemInterface $item) {
-		$linkArray = $item->getLink()->getRawUrl();
+        $requestParams = (array)$this->request->getAttribute('params');
+        if ($this->matches($requestParams, $linkArray)) {
+            $item->setActive(true);
+        }
+    }
 
-		$requestArray = $this->_request->getAttribute('params');
+    /**
+     * @phpstan-param array<string, mixed> $requestParams
+     * @phpstan-param array<string|int, mixed> $linkArray
+     */
+    protected function matches(array $requestParams, array $linkArray): bool
+    {
+        foreach (['plugin', 'prefix', 'controller', 'action'] as $key) {
+            if (array_key_exists($key, $linkArray) && ($requestParams[$key] ?? null) !== $linkArray[$key]) {
+                return false;
+            }
+        }
 
-		if ($this->_match($requestArray, $linkArray)) {
-			$item->setActive(true);
-		}
-	}
+        foreach ($linkArray as $key => $value) {
+            if (!is_int($key)) {
+                continue;
+            }
+            if (($requestParams['pass'][$key] ?? null) !== $value) {
+                return false;
+            }
+        }
 
-	/**
-	 * @param array $requestArray
-	 * @param array $linkArray
-	 * @return bool
-	 */
-	protected function _match(array $requestArray, array $linkArray) {
-		//TODO: also plugin and prefix
-		if ($requestArray['controller'] !== $linkArray['controller']) {
-			return false;
-		}
-		if ($requestArray['action'] !== $linkArray['action']) {
-			return false;
-		}
-
-		return true;
-	}
-
+        return true;
+    }
 }

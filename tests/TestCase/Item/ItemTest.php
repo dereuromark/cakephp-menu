@@ -1,44 +1,48 @@
 <?php
-declare(strict_types = 1);
 
-namespace Menu\TestCase\Item;
+declare(strict_types=1);
+
+namespace Menu\Test\TestCase\Item;
 
 use Cake\TestSuite\TestCase;
 use Menu\Item\Item;
 use Menu\Link\Link;
-use Menu\Renderer\StringTemplateRenderer;
 
-class ItemTest extends TestCase {
+class ItemTest extends TestCase
+{
+    public function testLabelEscapingFlag(): void
+    {
+        $escaped = (new Item())->setLabel('First<>');
+        $raw = (new Item())->setLabel('Se<b>co</b>nd', false);
 
-	/**
-	 * @return void
-	 */
-	public function testItem() {
-		$item = (new Item())
-			->setLabel('First<>')
-			->setLink(new Link());
+        $this->assertSame('First<>', $escaped->getLabel());
+        $this->assertTrue($escaped->shouldEscapeLabel());
+        $this->assertSame('Se<b>co</b>nd', $raw->getLabel());
+        $this->assertFalse($raw->shouldEscapeLabel());
+    }
 
-		$item2 = (new Item())
-			->setLabel('Se<b>co</b>nd', true)
-			->setLink(new Link());
+    public function testAddChildCreatesSubMenuAndParentReference(): void
+    {
+        $parent = new Item('Parent', '/parent');
+        $child = new Item('Child', '/child');
 
-		$this->assertSame('First&lt;&gt;', $item->getLabel());
-		$this->assertSame('Se<b>co</b>nd', $item2->getLabel());
-	}
+        $parent->add($child);
 
-	/**
-	 * @return void
-	 */
-	public function testItemRender() {
-		$item = (new Item())
-			->setLabel('First')
-			->setLink(Link::create('/abc'));
+        $this->assertTrue($parent->hasSubMenu());
+        $this->assertSame($parent, $child->getParent());
+        $this->assertSame($parent->getId(), $child->getParentId());
+        $this->assertCount(1, $parent->getSubMenu()->getItems());
+    }
 
-		$renderer = new StringTemplateRenderer();
+    public function testLinkShortcutAndDecorators(): void
+    {
+        $item = (new Item('Dashboard'))
+            ->setLink('/dashboard')
+            ->setBefore('<i class="icon"></i>')
+            ->setAfter('<span>!</span>');
 
-		$expected = '<a href="/abc">First</a>';
-		$result = $renderer->renderItem($item);
-		$this->assertSame($expected, $result);
-	}
-
+        $this->assertInstanceOf(Link::class, $item->getLink());
+        $this->assertSame('<i class="icon"></i>', $item->getBefore());
+        $this->assertSame('<span>!</span>', $item->getAfter());
+    }
 }

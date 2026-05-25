@@ -1,67 +1,76 @@
 <?php
-declare(strict_types = 1);
 
-namespace Menu\TestCase\Menu;
+declare(strict_types=1);
 
+namespace Menu\Test\TestCase\Menu;
+
+use Cake\Http\ServerRequest;
 use Cake\TestSuite\TestCase;
-use Menu\Item\Item;
-use Menu\Link\Link;
 use Menu\Menu;
+use Menu\Resolver\UrlArrayResolver;
 
-/**
- * Item Test Case
- */
-class MenuTest extends TestCase {
+class MenuTest extends TestCase
+{
+    public function testAttributeMerging(): void
+    {
+        $menu = Menu::create()
+            ->setAttributes(['class' => 'primary'])
+            ->setAttributes(['id' => 'main-nav'], true);
 
-	/**
-	 * @return void
-	 */
-	public function testGetAttributes() {
-		$menu = Menu::create();
-		$menu->setAttributes(['foo' => 'bar']);
-		$menu->setAttributes(['fo' => 'ba']);
+        $this->assertSame([
+            'id' => 'main-nav',
+            'class' => 'primary',
+        ], $menu->getAttributes());
+    }
 
-		$attributes = $menu->getAttributes();
-		$expected = [
-			'fo' => 'ba',
-		];
-		$this->assertSame($expected, $attributes);
-	}
+    public function testAddGetAndRemove(): void
+    {
+        $menu = Menu::create();
+        $dashboard = $menu->addItem('Dashboard', '/dashboard', ['id' => 'dashboard']);
+        $settings = $menu->addItem('Settings', '/settings', ['id' => 'settings']);
 
-	/**
-	 * @return void
-	 */
-	public function testGetAttributesMerge() {
-		$menu = Menu::create();
-		$menu->setAttributes(['foo' => 'bar']);
-		$menu->setAttributes(['fo' => 'ba'], true);
+        $this->assertSame($dashboard, $menu->get('dashboard'));
+        $this->assertTrue($menu->has('settings'));
 
-		$attributes = $menu->getAttributes();
-		$expected = [
-			'fo' => 'ba',
-			'foo' => 'bar',
-		];
-		$this->assertSame($expected, $attributes);
-	}
+        $menu->remove('settings');
 
-	/**
-	 * @return void
-	 */
-	public function testMenu() {
-		$item = (new Item())
-			->setLabel('First<>')
-			->setLink(new Link());
+        $this->assertNull($menu->get('settings'));
+        $this->assertCount(1, $menu->getItems());
+        $this->assertSame([$dashboard], $menu->getItems());
+    }
 
-		$item2 = (new Item())
-			->setLabel('Se<b>co</b>nd', true)
-			->setLink(new Link());
+    public function testFilterAndSort(): void
+    {
+        $menu = Menu::create();
+        $menu->addItem('Users', '/users', ['id' => 'users'])->setData('weight', 20);
+        $menu->addItem('Dashboard', '/dashboard', ['id' => 'dashboard'])->setData('weight', 10);
+        $menu->addItem('Hidden', '/hidden', ['id' => 'hidden'])->setVisibility(false);
 
-		$menu = new Menu();
-		$menu->add($item);
-		$menu->add($item2);
+        $menu->filter(static fn ($item) => $item->isVisible());
+        $menu->sortBy('weight');
 
-		//Render menu
-		$this->assertCount(2, $menu->getItems());
-	}
+        $items = $menu->getItems();
+        $this->assertCount(2, $items);
+        $this->assertSame('dashboard', $items[0]->getId());
+        $this->assertSame('users', $items[1]->getId());
+    }
 
+    public function testResolveRecursively(): void
+    {
+        $request = new ServerRequest();
+        $request = $request->withAttribute('params', [
+            'controller' => 'Articles',
+            'action' => 'view',
+            'pass' => [42],
+        ]);
+
+        $menu = Menu::create();
+        $parent = $menu->addItem('Articles', ['controller' => 'Articles', 'action' => 'index'], ['id' => 'articles']);
+        $parent->add((new Menu())->newItem('View', ['controller' => 'Articles', 'action' => 'view', 42], ['id' => 'view']));
+
+        $menu->resolve(new UrlArrayResolver($request));
+
+        $this->assertFalse($parent->isActive());
+        $this->assertTrue($menu->get('view')?->isActive());
+    }
 }

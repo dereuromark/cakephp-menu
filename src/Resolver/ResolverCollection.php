@@ -1,6 +1,55 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Menu\Resolver;
 
-class ResolverCollection implements ResolverCollectionInterface {
+use InvalidArgumentException;
+use Menu\Item\ItemInterface;
+
+class ResolverCollection implements ResolverCollectionInterface
+{
+    /**
+     * @var list<\Menu\Resolver\ResolverInterface>
+     */
+    protected array $resolvers = [];
+
+    public function add(ResolverInterface $resolver): static
+    {
+        $this->resolvers[] = $resolver;
+
+        return $this;
+    }
+
+    /**
+     * @phpstan-param array<mixed> $resolvers
+     *
+     * @throws \InvalidArgumentException
+     */
+    public function addMany(array $resolvers): static
+    {
+        foreach ($resolvers as $resolver) {
+            if (!$resolver instanceof ResolverInterface) {
+                throw new InvalidArgumentException('All resolvers must implement ' . ResolverInterface::class);
+            }
+            $this->add($resolver);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return list<\Menu\Resolver\ResolverInterface>
+     */
+    public function all(): array
+    {
+        return $this->resolvers;
+    }
+
+    public function resolve(ItemInterface $item): void
+    {
+        foreach ($this->resolvers as $resolver) {
+            $resolver->resolve($item);
+        }
+    }
 }

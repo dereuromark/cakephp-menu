@@ -1,75 +1,110 @@
 <?php
-declare(strict_types = 1);
+
+declare(strict_types=1);
 
 namespace Menu;
 
-use Cake\Collection\Collection;
+use Countable;
+use InvalidArgumentException;
+use IteratorAggregate;
 use Menu\Item\ItemInterface;
-use RuntimeException;
+use Traversable;
 
 /**
- * Item Collection for a Menu
+ * @implements \IteratorAggregate<int, \Menu\Item\ItemInterface>
  */
-class ItemCollection extends Collection {
+class ItemCollection implements Countable, IteratorAggregate
+{
+    /**
+     * @var list<\Menu\Item\ItemInterface>
+     */
+    protected array $items = [];
 
-	/**
-	 * Adds an item to the collection
-	 *
-	 * @param \Menu\Item\ItemInterface $item Item
-	 * @return void
-	 */
-	public function add(ItemInterface $item) {
-		$this->addMany([$item]);
-	}
+    /**
+     * @param array<mixed> $items
+     */
+    public function __construct(array $items = [])
+    {
+        $this->addMany($items);
+    }
 
-	/**
-	 * Adds many items to the collection
-	 *
-	 * @param array $items
-	 * @return void
-	 */
-	public function addMany(array $items = []) {
-		foreach ($items as $key => $item) {
-			if (!$item instanceof ItemInterface) {
-				throw new RuntimeException(sprintf(
-					'Item #`%s` does not implement `%s`',
-					$key,
-					ItemInterface::class
-				));
-			}
-		}
+    public function add(ItemInterface $item): static
+    {
+        $this->items[] = $item;
 
-		$this->append($items);
-	}
+        return $this;
+    }
 
-	/**
-	 * Find all items by parent id
-	 *
-	 * @param int|string|\Menu\Item\ItemInterface $parentId Parent Id or Item
-	 * @return array
-	 */
-	public function findByParent($parentId) {
-		if ($parentId instanceof ItemInterface) {
-			$parentId = $parentId->getId();
-		}
+    /**
+     * @param array<mixed> $items
+     *
+     * @throws \InvalidArgumentException
+     */
+    public function addMany(array $items): static
+    {
+        foreach ($items as $item) {
+            if (!$item instanceof ItemInterface) {
+                throw new InvalidArgumentException('All collection items must implement ' . ItemInterface::class);
+            }
+            $this->add($item);
+        }
 
-		return $this->filter(function($item) use ($parentId) {
-			return $item->getParentId() === $parentId;
-		})->toArray();
-	}
+        return $this;
+    }
 
-	/**
-	 * Finds a single item by its id
-	 *
-	 * @param string $id
-	 * @return int|string|null
-	 */
-	public function findById($id) {
-		$result = $this->filter(function(ItemInterface $item) use ($id) {
-			return $item->getId() === $id;
-		});
+    /**
+     * @return list<\Menu\Item\ItemInterface>
+     */
+    public function all(): array
+    {
+        return $this->items;
+    }
 
-		return $result->first();
-	}
+    public function findById(string $id): ?ItemInterface
+    {
+        foreach ($this->items as $item) {
+            if ($item->getId() === $id) {
+                return $item;
+            }
+        }
 
+        return null;
+    }
+
+    public function findByKey(string $key): ?ItemInterface
+    {
+        foreach ($this->items as $item) {
+            if ($item->getKey() === $key) {
+                return $item;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @return list<\Menu\Item\ItemInterface>
+     */
+    public function findByParent(string|ItemInterface $parent): array
+    {
+        $parentId = $parent instanceof ItemInterface ? $parent->getId() : $parent;
+
+        return array_values(array_filter(
+            $this->items,
+            static fn (ItemInterface $item): bool => $item->getParentId() === $parentId,
+        ));
+    }
+
+    public function count(): int
+    {
+        return count($this->items);
+    }
+
+    /**
+     * @return \Traversable<int, \Menu\Item\ItemInterface>
+     */
+    public function getIterator(): Traversable
+    {
+        yield from $this->items;
+    }
 }

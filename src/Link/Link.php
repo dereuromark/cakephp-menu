@@ -1,132 +1,113 @@
 <?php
-declare(strict_types = 1);
+
+declare(strict_types=1);
 
 namespace Menu\Link;
 
 use Cake\Routing\Router;
 use LogicException;
-use RuntimeException;
 
-class Link implements LinkInterface {
+class Link implements LinkInterface
+{
+    /**
+     * @var array<string, mixed>
+     */
+    protected array $attributes = [];
 
-	/**
-	 * @var array
-	 */
-	protected $_attributes = [];
+    /**
+     * @var array<string|int, mixed>|string|null
+     */
+    protected string|array|null $url = null;
 
-	/**
-	 * @var string|array|null
-	 */
-	protected $_url;
+    protected bool $external = false;
 
-	/**
-	 * @var bool
-	 */
-	protected $_external = false;
+    /**
+     * @phpstan-param array<string|int, mixed>|string|null $url
+     * @phpstan-param array<string, mixed> $attributes
+     */
+    public static function create(
+        string|array|null $url = null,
+        array $attributes = [],
+        bool $external = false,
+    ): static {
+        $link = new static();
+        $link->setUrl($url, $external);
+        if ($attributes) {
+            $link->setAttributes($attributes);
+        }
 
-	/**
-	 * @var string
-	 */
-	protected $_title;
+        return $link;
+    }
 
-	/**
-	 * Convenience factory method
-	 *
-	 * @param string|array|null $url
-	 * @param bool $external
-	 *
-	 * @return static
-	 */
-	public static function create($url = null, $external = false) {
-		$link = new static();
-		if ($url !== null) {
-			$link->setUrl($url, $external);
-		}
+    /**
+     * @phpstan-param array<string|int, mixed>|string|null $url
+     *
+     * @throws \LogicException
+     */
+    public function setUrl(string|array|null $url, bool $external = false): static
+    {
+        if ($external && is_array($url)) {
+            throw new LogicException('External links must use a string URL.');
+        }
 
-		return $link;
-	}
+        $this->url = $url;
+        $this->external = $external;
 
-	/**
-	 * @param string|array $url
-	 * @param bool $external
-	 *
-	 * @return $this
-	 */
-	public function setUrl($url, $external = false) {
-		if ($external && is_array($url)) {
-			throw new LogicException('URL array must always be an internal link, otherwise transform into string manually before passing.');
-		}
+        return $this;
+    }
 
-		$this->_url = $url;
-		$this->_external = $external;
+    public function setAttribute(string $name, mixed $value): static
+    {
+        $this->attributes[$name] = $value;
 
-		return $this;
-	}
+        return $this;
+    }
 
-	/**
-	 * @param string $title
-	 *
-	 * @return $this
-	 */
-	public function setTitle($title) {
-		$this->_title = $title;
+    /**
+     * @phpstan-param array<string, mixed> $attributes
+     */
+    public function setAttributes(array $attributes, bool $merge = false): static
+    {
+        $this->attributes = $merge ? $attributes + $this->attributes : $attributes;
 
-		return $this;
-	}
+        return $this;
+    }
 
-	/**
-	 * @param string $name
-	 * @param mixed $value
-	 *
-	 * @return $this
-	 */
-	public function setAttribute($name, $value) {
-		$this->_attributes[$name] = $value;
+    /**
+     * @phpstan-return array<string, mixed>
+     */
+    public function getAttributes(): array
+    {
+        return $this->attributes;
+    }
 
-		return $this;
-	}
+    /**
+     * @phpstan-return array<string|int, mixed>|string|null
+     */
+    public function getRawUrl(): string|array|null
+    {
+        return $this->url;
+    }
 
-	/**
-	 * @return array
-	 */
-	public function getAttributes() {
-		return $this->_attributes;
-	}
+    public function getUrl(): ?string
+    {
+        if ($this->url === null) {
+            return null;
+        }
 
-	/**
-	 * @return string|array|null
-	 */
-	public function getRawUrl() {
-		return $this->_url;
-	}
+        if ($this->external) {
+            if (!is_string($this->url)) {
+                throw new LogicException('External links must use a string URL.');
+            }
 
-	/**
-	 * @return string|null
-	 */
-	public function getUrl() {
-		$rawUrl = $this->getRawUrl();
-		if ($rawUrl === null) {
-			return null;
-		}
+            return $this->url;
+        }
 
-		return $this->_builder($rawUrl);
-	}
+        return Router::url($this->url);
+    }
 
-	/**
-	 * @param string|array $rawUrl
-	 *
-	 * @return string
-	 */
-	protected function _builder($rawUrl) {
-		if ($this->_external) {
-			if (is_array($rawUrl)) {
-				throw new RuntimeException('Cannot use an array URL as external one');
-			}
-
-			return $rawUrl;
-		}
-
-		return Router::url($rawUrl);
-	}
-
+    public function isExternal(): bool
+    {
+        return $this->external;
+    }
 }

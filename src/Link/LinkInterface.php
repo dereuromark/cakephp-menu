@@ -1,39 +1,44 @@
 <?php
-declare(strict_types = 1);
+
+declare(strict_types=1);
 
 namespace Menu\Link;
 
-interface LinkInterface {
+interface LinkInterface
+{
+    /**
+     * @phpstan-param array<string|int, mixed>|string|null $url
+     * @phpstan-param array<string, mixed> $attributes
+     */
+    public static function create(
+        string|array|null $url = null,
+        array $attributes = [],
+        bool $external = false,
+    ): static;
 
-	/**
-	 * Sets HTML attributes for the link
-	 *
-	 * @param string $name
-	 * @param string $value
-	 *
-	 * @return $this
-	 */
-	public function setAttribute($name, $value);
+    /**
+     * @phpstan-param array<string|int, mixed>|string|null $url
+     */
+    public function setUrl(string|array|null $url, bool $external = false): static;
 
-	/**
-	 * Gets all attributes as array
-	 *
-	 * @return array Attributes
-	 */
-	public function getAttributes();
+    public function setAttribute(string $name, mixed $value): static;
 
-	/**
-	 * Returns whatever the implementation expects to build an URL from
-	 *
-	 * @return mixed
-	 */
-	public function getRawUrl();
+    /**
+     * @phpstan-param array<string, mixed> $attributes
+     */
+    public function setAttributes(array $attributes, bool $merge = false): static;
 
-	/**
-	 * Gets the URL
-	 *
-	 * @return string
-	 */
-	public function getUrl();
+    /**
+     * @phpstan-return array<string, mixed>
+     */
+    public function getAttributes(): array;
 
+    /**
+     * @phpstan-return array<string|int, mixed>|string|null
+     */
+    public function getRawUrl(): string|array|null;
+
+    public function getUrl(): ?string;
+
+    public function isExternal(): bool;
 }

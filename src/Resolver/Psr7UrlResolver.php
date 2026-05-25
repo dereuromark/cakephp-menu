@@ -1,43 +1,59 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Menu\Resolver;
 
 use Cake\Core\InstanceConfigTrait;
 use Menu\Item\ItemInterface;
 use Psr\Http\Message\RequestInterface;
+use function parse_url;
 
-class Psr7UrlResolver implements ResolverInterface {
+class Psr7UrlResolver implements ResolverInterface
+{
+    use InstanceConfigTrait;
 
-	use InstanceConfigTrait;
+    /**
+     * @var array<string, mixed>
+     */
+    protected array $_defaultConfig = [];
 
-	/**
-	 * @var \Psr\Http\Message\RequestInterface
-	 */
-	protected $_request;
+    /**
+     * @phpstan-param array<string, mixed> $options
+     */
+    public function __construct(
+        protected RequestInterface $request,
+        array $options = [],
+    ) {
+        $this->setConfig($options);
+    }
 
-	/**
-	 * @var array
-	 */
-	protected $_defaultConfig = [
-	];
+    public function resolve(ItemInterface $item): void
+    {
+        $link = $item->getLink();
+        if ($link === null || is_array($link->getRawUrl())) {
+            return;
+        }
 
-	/**
-	 * @param \Psr\Http\Message\RequestInterface $request
-	 * @param array $options
-	 */
-	public function __construct(RequestInterface $request, array $options = []) {
-		$this->_request = $request;
-		$this->setConfig($options);
-	}
+        $requestUri = (string)$this->request->getUri();
+        $linkUrl = $link->getUrl();
+        if ($linkUrl === null) {
+            return;
+        }
 
-	/**
-	 * @param \Menu\Item\ItemInterface $item
-	 * @return void
-	 */
-	public function resolve(ItemInterface $item) {
-		if ((string)$this->_request->getUri() === $item->getLink()->getUrl()) {
-			$item->setActive(true);
-		}
-	}
+        if ($requestUri === $linkUrl) {
+            $item->setActive(true);
 
+            return;
+        }
+
+        $requestPath = parse_url($requestUri, PHP_URL_PATH);
+        $requestQuery = parse_url($requestUri, PHP_URL_QUERY);
+        $linkPath = parse_url($linkUrl, PHP_URL_PATH);
+        $linkQuery = parse_url($linkUrl, PHP_URL_QUERY);
+
+        if ($requestPath === $linkPath && $requestQuery === $linkQuery) {
+            $item->setActive(true);
+        }
+    }
 }

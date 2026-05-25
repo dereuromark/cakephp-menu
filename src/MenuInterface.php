@@ -1,85 +1,100 @@
 <?php
-declare(strict_types = 1);
+
+declare(strict_types=1);
 
 namespace Menu;
 
 use Menu\Item\ItemInterface;
+use Menu\Link\LinkInterface;
+use Menu\Resolver\ResolverCollectionInterface;
+use Menu\Resolver\ResolverInterface;
 
-interface MenuInterface {
+interface MenuInterface
+{
+    /**
+     * @var string
+     */
+    public const SORT_ASC = 'asc';
 
-	public const SORT_ASC = 'asc';
-	public const SORT_DESC = 'desc';
+    /**
+     * @var string
+     */
+    public const SORT_DESC = 'desc';
 
-	/**
-	 * @param \Menu\Item\ItemInterface $item
-	 *
-	 * @return $this
-	 */
-	public function add(ItemInterface $item);
+    /**
+     * @phpstan-param array<string, mixed> $attributes
+     */
+    public static function create(array $attributes = []): static;
 
-	/**
-	 * @param string $itemId
-	 * @return $this
-	 */
-	public function remove($itemId);
+    public function add(ItemInterface $item): static;
 
-	/**
-	 * @return \Menu\Item\ItemInterface[]
-	 */
-	public function getItems();
+    /**
+     * @phpstan-param \Menu\Link\LinkInterface|array<string|int, mixed>|string|null $link
+     * @phpstan-param array<string, mixed> $options
+     */
+    public function addItem(
+        string $label,
+        LinkInterface|string|array|null $link = null,
+        array $options = [],
+    ): ItemInterface;
 
-	/**
-	 * @param string $name
-	 * @param mixed $value
-	 *
-	 * @return $this
-	 */
-	public function setData($name, $value);
+    /**
+     * @phpstan-param array<string, mixed> $options
+     */
+    public function addRaw(string $html, array $options = []): ItemInterface;
 
-	/**
-	 * @param string $name
-	 *
-	 * @return mixed
-	 */
-	public function getData($name);
+    /**
+     * @phpstan-param array<string, mixed> $options
+     */
+    public function addDivider(array $options = []): ItemInterface;
 
-	/**
-	 * @return array
-	 */
-	public function getAttributes();
+    /**
+     * @phpstan-param \Menu\Link\LinkInterface|array<string|int, mixed>|string|null $link
+     * @phpstan-param array<string, mixed> $options
+     */
+    public function newItem(
+        ?string $label = null,
+        LinkInterface|string|array|null $link = null,
+        array $options = [],
+    ): ItemInterface;
 
-	/**
-	 * @param string $name
-	 * @param mixed $value
-	 *
-	 * @return mixed
-	 */
-	public function setAttribute($name, $value);
+    /**
+     * @return list<\Menu\Item\ItemInterface>
+     */
+    public function getItems(): array;
 
-	/**
-	 * Sets multiple HTML attributes
-	 *
-	 * @param array $attributes Attributes
-	 * @param bool $merge Merge them or not
-	 *
-	 * @return void
-	 */
-	public function setAttributes(array $attributes, $merge = false);
+    /**
+     * @phpstan-param array<mixed> $items
+     *
+     * @return $this
+     */
+    public function setItems(array $items): static;
 
-	/**
-	 * @param callable|string $by
-	 * @param array $options
-	 *
-	 * @return void
-	 */
-	public function filter($by, array $options);
+    public function get(string $id): ?ItemInterface;
 
-	/**
-	 * @param string $name
-	 * @param string $direction
-	 *
-	 * @return void
-	 */
-	public function sortBy($name, $direction = self::SORT_DESC);
+    public function has(string $id): bool;
 
+    public function remove(string $id): static;
+
+    public function setData(string $name, mixed $value): static;
+
+    public function getData(?string $name = null): mixed;
+
+    /**
+     * @phpstan-return array<string, mixed>
+     */
+    public function getAttributes(): array;
+
+    public function setAttribute(string $name, mixed $value): static;
+
+    /**
+     * @phpstan-param array<string, mixed> $attributes
+     */
+    public function setAttributes(array $attributes, bool $merge = false): static;
+
+    public function filter(callable $callback): static;
+
+    public function sortBy(callable|string $by, string $direction = self::SORT_ASC): static;
+
+    public function resolve(ResolverInterface|ResolverCollectionInterface $resolver): static;
 }

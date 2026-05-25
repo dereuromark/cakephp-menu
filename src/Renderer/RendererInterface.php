@@ -1,18 +1,21 @@
 <?php
-declare(strict_types = 1);
+
+declare(strict_types=1);
 
 namespace Menu\Renderer;
 
+use Menu\Item\ItemInterface;
 use Menu\MenuInterface;
 
-interface RendererInterface {
+interface RendererInterface
+{
+    /**
+     * @phpstan-param array<string, mixed> $options
+     */
+    public function render(MenuInterface $menu, array $options = []): string;
 
-	/**
-	 * @param \Menu\MenuInterface $menu
-	 * @param array $options
-	 *
-	 * @return string
-	 */
-	public function render(MenuInterface $menu, array $options = []);
-
+    /**
+     * @phpstan-param array<string, mixed> $options
+     */
+    public function renderItem(ItemInterface $item, array $options = []): string;
 }

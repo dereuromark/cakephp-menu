@@ -1,39 +1,33 @@
 <?php
-declare(strict_types = 1);
 
-namespace Menu\TestCase\Menu;
+declare(strict_types=1);
 
+namespace Menu\Test\TestCase\View\Helper;
+
+use Cake\Http\Response;
+use Cake\Http\ServerRequest;
 use Cake\TestSuite\TestCase;
 use Cake\View\View;
-use Menu\Item\Item;
-use Menu\Link\Link;
 use Menu\Menu;
 use Menu\View\Helper\MenuHelper;
 
-class MenuHelperTest extends TestCase {
+class MenuHelperTest extends TestCase
+{
+    public function testRender(): void
+    {
+        $menuHelper = new MenuHelper(new View(
+            request: new ServerRequest(),
+            response: new Response(),
+        ));
+        $menu = Menu::create();
+        $menu->addItem('First', '/x');
+        $menu->addItem('Second', '/y');
 
-	/**
-	 * @return void
-	 */
-	public function testRender() {
-		$menuHelper = new MenuHelper(new View());
+        $html = $menuHelper->render($menu);
 
-		$item = (new Item())
-			->setLabel('First')
-			->setLink((new Link())->setUrl('/x'));
-
-		$item2 = (new Item())
-			->setLabel('Second')
-			->setLink((new Link())->setUrl('/y'));
-
-		$menu = new Menu();
-		$menu->add($item)
-			->add($item2);
-
-		$html = $menuHelper->render($menu);
-
-		$expected = '<a href="/x">First</a><a href="/y">Second</a>';
-		$this->assertSame($expected, $html);
-	}
-
+        $this->assertSame(
+            '<ul><li><a href="/x">First</a></li><li><a href="/y">Second</a></li></ul>',
+            $html,
+        );
+    }
 }

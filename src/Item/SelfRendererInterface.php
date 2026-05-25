@@ -1,13 +1,10 @@
 <?php
-declare(strict_types = 1);
+
+declare(strict_types=1);
 
 namespace Menu\Item;
 
-interface SelfRendererInterface {
-
-	/**
-	 * @return string
-	 */
-	public function render();
-
+interface SelfRendererInterface
+{
+    public function render(): string;
 }

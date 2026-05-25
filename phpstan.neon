@@ -2,10 +2,8 @@ parameters:
 	level: 8
 	bootstrapFiles:
 		- %rootDir%/../../../tests/bootstrap.php
-	checkMissingIterableValueType: false
-	checkGenericClassInNonGenericObjectType: false
+	paths:
+		- src
+		- tests
 	ignoreErrors:
 		- '#Unsafe usage of new static\(\).#'
-	earlyTerminatingMethodCalls:
-		Cake\Shell\Shell:
-			- abort

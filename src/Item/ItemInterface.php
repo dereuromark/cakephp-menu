@@ -1,172 +1,90 @@
 <?php
-declare(strict_types = 1);
+
+declare(strict_types=1);
 
 namespace Menu\Item;
 
 use Menu\Link\LinkInterface;
+use Menu\MenuInterface;
 
-/**
- * Item Interface
- */
-interface ItemInterface {
+interface ItemInterface
+{
+    public function setId(string $id): static;
 
-	/**
-	 * @param string $key
-	 *
-	 * @return $this
-	 */
-	public function setKey($key);
+    public function getId(): string;
 
-	/**
-	 * @return string
-	 */
-	public function getKey();
+    public function setKey(string $key): static;
 
-	/**
-	 * @return bool
-	 */
-	public function isRaw();
+    public function getKey(): string;
 
-	/**
-	 * @param string $content
-	 *
-	 * @return $this
-	 */
-	public function setRaw($content);
+    public function setLabel(string $label, bool $escape = true): static;
 
-	/**
-	 * @return string
-	 */
-	public function getRaw();
+    public function getLabel(): ?string;
 
-	/**
-	 * @param string $title
-	 *
-	 * @return $this
-	 */
-	public function setLabel($title);
+    public function shouldEscapeLabel(): bool;
 
-	/**
-	 * @return string
-	 */
-	public function getLabel();
+    /**
+     * @phpstan-param \Menu\Link\LinkInterface|array<string|int, mixed>|string|null $link
+     */
+    public function setLink(LinkInterface|string|array|null $link): static;
 
-	/**
-	 * @param \Menu\Link\LinkInterface|null $link Link Object
-	 *
-	 * @return $this
-	 */
-	public function setLink(?LinkInterface $link);
+    public function getLink(): ?LinkInterface;
 
-	/**
-	 * @return \Menu\Link\LinkInterface
-	 */
-	public function getLink();
+    public function setRaw(string $content): static;
 
-	/**
-	 * @return string
-	 */
-	public function getId();
+    public function getRaw(): ?string;
 
-	/**
-	 * @param string $id
-	 *
-	 * @return $this
-	 */
-	public function setId($id);
+    public function isRaw(): bool;
 
-	/**
-	 * @return bool
-	 */
-	public function isActive();
+    public function setDivider(bool $divider = true): static;
 
-	/**
-	 * @param bool|callable $isActive Sets the active status
-	 *
-	 * @return $this
-	 */
-	public function setActive($isActive);
+    public function isDivider(): bool;
 
-	/**
-	 * @return bool
-	 */
-	public function isVisible();
+    public function setVisibility(bool $isVisible): static;
 
-	/**
-	 * Sets the visibility of the item
-	 *
-	 * @param bool $isVisible Is visible or not
-	 *
-	 * @return $this
-	 */
-	public function setVisibility($isVisible);
+    public function isVisible(): bool;
 
-	/**
-	 * @param \Menu\Item\ItemInterface $item
-	 *
-	 * @return $this
-	 */
-	public function add(ItemInterface $item);
+    public function setActive(bool $isActive): static;
 
-	/**
-	 * @param string $name
-	 * @param mixed $value
-	 *
-	 * @return $this
-	 */
-	public function setData($name, $value);
+    public function isActive(): bool;
 
-	/**
-	 * @param string|null $name
-	 *
-	 * @return mixed
-	 */
-	public function getData($name = null);
+    public function add(ItemInterface $item): static;
 
-	/**
-	 * Sets a single attribute.
-	 *
-	 * @param string $name
-	 * @param string $value
-	 *
-	 * @return $this
-	 */
-	public function setAttribute($name, $value);
+    public function setSubMenu(MenuInterface $menu): static;
 
-	/**
-	 * Replaces all attributes completely.
-	 *
-	 * @param array $attributes
-	 *
-	 * @return $this
-	 */
-	public function setAttributes(array $attributes);
+    public function getSubMenu(): MenuInterface;
 
-	/**
-	 * @return array
-	 */
-	public function getAttributes();
+    public function hasSubMenu(): bool;
 
-	/**
-	 * @return bool
-	 */
-	public function hasParent();
+    public function setParent(ItemInterface $item): static;
 
-	/**
-	 * @param \Menu\Item\ItemInterface $item
-	 *
-	 * @return $this
-	 */
-	public function setParent(ItemInterface $item);
+    public function getParent(): ?ItemInterface;
 
-	/**
-	 * @return \Menu\Item\ItemInterface
-	 */
-	public function getParent();
+    public function hasParent(): bool;
 
-	/**
-	 * @return string|int
-	 */
-	public function getParentId();
+    public function getParentId(): ?string;
 
+    public function setBefore(string $before): static;
+
+    public function getBefore(): string;
+
+    public function setAfter(string $after): static;
+
+    public function getAfter(): string;
+
+    public function setAttribute(string $name, mixed $value): static;
+
+    /**
+     * @phpstan-param array<string, mixed> $attributes
+     */
+    public function setAttributes(array $attributes, bool $merge = false): static;
+
+    /**
+     * @phpstan-return array<string, mixed>
+     */
+    public function getAttributes(): array;
+
+    public function setData(string $name, mixed $value): static;
+
+    public function getData(?string $name = null): mixed;
 }

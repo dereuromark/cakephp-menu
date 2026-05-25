@@ -1,359 +1,300 @@
 <?php
-declare(strict_types = 1);
+
+declare(strict_types=1);
 
 namespace Menu\Item;
 
+use Cake\Utility\Text;
+use Menu\Link\Link;
 use Menu\Link\LinkInterface;
+use Menu\Menu;
 use Menu\MenuInterface;
-use RuntimeException;
 
-class Item implements ItemInterface {
+class Item implements ItemInterface
+{
+    protected string $id;
 
-	/**
-	 * @var string
-	 */
-	protected $_id;
+    protected string $key = '';
 
-	/**
-	 * @var bool
-	 */
-	protected $_isRaw = false;
+    protected ?string $label = null;
 
-	/**
-	 * @var bool
-	 */
-	protected $_isDivider = true;
+    protected bool $escapeLabel = true;
 
-	/**
-	 * @var bool
-	 */
-	protected $_isVisible = true;
+    protected ?LinkInterface $link = null;
 
-	/**
-	 * @var bool|callable
-	 */
-	protected $_isActive = false;
+    protected ?string $raw = null;
 
-	/**
-	 * @var array
-	 */
-	protected $_attributes = [];
+    protected bool $divider = false;
 
-	/**
-	 * @var string|null
-	 */
-	protected $_label;
+    protected bool $visible = true;
 
-	/**
-	 * @var string|null
-	 */
-	protected $_data;
+    protected bool $active = false;
 
-	/**
-	 * @var string|array|null
-	 */
-	protected $_raw;
+    protected string $before = '';
 
-	/**
-	 * @var \Menu\Link\LinkInterface|null
-	 */
-	protected $_link;
+    protected string $after = '';
 
-	/**
-	 * @var \Menu\Item\ItemInterface|null
-	 */
-	protected $_parent;
+    /**
+     * @var array<string, mixed>
+     */
+    protected array $attributes = [];
 
-	/**
-	 * @var int|string
-	 */
-	protected $_parentId;
+    /**
+     * @var array<string, mixed>
+     */
+    protected array $data = [];
 
-	/**
-	 * @var string
-	 */
-	protected $_key = '';
+    protected ?ItemInterface $parent = null;
 
-	/**
-	 * @param string|null $title
-	 * @param \Menu\Link\LinkInterface|null $link
-	 */
-	public function __construct($title = null, $link = null) {
-		$this->_id = str_replace('.', '', uniqid('id-', true));
-		$this->_key = strtolower(str_replace(' ', '-', (string)$title));
+    protected ?MenuInterface $subMenu = null;
 
-		if ($title !== null) {
-			$this->setLabel($title);
-		}
-		if ($link instanceof LinkInterface) {
-			$this->setLink($link);
-		}
-	}
+    /**
+     * @phpstan-param \Menu\Link\LinkInterface|array<string|int, mixed>|string|null $link
+     */
+    public function __construct(
+        ?string $label = null,
+        LinkInterface|string|array|null $link = null,
+    ) {
+        $this->id = 'menu-item-' . Text::uuid();
+        if ($label !== null) {
+            $this->setLabel($label);
+        }
+        if ($link !== null) {
+            $this->setLink($link);
+        }
+    }
 
-	/**
-	 * @param bool $isVisible
-	 *
-	 * @return $this
-	 */
-	public function setVisibility($isVisible) {
-		$this->_isVisible = $isVisible;
+    public function setId(string $id): static
+    {
+        $this->id = $id;
 
-		return $this;
-	}
+        return $this;
+    }
 
-	/**
-	 * @param bool|callable $isActive
-	 *
-	 * @return $this
-	 */
-	public function setActive($isActive) {
-		$this->_isActive = $isActive;
+    public function getId(): string
+    {
+        return $this->id;
+    }
 
-		return $this;
-	}
+    public function setKey(string $key): static
+    {
+        $this->key = $key;
 
-	/**
-	 * @param \Menu\Link\LinkInterface|null $link
-	 *
-	 * @return $this
-	 */
-	public function setLink(?LinkInterface $link) {
-		$this->_link = $link;
+        return $this;
+    }
 
-		return $this;
-	}
+    public function getKey(): string
+    {
+        if ($this->key === '' && $this->label !== null) {
+            $this->key = strtolower((string)Text::slug($this->label));
+        }
 
-	/**
-	 * @param string $key
-	 * @return \Menu\Item\Item
-	 */
-	public function setKey($key) {
-		$this->_key = $key;
+        return $this->key;
+    }
 
-		return $this;
-	}
+    public function setLabel(string $label, bool $escape = true): static
+    {
+        $this->label = $label;
+        $this->escapeLabel = $escape;
 
-	/**
-	 * @return string
-	 */
-	public function getKey() {
-		return $this->_key;
-	}
+        return $this;
+    }
 
-	/**
-	 * @return \Menu\Link\LinkInterface|null
-	 */
-	public function getLink() {
-		return $this->_link;
-	}
+    public function getLabel(): ?string
+    {
+        return $this->label;
+    }
 
-	/**
-	 * @param string $title
-	 * @param bool $html
-	 *
-	 * @return $this
-	 */
-	public function setLabel($title, $html = false) {
-		$this->_label = $html ? $title : (string)h($title);
+    public function shouldEscapeLabel(): bool
+    {
+        return $this->escapeLabel;
+    }
 
-		return $this;
-	}
+    /**
+     * @phpstan-param \Menu\Link\LinkInterface|array<string|int, mixed>|string|null $link
+     */
+    public function setLink(LinkInterface|string|array|null $link): static
+    {
+        if (!$link instanceof LinkInterface) {
+            $link = Link::create($link);
+        }
 
-	/**
-	 * @return bool
-	 */
-	public function isRaw() {
-		return $this->_isRaw;
-	}
+        $this->link = $link;
 
-	/**
-	 * @param string|array $data
-	 *
-	 * @return $this
-	 */
-	public function setRaw($data) {
-		$this->_raw = $data;
-		$this->_isRaw = true;
+        return $this;
+    }
 
-		return $this;
-	}
+    public function getLink(): ?LinkInterface
+    {
+        return $this->link;
+    }
 
-	/**
-	 * @return string|array|null
-	 */
-	public function getRaw() {
-		return $this->_raw;
-	}
+    public function setRaw(string $content): static
+    {
+        $this->raw = $content;
 
-	/**
-	 * @param \Menu\Item\ItemInterface $item
-	 *
-	 * @return $this
-	 */
-	public function add(ItemInterface $item) {
-		$item->setParent($this);
-		$this->getSubMenu()->add($item);
+        return $this;
+    }
 
-		return $this;
-	}
+    public function getRaw(): ?string
+    {
+        return $this->raw;
+    }
 
-	/**
-	 * @return \Menu\MenuInterface
-	 */
-	public function getSubMenu() {
-		//TODO
-	}
+    public function isRaw(): bool
+    {
+        return $this->raw !== null;
+    }
 
-	/**
-	 * @param \Menu\MenuInterface $menu
-	 *
-	 * @return $this
-	 */
-	public function setSubMenu(MenuInterface $menu) {
-		//TODO
+    public function setDivider(bool $divider = true): static
+    {
+        $this->divider = $divider;
 
-		return $this;
-	}
+        return $this;
+    }
 
-	/**
-	 * @param string|null $name
-	 *
-	 * @return mixed|array|null
-	 */
-	public function getData($name = null) {
-		if ($name === null) {
-			return $this->_attributes;
-		}
+    public function isDivider(): bool
+    {
+        return $this->divider;
+    }
 
-		if (!isset($this->_attributes[$name])) {
-			return null;
-		}
+    public function setVisibility(bool $isVisible): static
+    {
+        $this->visible = $isVisible;
 
-		return $this->_attributes[$name];
-	}
+        return $this;
+    }
 
-	/**
-	 * @param string $name
-	 * @param mixed $value
-	 *
-	 * @return $this
-	 */
-	public function setData($name, $value) {
-		$this->_attributes[$name] = $value;
+    public function isVisible(): bool
+    {
+        return $this->visible;
+    }
 
-		return $this;
-	}
+    public function setActive(bool $isActive): static
+    {
+        $this->active = $isActive;
 
-	/**
-	 * @return string|null
-	 */
-	public function getLabel() {
-		return $this->_label;
-	}
+        return $this;
+    }
 
-	/**
-	 * @return string
-	 */
-	public function getId() {
-		return $this->_id;
-	}
+    public function isActive(): bool
+    {
+        return $this->active;
+    }
 
-	/**
-	 * @param string $id
-	 *
-	 * @return $this
-	 */
-	public function setId($id) {
-		$this->_id = $id;
+    public function add(ItemInterface $item): static
+    {
+        $item->setParent($this);
+        $this->getSubMenu()->add($item);
 
-		return $this;
-	}
+        return $this;
+    }
 
-	/**
-	 * @return bool
-	 */
-	public function isActive() {
-		if (is_bool($this->_isActive)) {
-			return $this->_isActive;
-		}
+    public function setSubMenu(MenuInterface $menu): static
+    {
+        $this->subMenu = $menu;
 
-		if (is_callable($this->_isActive)) {
-			$isActive = $this->_isActive;
+        return $this;
+    }
 
-			return $isActive($this);
-		}
+    public function getSubMenu(): MenuInterface
+    {
+        if ($this->subMenu === null) {
+            $this->subMenu = new Menu();
+        }
 
-		throw new RuntimeException('Error getting the active status for item');
-	}
+        return $this->subMenu;
+    }
 
-	/**
-	 * @return bool
-	 */
-	public function isVisible() {
-		return $this->_isVisible;
-	}
+    public function hasSubMenu(): bool
+    {
+        return $this->subMenu !== null && $this->subMenu->getItems() !== [];
+    }
 
-	/**
-	 * @param string $name
-	 * @param string $value
-	 *
-	 * @return $this
-	 */
-	public function setAttribute($name, $value) {
-		$this->_attributes[$name] = $value;
+    public function setParent(ItemInterface $item): static
+    {
+        $this->parent = $item;
 
-		return $this;
-	}
+        return $this;
+    }
 
-	/**
-	 * @param array $attributes
-	 *
-	 * @return $this
-	 */
-	public function setAttributes(array $attributes) {
-		$this->_attributes = $attributes;
+    public function getParent(): ?ItemInterface
+    {
+        return $this->parent;
+    }
 
-		return $this;
-	}
+    public function hasParent(): bool
+    {
+        return $this->parent !== null;
+    }
 
-	/**
-	 * @return array
-	 */
-	public function getAttributes() {
-		return $this->_attributes;
-	}
+    public function getParentId(): ?string
+    {
+        return $this->parent?->getId();
+    }
 
-	/**
-	 * @return bool
-	 */
-	public function hasParent() {
-		return !empty($this->_parent);
-	}
+    public function setBefore(string $before): static
+    {
+        $this->before = $before;
 
-	/**
-	 * @param \Menu\Item\ItemInterface $item
-	 *
-	 * @return $this
-	 */
-	public function setParent(ItemInterface $item) {
-		$this->_parent = $item;
-		$this->_parentId = $item->getId();
+        return $this;
+    }
 
-		return $this;
-	}
+    public function getBefore(): string
+    {
+        return $this->before;
+    }
 
-	/**
-	 * @return \Menu\Item\ItemInterface|null
-	 */
-	public function getParent() {
-		return $this->_parent;
-	}
+    public function setAfter(string $after): static
+    {
+        $this->after = $after;
 
-	/**
-	 * @return int|string
-	 */
-	public function getParentId() {
-		return $this->_parentId;
-	}
+        return $this;
+    }
 
+    public function getAfter(): string
+    {
+        return $this->after;
+    }
+
+    public function setAttribute(string $name, mixed $value): static
+    {
+        $this->attributes[$name] = $value;
+
+        return $this;
+    }
+
+    /**
+     * @phpstan-param array<string, mixed> $attributes
+     */
+    public function setAttributes(array $attributes, bool $merge = false): static
+    {
+        $this->attributes = $merge ? $attributes + $this->attributes : $attributes;
+
+        return $this;
+    }
+
+    /**
+     * @phpstan-return array<string, mixed>
+     */
+    public function getAttributes(): array
+    {
+        return $this->attributes;
+    }
+
+    public function setData(string $name, mixed $value): static
+    {
+        $this->data[$name] = $value;
+
+        return $this;
+    }
+
+    public function getData(?string $name = null): mixed
+    {
+        if ($name === null) {
+            return $this->data;
+        }
+
+        return $this->data[$name] ?? null;
+    }
 }
