@@ -354,6 +354,46 @@ echo $this->Menu->render($menu, [
 ]);
 ```
 
+Collapsible Bootstrap 5 sidebar — a vertical `nav` whose branches are Bootstrap `collapse` regions:
+
+```php
+echo $this->Menu->render('sidebar', [
+    'renderer' => \Menu\Renderer\Bootstrap5SidebarRenderer::class,
+]);
+```
+
+The branch containing the active item is expanded (`collapse show`, `aria-expanded="true"`), all
+other branches start collapsed, and the active leaf gets the active class plus `aria-current="page"`.
+Each branch is wired to its `collapse` element through a unique id, so it works with the standard
+Bootstrap bundle and needs no custom JavaScript. Item and submenu attributes from the menu
+definition are preserved on the `<li>` and nested `<ul>`.
+
+A branch that only groups children (placeholder link `#`/none) renders a single toggle. A branch
+that *also* has a real URL stays navigable: it renders the link plus a separate collapse toggle
+button (`data-bs-target`), so the destination is reachable and its link attributes are kept.
+
+Besides the shared `activeClass`, `currentAsLink`, `addAriaCurrent` and `hideEmptyBranches` options,
+it accepts:
+
+| Option | Default | Purpose |
+| --- | --- | --- |
+| `idPrefix` | `menu-collapse-` | Prefix for the generated collapse ids. Use a distinct value per sidebar on a page to avoid id collisions. |
+| `navClass` | `nav flex-column` | Class on the root `<ul>`. |
+| `nestedNavClass` | `nav flex-column ms-3` | Class on the nested `<ul>` inside each collapse. |
+| `itemClass` | `nav-item` | Class added to each `<li>` (on top of the item's own attributes). |
+| `linkClass` | `nav-link` | Class on leaf links. |
+| `toggleClass` | `nav-link d-flex justify-content-between align-items-center` | Class on toggle-only branch links. |
+| `toggleButtonClass` | `btn btn-link nav-link border-0 p-0 ms-2` | Class on the separate toggle button used for navigable branches. |
+| `collapseClass` | `collapse` | Class on the branch wrapper element. |
+| `expandedClass` | `show` | Class added to the wrapper when the branch is open. |
+| `toggleAttribute` | `data-bs-toggle` | Toggle attribute on the branch control (value `toggleValue`). Set to `''` to omit (e.g. when wiring your own JS). |
+| `toggleValue` | `collapse` | Value for `toggleAttribute`. |
+| `targetAttribute` | `data-bs-target` | Attribute pointing the navigable-branch toggle button at its wrapper id. |
+| `caret` | `true` | Append a small open/closed indicator (`<span class="menu-caret">`) to branch toggles; set `false` to omit. |
+| `caretOpen` / `caretClosed` | `▾` / `▸` | Open/closed caret markup (trusted; pass an icon element like a FontAwesome `<i>` if you prefer). |
+
+The framework-specific keys default to Bootstrap 5; override them (e.g. `toggleAttribute => 'data-toggle'`, `expandedClass => 'is-open'`) to target Bootstrap 4 or another setup without subclassing.
+
 You can override templates per render call:
 
 ```php
@@ -373,6 +413,11 @@ constructor config when instantiating a renderer directly.
 `Bootstrap5Renderer` overrides some of these defaults: `ancestorClass` → `active`,
 `branchClass` / `submenuClass` → `dropdown`, `nestedMenuClass` → `dropdown-menu`, and
 `addAriaExpanded` → `false` (it emits `aria-expanded` on the toggle link instead).
+
+`Bootstrap5Renderer` also exposes its link-level Bootstrap bits as config (defaults shown), so
+BS4/other setups work without subclassing: `linkClass` (`nav-link`, top-level links),
+`childLinkClass` (`dropdown-item`, nested links), `toggleClass` (`dropdown-toggle`, branch links),
+`toggleAttribute` (`data-bs-toggle`) and `toggleValue` (`dropdown`).
 
 | Option | Default | Description |
 | --- | --- | --- |
