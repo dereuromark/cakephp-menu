@@ -15,13 +15,15 @@ class Bootstrap5RendererTest extends TestCase
         $menu = Menu::create(['class' => 'navbar-nav']);
         $menu->addItem('Home', '/');
         $parent = $menu->addItem('Account', '#');
-        $parent->getSubMenu()->addItem('Profile', '/profile');
+        $settings = $parent->getSubMenu()->addItem('Settings', '#');
+        $settings->getSubMenu()->addItem('Profile', '/profile');
 
         $result = (new Bootstrap5Renderer())->render($menu);
 
         $this->assertStringContainsString('<a class="nav-link" href="/">Home</a>', $result);
         $this->assertStringContainsString('class="dropdown"', $result);
         $this->assertStringContainsString('class="dropdown-menu"', $result);
+        $this->assertStringContainsString('class="dropdown-item dropdown-toggle"', $result);
         $this->assertStringContainsString('class="dropdown-item" href="/profile"', $result);
     }
 }

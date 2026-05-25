@@ -12,6 +12,8 @@ use function method_exists;
 
 class PermissionResolver implements ContextAwareResolverInterface
 {
+    protected ?int $parameterCount = null;
+
     public function __construct(
         protected object $authorizer,
         protected mixed $identity = null,
@@ -44,14 +46,16 @@ class PermissionResolver implements ContextAwareResolverInterface
 
     protected function invokeAuthorizer(string $permission, ItemInterface $item, ResolverContext $context): mixed
     {
-        $reflectionMethod = new ReflectionMethod($this->authorizer, $this->method);
-        $parameterCount = $reflectionMethod->getNumberOfParameters();
+        if ($this->parameterCount === null) {
+            $reflectionMethod = new ReflectionMethod($this->authorizer, $this->method);
+            $this->parameterCount = $reflectionMethod->getNumberOfParameters();
+        }
 
         return match (true) {
-            $parameterCount >= 4 => $this->authorizer->{$this->method}($this->identity, $permission, $item, $context),
-            $parameterCount === 3 => $this->authorizer->{$this->method}($this->identity, $permission, $item),
-            $parameterCount === 2 => $this->authorizer->{$this->method}($this->identity, $permission),
-            $parameterCount === 1 => $this->authorizer->{$this->method}($permission),
+            $this->parameterCount >= 4 => $this->authorizer->{$this->method}($this->identity, $permission, $item, $context),
+            $this->parameterCount === 3 => $this->authorizer->{$this->method}($this->identity, $permission, $item),
+            $this->parameterCount === 2 => $this->authorizer->{$this->method}($this->identity, $permission),
+            $this->parameterCount === 1 => $this->authorizer->{$this->method}($permission),
             default => $this->authorizer->{$this->method}(),
         };
     }

@@ -38,15 +38,15 @@ class Bootstrap5Renderer extends StringTemplateRenderer
         $link = $item->getLink();
         if ($link !== null) {
             $attributes = $link->getAttributes();
+            $baseLinkClass = $item->hasParent() ? 'dropdown-item' : 'nav-link';
             if ($item->hasSubMenu()) {
-                $attributes['class'] = array_filter(['nav-link', 'dropdown-toggle', $attributes['class'] ?? null]);
+                $attributes['class'] = array_filter([$baseLinkClass, 'dropdown-toggle', $attributes['class'] ?? null]);
                 $attributes['data-bs-toggle'] = 'dropdown';
                 $attributes['role'] = $attributes['role'] ?? 'button';
                 $attributes['aria-expanded'] = $item->isExpanded() || $item->isActive() ? 'true' : 'false';
                 $link->setAttributes($attributes);
             } else {
-                $linkClass = $item->hasParent() ? 'dropdown-item' : 'nav-link';
-                $attributes['class'] = array_filter([$linkClass, $attributes['class'] ?? null]);
+                $attributes['class'] = array_filter([$baseLinkClass, $attributes['class'] ?? null]);
                 $link->setAttributes($attributes);
             }
         }
