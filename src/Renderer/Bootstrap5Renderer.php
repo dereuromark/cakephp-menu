@@ -35,22 +35,40 @@ class Bootstrap5Renderer extends StringTemplateRenderer
      */
     protected function renderContent(ItemInterface $item, array $options): string
     {
-        $link = $item->getLink();
-        if ($link !== null) {
-            $attributes = $link->getAttributes();
-            $baseLinkClass = $item->hasParent() ? 'dropdown-item' : 'nav-link';
-            if ($item->hasSubMenu()) {
-                $attributes['class'] = array_filter([$baseLinkClass, 'dropdown-toggle', $attributes['class'] ?? null]);
-                $attributes['data-bs-toggle'] = 'dropdown';
-                $attributes['role'] = $attributes['role'] ?? 'button';
-                $attributes['aria-expanded'] = $item->isExpanded() || $item->isActive() ? 'true' : 'false';
-                $link->setAttributes($attributes);
-            } else {
-                $attributes['class'] = array_filter([$baseLinkClass, $attributes['class'] ?? null]);
-                $link->setAttributes($attributes);
-            }
+        if ($item->isRaw()) {
+            return (string)$item->getRaw();
         }
 
-        return parent::renderContent($item, $options);
+        $label = $this->escapeLabel($item);
+        $link = $item->getLink();
+        if ($link === null || ($item->isActive() && !$this->getBooleanOption($options, 'currentAsLink', true))) {
+            $attributes = $link?->getAttributes() ?? [];
+            unset($attributes['href']);
+
+            return $this->templater()->format('label', [
+                'attributes' => $this->renderAttributes($attributes),
+                'title' => $label,
+            ]);
+        }
+
+        $attributes = $link->getAttributes();
+        $attributes['href'] = $link->getUrl() ?? '#';
+        $baseLinkClass = $item->hasParent() ? 'dropdown-item' : 'nav-link';
+        if ($item->hasSubMenu()) {
+            $attributes['class'] = array_filter([$baseLinkClass, 'dropdown-toggle', $attributes['class'] ?? null]);
+            $attributes['data-bs-toggle'] = 'dropdown';
+            $attributes['role'] = $attributes['role'] ?? 'button';
+            $attributes['aria-expanded'] = $item->isExpanded() || $item->isActive() ? 'true' : 'false';
+        } else {
+            $attributes['class'] = array_filter([$baseLinkClass, $attributes['class'] ?? null]);
+        }
+        if ($item->isActive() && $this->getBooleanOption($options, 'addAriaCurrent', true)) {
+            $attributes['aria-current'] = 'page';
+        }
+
+        return $this->templater()->format('link', [
+            'attributes' => $this->renderAttributes($attributes),
+            'title' => $label,
+        ]);
     }
 }

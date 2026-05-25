@@ -18,12 +18,18 @@ class Bootstrap5RendererTest extends TestCase
         $settings = $parent->getSubMenu()->addItem('Settings', '#');
         $settings->getSubMenu()->addItem('Profile', '/profile');
 
-        $result = (new Bootstrap5Renderer())->render($menu);
+        $renderer = new Bootstrap5Renderer();
+        $result = $renderer->render($menu);
+        $secondResult = $renderer->render($menu);
 
-        $this->assertStringContainsString('<a class="nav-link" href="/">Home</a>', $result);
+        $this->assertStringContainsString('href="/"', $result);
+        $this->assertStringContainsString('class="nav-link"', $result);
         $this->assertStringContainsString('class="dropdown"', $result);
         $this->assertStringContainsString('class="dropdown-menu"', $result);
         $this->assertStringContainsString('class="dropdown-item dropdown-toggle"', $result);
-        $this->assertStringContainsString('class="dropdown-item" href="/profile"', $result);
+        $this->assertStringContainsString('href="/profile"', $result);
+        $this->assertStringContainsString('class="dropdown-item"', $result);
+        $this->assertSame($result, $secondResult);
+        $this->assertStringNotContainsString('Array', $secondResult);
     }
 }

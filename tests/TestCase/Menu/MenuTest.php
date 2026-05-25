@@ -91,6 +91,19 @@ class MenuTest extends TestCase
         $this->assertFalse($child->isActive());
     }
 
+    public function testClearActiveDoesNotDestroyResetStateBaseline(): void
+    {
+        $menu = Menu::create();
+        $parent = $menu->addItem('Articles', '/articles', ['id' => 'articles']);
+        $child = $parent->getSubMenu()->addItem('View', '/articles/view', ['id' => 'view', 'active' => true]);
+
+        $menu->clearActive();
+        $menu->resetState();
+
+        $this->assertSame($child, $menu->getActiveItem());
+        $this->assertTrue($child->isActive());
+    }
+
     public function testRejectsDuplicateIds(): void
     {
         $this->expectExceptionMessage('Duplicate menu item id `articles` detected.');

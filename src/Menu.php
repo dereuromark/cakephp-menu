@@ -304,7 +304,11 @@ class Menu implements MenuInterface
     public function clearActive(): static
     {
         foreach ($this->items as $item) {
-            $item->setActive(false);
+            if ($item instanceof StateResetInterface) {
+                $item->setRuntimeActive(false);
+            } else {
+                $item->setActive(false);
+            }
             if ($item->hasSubMenu()) {
                 $item->getSubMenu()->clearActive();
             }
