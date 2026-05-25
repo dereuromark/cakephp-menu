@@ -341,6 +341,74 @@ class MenuHelper extends Helper
 
         $menu->resetState();
         $menu->resolve($resolver);
+
+        if (!empty($options['singleActive'])) {
+            $this->enforceSingleActive($menu);
+        }
+    }
+
+    /**
+     * Keeps only the best (deepest) active item active, deactivating the rest.
+     *
+     * Resolvers can mark several items active for one request; this picks the most specific match
+     * — the deepest in the tree, breaking ties by document order — so `getActiveItem()` and
+     * breadcrumbs follow a single trail.
+     */
+    protected function enforceSingleActive(MenuInterface $menu): void
+    {
+        /** @var list<array{item: \Menu\Item\ItemInterface, depth: int, visible: bool}> $active */
+        $active = [];
+        $this->collectActiveItems($menu, 1, true, $active);
+        if ($active === []) {
+            return;
+        }
+
+        // Best match = the deepest active item that actually renders (visible, with visible
+        // ancestors), breaking ties by document order.
+        $best = null;
+        $bestDepth = -1;
+        foreach ($active as $entry) {
+            if ($entry['visible'] && $entry['depth'] > $bestDepth) {
+                $best = $entry['item'];
+                $bestDepth = $entry['depth'];
+            }
+        }
+
+        // Deactivate every other active item, including hidden ones that getActiveItem() would
+        // otherwise still walk into.
+        foreach ($active as $entry) {
+            if ($entry['item'] === $best) {
+                continue;
+            }
+            $item = $entry['item'];
+            if ($item instanceof StateResetInterface) {
+                $item->setRuntimeActive(false);
+            } else {
+                $item->setActive(false);
+            }
+        }
+    }
+
+    /**
+     * Collects every active item in the tree, recording its depth and whether it (and all its
+     * ancestors) are visible — i.e. whether it would actually render.
+     *
+     * @param \Menu\MenuInterface $menu
+     * @param int $depth
+     * @param bool $ancestorsVisible
+     * @param list<array{item: \Menu\Item\ItemInterface, depth: int, visible: bool}> $active
+     */
+    protected function collectActiveItems(MenuInterface $menu, int $depth, bool $ancestorsVisible, array &$active): void
+    {
+        foreach ($menu->getItems() as $item) {
+            $visible = $ancestorsVisible && $item->isVisible();
+            if ($item->isActive()) {
+                $active[] = ['item' => $item, 'depth' => $depth, 'visible' => $visible];
+            }
+            if ($item->hasSubMenu()) {
+                $this->collectActiveItems($item->getSubMenu(), $depth + 1, $visible, $active);
+            }
+        }
     }
 
     protected function invokeRegisterCallback(callable $callback, MenuInterface $menu): void
