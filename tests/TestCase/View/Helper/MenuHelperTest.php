@@ -15,6 +15,7 @@ use Menu\Renderer\BreadcrumbRenderer;
 use Menu\Resolver\AuthorizationResolver;
 use Menu\Resolver\ResolverCollection;
 use Menu\Resolver\ResolverContext;
+use Menu\Resolver\SectionResolver;
 use Menu\View\Helper\MenuHelper;
 
 class MenuHelperTest extends TestCase
@@ -88,8 +89,11 @@ class MenuHelperTest extends TestCase
         $currentItem = $menuHelper->getCurrentItem('main');
         $path = $menuHelper->extractPath($child);
 
-        $this->assertSame($child, $currentItem);
-        $this->assertSame([$parent, $child], $path);
+        $this->assertSame('View', $currentItem?->getLabel());
+        $this->assertSame(['Articles', 'View'], array_map(
+            static fn (ItemInterface $item): ?string => $item->getLabel(),
+            $path,
+        ));
     }
 
     public function testHelperLifecycleMethods(): void
@@ -172,8 +176,46 @@ class MenuHelperTest extends TestCase
             $menu->addItem('Articles', '/articles');
         });
 
+        $menuAgain = $menuHelper->register('main', static function ($menu): void {
+            $menu->addItem('Users', '/users');
+        });
+
         $this->assertSame($menu, $menuHelper->get('main'));
+        $this->assertSame($menuAgain, $menuHelper->get('main'));
         $this->assertCount(1, $menu->getItems());
+    }
+
+    public function testRenderDoesNotLeakResolverStateIntoStoredMenu(): void
+    {
+        $request = (new ServerRequest(['url' => '/articles']))
+            ->withAttribute('params', [
+                'controller' => 'Articles',
+                'action' => 'index',
+            ])
+            ->withUri((new ServerRequest())->getUri()->withPath('/articles'));
+        $menuHelper = $this->createHelper($request);
+
+        $menu = $menuHelper->create('main');
+        $menu->addItem('Admin', '/admin', ['data' => ['role' => 'admin']]);
+        $menu->addItem('Articles', '/articles', [
+            'data' => ['section' => ['controller' => 'Articles']],
+        ]);
+
+        $menuHelper->render('main', [
+            'resolver' => (new ResolverCollection())
+                ->add(new SectionResolver($request))
+                ->add(new AuthorizationResolver(static function (ItemInterface $item, ResolverContext $context): ?bool {
+                    if ($item->getData('role') === 'admin') {
+                        return false;
+                    }
+
+                    return null;
+                })),
+        ]);
+
+        $this->assertTrue($menu->getItems()[0]->isVisible());
+        $this->assertFalse($menu->getItems()[1]->isActive());
+        $this->assertFalse($menu->getItems()[1]->isExpanded());
     }
 
     public function testAuthorizationResolverAndDepthLimit(): void

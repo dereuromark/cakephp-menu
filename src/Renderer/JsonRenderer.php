@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Menu\Renderer;
 
-use JsonException;
 use Menu\Item\ItemInterface;
 use Menu\MenuInterface;
 
@@ -20,11 +19,7 @@ class JsonRenderer implements RendererInterface
             $flags |= JSON_PRETTY_PRINT;
         }
 
-        try {
-            return json_encode($menu->toArray(), $flags);
-        } catch (JsonException $exception) {
-            return '';
-        }
+        return json_encode($menu->toArray(), $flags);
     }
 
     /**
@@ -37,10 +32,6 @@ class JsonRenderer implements RendererInterface
             $flags |= JSON_PRETTY_PRINT;
         }
 
-        try {
-            return json_encode($item->toArray(), $flags);
-        } catch (JsonException $exception) {
-            return '';
-        }
+        return json_encode($item->toArray(), $flags);
     }
 }

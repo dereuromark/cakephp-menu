@@ -24,4 +24,19 @@ class PermissionResolverTest extends TestCase
 
         $this->assertFalse($item->isVisible());
     }
+
+    public function testSupportsTwoArgumentCanMethod(): void
+    {
+        $item = (new Item('Admin', '/admin'))->setData('permission', 'admin.access');
+        $authorizer = new class {
+            public function can(mixed $identity, string $permission): bool
+            {
+                return $permission !== 'admin.access';
+            }
+        };
+
+        (new PermissionResolver($authorizer, ['id' => 1]))->resolve($item);
+
+        $this->assertFalse($item->isVisible());
+    }
 }

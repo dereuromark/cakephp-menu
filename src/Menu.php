@@ -101,7 +101,7 @@ class Menu implements MenuInterface
             if (!empty($itemConfig['expanded'])) {
                 $item->setExpanded();
             }
-            if (!empty($itemConfig['submenu']['items'])) {
+            if (!empty($itemConfig['submenu']) && is_array($itemConfig['submenu'])) {
                 $item->setSubMenu(static::fromArray((array)$itemConfig['submenu']));
             }
 
@@ -459,6 +459,11 @@ class Menu implements MenuInterface
     {
         $this->assertMutable();
         $this->ownerItem = $ownerItem;
+        foreach ($this->items as $item) {
+            if (!$item->hasParent()) {
+                $item->setParent($ownerItem);
+            }
+        }
 
         return $this;
     }

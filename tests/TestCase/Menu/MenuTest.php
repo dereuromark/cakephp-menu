@@ -137,6 +137,16 @@ class MenuTest extends TestCase
                         ],
                     ],
                 ],
+                [
+                    'id' => 'account',
+                    'label' => 'Account',
+                    'link' => '#',
+                    'submenu' => [
+                        'attributes' => ['class' => 'dropdown-menu'],
+                        'data' => ['kind' => 'account'],
+                        'items' => [],
+                    ],
+                ],
             ],
         ]);
 
@@ -146,6 +156,8 @@ class MenuTest extends TestCase
         $this->assertSame('main', $export['data']['area']);
         $this->assertSame('articles', $export['items'][0]['id']);
         $this->assertSame('view', $export['items'][0]['submenu']['items'][0]['id']);
+        $this->assertSame('dropdown-menu', $export['items'][1]['submenu']['attributes']['class']);
+        $this->assertSame('account', $export['items'][1]['submenu']['data']['kind']);
     }
 
     public function testFreezePreventsStructuralMutation(): void
