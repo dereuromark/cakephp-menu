@@ -405,7 +405,7 @@ class MenuHelper extends Helper
      */
     protected function createDefaultResolver(array $options): ResolverCollectionInterface
     {
-        return (new ResolverCollection())
+        $collection = (new ResolverCollection())
             ->add(new UrlArrayResolver(
                 $this->getView()->getRequest(),
                 [
@@ -420,6 +420,13 @@ class MenuHelper extends Helper
                     'maxDepth' => $options['resolveDepth'] ?? null,
                 ],
             ));
+
+        $additional = $options['additionalResolvers'] ?? [];
+        if (is_array($additional) && $additional !== []) {
+            $collection->addMany($additional);
+        }
+
+        return $collection;
     }
 
     /**
