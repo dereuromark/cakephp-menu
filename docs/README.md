@@ -126,6 +126,24 @@ $menu->clearActive();
 $menu->getActiveItem();
 ```
 
+### Flattened Collection
+
+`Menu::collect()` returns an `ItemCollection` containing every item in the tree (depth-first), so
+you can iterate or query the whole menu without manual recursion:
+
+```php
+$items = $menu->collect();
+
+foreach ($items as $item) {
+    // ...
+}
+
+$items->findById('menu-item-...');
+$items->findByKey('profile');
+$items->findByParent($accountItem); // direct children of $accountItem
+count($items);
+```
+
 ## Resolvers
 
 Resolvers apply cross-cutting state without mixing request/session logic into menu construction.
@@ -320,7 +338,7 @@ echo $this->Menu->render($menu, [
 - Active matching is automatic in the helper by default and uses both array and string resolvers.
 - Each helper render/request-state lookup applies resolvers temporarily and restores the original `active`, `visible`, and `expanded` item state afterward.
 - Custom item classes should extend `Menu\Item\Item` or implement `Menu\Item\StateResetInterface` if you want `Menu::resetState()` to restore their original runtime defaults.
-- The default renderer emits `aria-current="page"` for the active link and `aria-expanded` for branch items.
+- The default renderer emits `aria-current="page"` for the active item (whether rendered as a link or as a label) and `aria-expanded` for branch items.
 
 ## Recipes
 
