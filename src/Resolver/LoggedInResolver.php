@@ -6,13 +6,18 @@ namespace Menu\Resolver;
 
 use Menu\Item\ItemInterface;
 
-class LoggedInResolver implements ResolverInterface
+class LoggedInResolver implements ContextAwareResolverInterface
 {
     public function __construct(protected bool $loggedIn)
     {
     }
 
     public function resolve(ItemInterface $item): void
+    {
+        $this->resolveWithContext($item, new ResolverContext());
+    }
+
+    public function resolveWithContext(ItemInterface $item, ResolverContext $context): void
     {
         $auth = $item->getData('auth');
         if ($auth === 'loggedIn') {

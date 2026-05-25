@@ -8,7 +8,9 @@ use InvalidArgumentException;
 use Menu\Item\Item;
 use Menu\Item\ItemInterface;
 use Menu\Link\LinkInterface;
+use Menu\Resolver\ContextAwareResolverInterface;
 use Menu\Resolver\ResolverCollectionInterface;
+use Menu\Resolver\ResolverContext;
 use Menu\Resolver\ResolverInterface;
 
 class Menu implements MenuInterface
@@ -54,6 +56,7 @@ class Menu implements MenuInterface
             $item->setParent($this->ownerItem);
         }
 
+        $this->assertUniqueItemTree($item);
         $this->items[] = $item;
 
         return $this;
@@ -182,6 +185,7 @@ class Menu implements MenuInterface
             $validatedItems[] = $item;
         }
 
+        $this->assertUniqueItems($validatedItems);
         $this->items = $validatedItems;
 
         return $this;
@@ -336,14 +340,50 @@ class Menu implements MenuInterface
 
     public function resolve(ResolverInterface|ResolverCollectionInterface $resolver): static
     {
-        foreach ($this->items as $item) {
-            $resolver->resolve($item);
-            if ($item->hasSubMenu()) {
-                $item->getSubMenu()->resolve($resolver);
-            }
-        }
+        $this->resolveItems($resolver, $this->items, 1, $this->ownerItem);
 
         return $this;
+    }
+
+    /**
+     * @param \Menu\Resolver\ResolverInterface|\Menu\Resolver\ResolverCollectionInterface $resolver
+     * @param list<\Menu\Item\ItemInterface> $items
+     * @param \Menu\Item\ItemInterface|null $parent
+     * @param int $depth
+     */
+    protected function resolveItems(
+        ResolverInterface|ResolverCollectionInterface $resolver,
+        array $items,
+        int $depth,
+        ?ItemInterface $parent,
+    ): void {
+        $context = new ResolverContext($depth, $parent);
+        foreach ($items as $item) {
+            if ($resolver instanceof ContextAwareResolverInterface) {
+                $resolver->resolveWithContext($item, $context);
+            } else {
+                $resolver->resolve($item);
+            }
+            if ($item->hasSubMenu()) {
+                $subMenu = $item->getSubMenu();
+                if ($subMenu instanceof self) {
+                    $subMenu->resolveItems($resolver, $subMenu->getItems(), $depth + 1, $item);
+                } else {
+                    $subMenu->resolve($resolver);
+                }
+            }
+        }
+    }
+
+    /**
+     * @param list<\Menu\Item\ItemInterface> $items
+     */
+    protected function assertUniqueItems(array $items): void
+    {
+        $ids = [];
+        foreach ($items as $item) {
+            $this->collectIdentifiers($item, $ids);
+        }
     }
 
     public function setOwnerItem(ItemInterface $ownerItem): static
@@ -365,5 +405,36 @@ class Menu implements MenuInterface
             'label' => $item->getLabel(),
             default => $item->getData($by),
         };
+    }
+
+    protected function assertUniqueItemTree(ItemInterface $candidate): void
+    {
+        $ids = [];
+        foreach ($this->items as $item) {
+            $this->collectIdentifiers($item, $ids);
+        }
+
+        $this->collectIdentifiers($candidate, $ids);
+    }
+
+    /**
+     * @param \Menu\Item\ItemInterface $item
+     * @param array<string, true> $ids
+     *
+     * @throws \InvalidArgumentException
+     */
+    protected function collectIdentifiers(ItemInterface $item, array &$ids): void
+    {
+        $id = $item->getId();
+        if (isset($ids[$id])) {
+            throw new InvalidArgumentException(sprintf('Duplicate menu item id `%s` detected.', $id));
+        }
+        $ids[$id] = true;
+
+        if ($item->hasSubMenu()) {
+            foreach ($item->getSubMenu()->getItems() as $child) {
+                $this->collectIdentifiers($child, $ids);
+            }
+        }
     }
 }

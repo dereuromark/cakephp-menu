@@ -7,7 +7,7 @@ namespace Menu\Resolver;
 use InvalidArgumentException;
 use Menu\Item\ItemInterface;
 
-class ResolverCollection implements ResolverCollectionInterface
+class ResolverCollection implements ResolverCollectionInterface, ContextAwareResolverInterface
 {
     /**
      * @var list<\Menu\Resolver\ResolverInterface>
@@ -48,7 +48,18 @@ class ResolverCollection implements ResolverCollectionInterface
 
     public function resolve(ItemInterface $item): void
     {
+        $this->resolveWithContext($item, new ResolverContext());
+    }
+
+    public function resolveWithContext(ItemInterface $item, ResolverContext $context): void
+    {
         foreach ($this->resolvers as $resolver) {
+            if ($resolver instanceof ContextAwareResolverInterface) {
+                $resolver->resolveWithContext($item, $context);
+
+                continue;
+            }
+
             $resolver->resolve($item);
         }
     }

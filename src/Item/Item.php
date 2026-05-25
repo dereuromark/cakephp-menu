@@ -57,6 +57,8 @@ class Item implements ItemInterface
 
     protected bool $fuzzyMatch = false;
 
+    protected bool $expanded = false;
+
     /**
      * @phpstan-param \Menu\Link\LinkInterface|array<string|int, mixed>|string|null $link
      */
@@ -363,5 +365,17 @@ class Item implements ItemInterface
     public function isFuzzyMatch(): bool
     {
         return $this->fuzzyMatch;
+    }
+
+    public function setExpanded(bool $expanded = true): static
+    {
+        $this->expanded = $expanded;
+
+        return $this;
+    }
+
+    public function isExpanded(): bool
+    {
+        return $this->expanded;
     }
 }

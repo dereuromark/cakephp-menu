@@ -19,7 +19,7 @@ class StringTemplateRendererTest extends TestCase
         $result = (new StringTemplateRenderer())->render($menu);
 
         $this->assertStringContainsString('First&lt;&gt;', $result);
-        $this->assertStringContainsString('<li class="active"><a href="/second">Second</a></li>', $result);
+        $this->assertStringContainsString('<li class="active"><a href="/second" aria-current="page">Second</a></li>', $result);
     }
 
     public function testRendersRawItemWithoutEscaping(): void
@@ -65,5 +65,21 @@ class StringTemplateRendererTest extends TestCase
         $this->assertStringContainsString('<li class="first">', $result);
         $this->assertStringContainsString('class="has-children last"', $result);
         $this->assertStringContainsString('<ul class="submenu level-2">', $result);
+    }
+
+    public function testAddsAriaCurrentAndExpandedState(): void
+    {
+        $menu = Menu::create();
+        $parent = $menu->addItem('Articles', '/articles');
+        $parent->setExpanded();
+        $parent->getSubMenu()->addItem('View', '/articles/view', ['active' => true]);
+
+        $result = (new StringTemplateRenderer([
+            'ariaLabel' => 'Main navigation',
+        ]))->render($menu);
+
+        $this->assertStringContainsString('<ul aria-label="Main navigation">', $result);
+        $this->assertStringContainsString('aria-expanded="true"', $result);
+        $this->assertStringContainsString('aria-current="page"', $result);
     }
 }

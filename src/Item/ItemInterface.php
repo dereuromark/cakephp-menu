@@ -110,4 +110,8 @@ interface ItemInterface
     public function setFuzzyMatch(bool $fuzzyMatch = true): static;
 
     public function isFuzzyMatch(): bool;
+
+    public function setExpanded(bool $expanded = true): static;
+
+    public function isExpanded(): bool;
 }

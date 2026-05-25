@@ -13,11 +13,12 @@ use function array_intersect_key;
 use function array_merge;
 use function array_walk;
 use function is_array;
+use function is_int;
 use function is_numeric;
 use function ksort;
 use const SORT_STRING;
 
-class UrlArrayResolver implements ResolverInterface
+class UrlArrayResolver implements ContextAwareResolverInterface
 {
     use InstanceConfigTrait;
 
@@ -26,6 +27,7 @@ class UrlArrayResolver implements ResolverInterface
      */
     protected array $_defaultConfig = [
         'fuzzy' => true,
+        'maxDepth' => null,
     ];
 
     /**
@@ -40,6 +42,16 @@ class UrlArrayResolver implements ResolverInterface
 
     public function resolve(ItemInterface $item): void
     {
+        $this->resolveWithContext($item, new ResolverContext());
+    }
+
+    public function resolveWithContext(ItemInterface $item, ResolverContext $context): void
+    {
+        $maxDepth = $this->getConfig('maxDepth');
+        if (is_int($maxDepth) && $context->getDepth() > $maxDepth) {
+            return;
+        }
+
         $link = $item->getLink();
         if ($link === null) {
             return;
@@ -68,6 +80,17 @@ class UrlArrayResolver implements ResolverInterface
     {
         $normalizedRequestParams = $this->extractParams($requestParams);
         $normalizedRoute = $this->normalizeRoute($linkArray);
+
+        if (isset($normalizedRoute['_name'])) {
+            if (($normalizedRequestParams['_name'] ?? null) !== $normalizedRoute['_name']) {
+                return false;
+            }
+
+            unset($normalizedRoute['_name'], $normalizedRequestParams['_name']);
+            if ($normalizedRoute === []) {
+                return true;
+            }
+        }
 
         $fuzzy = $item instanceof Item
             ? $item->isFuzzyMatch()
@@ -102,6 +125,10 @@ class UrlArrayResolver implements ResolverInterface
         $params['?'] = $this->request->getQueryParams();
         $params['_method'] = $this->request->getMethod();
         $params['_host'] = $this->request->getUri()->getHost();
+        $route = $params['_route'] ?? null;
+        if (is_object($route) && method_exists($route, 'getName')) {
+            $params['_name'] = $route->getName();
+        }
         if (!isset($params['_ext'])) {
             $params['_ext'] = null;
         }
