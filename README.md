@@ -1,9 +1,17 @@
 # CakePHP Menu Plugin
 
-[![CI](https://github.com/dereuromark/cakephp-menu/actions/workflows/ci.yml/badge.svg)](https://github.com/dereuromark/cakephp-menu/actions/workflows/ci.yml)
+[![CI](https://github.com/dereuromark/cakephp-menu/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/dereuromark/cakephp-menu/actions/workflows/ci.yml?query=branch%3Amaster)
+[![Coverage Status](https://img.shields.io/codecov/c/github/dereuromark/cakephp-menu/master.svg)](https://codecov.io/gh/dereuromark/cakephp-menu)
+[![PHPStan](https://img.shields.io/badge/PHPStan-level%208-brightgreen.svg?style=flat)](https://phpstan.org/)
+[![Latest Stable Version](https://poser.pugx.org/dereuromark/cakephp-menu/v/stable.svg)](https://packagist.org/packages/dereuromark/cakephp-menu)
+[![Minimum PHP Version](https://img.shields.io/badge/php-%3E%3D%208.2-8892BF.svg)](https://php.net/)
 [![License](https://poser.pugx.org/dereuromark/cakephp-menu/license.svg)](https://packagist.org/packages/dereuromark/cakephp-menu)
+[![Total Downloads](https://poser.pugx.org/dereuromark/cakephp-menu/d/total.svg)](https://packagist.org/packages/dereuromark/cakephp-menu)
+[![Coding Standards](https://img.shields.io/badge/cs-PhpCollective-purple.svg?style=flat-square)](https://github.com/php-collective/code-sniffer)
 
 Composable menu builder and renderer for CakePHP applications.
+
+This branch is for **CakePHP 5.3+**. See the [version matrix](https://github.com/dereuromark/cakephp-menu/wiki/Version-Matrix) for details.
 
 This plugin provides a small menu tree API with:
 
@@ -113,6 +121,8 @@ You can override templates through helper options/config.
 - [Usage Guide](docs/README.md)
 - [Version Matrix](docs/version-matrix.md)
 - [Wiki](https://github.com/dereuromark/cakephp-menu/wiki)
+
+Full documentation: https://github.com/dereuromark/cakephp-menu/wiki
 
 ## Development
 
