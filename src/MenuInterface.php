@@ -69,6 +69,12 @@ interface MenuInterface
     public function getItems(): array;
 
     /**
+     * Returns a flat collection of every item in the tree (depth-first), so the whole menu can
+     * be iterated or queried by id/key/parent without manual recursion.
+     */
+    public function collect(): ItemCollection;
+
+    /**
      * @phpstan-param array<mixed> $items
      *
      * @return $this

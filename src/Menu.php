@@ -233,6 +233,28 @@ class Menu implements MenuInterface
         return $this->items;
     }
 
+    public function collect(): ItemCollection
+    {
+        $collection = new ItemCollection();
+        $this->collectInto($collection, $this->items);
+
+        return $collection;
+    }
+
+    /**
+     * @param \Menu\ItemCollection $collection
+     * @param list<\Menu\Item\ItemInterface> $items
+     */
+    protected function collectInto(ItemCollection $collection, array $items): void
+    {
+        foreach ($items as $item) {
+            $collection->add($item);
+            if ($item->hasSubMenu()) {
+                $this->collectInto($collection, $item->getSubMenu()->getItems());
+            }
+        }
+    }
+
     /**
      * @phpstan-param array<mixed> $items
      *

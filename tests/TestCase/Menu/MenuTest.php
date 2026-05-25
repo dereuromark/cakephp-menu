@@ -8,6 +8,7 @@ use Cake\Http\ServerRequest;
 use Cake\TestSuite\TestCase;
 use LogicException;
 use Menu\Item\Item;
+use Menu\ItemCollection;
 use Menu\Menu;
 use Menu\Resolver\CallbackResolver;
 use Menu\Resolver\UrlArrayResolver;
@@ -207,5 +208,21 @@ class MenuTest extends TestCase
 
         $this->assertSame($secondParent, $child->getParent());
         $this->assertSame($child, $secondParent->getSubMenu()->get('child'));
+    }
+
+    public function testCollectFlattensTheTree(): void
+    {
+        $menu = Menu::create();
+        $account = $menu->addItem('Account', '#', ['key' => 'account']);
+        $account->getSubMenu()->addItem('Profile', '/profile', ['key' => 'profile']);
+        $account->getSubMenu()->addItem('Logout', '/logout', ['key' => 'logout']);
+        $menu->addItem('Home', '/', ['key' => 'home']);
+
+        $collection = $menu->collect();
+
+        $this->assertInstanceOf(ItemCollection::class, $collection);
+        $this->assertCount(4, $collection);
+        $this->assertSame('profile', $collection->findByKey('profile')?->getKey());
+        $this->assertCount(2, $collection->findByParent($account));
     }
 }
