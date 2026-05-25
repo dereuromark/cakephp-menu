@@ -49,6 +49,15 @@ class Item implements ItemInterface
     protected ?MenuInterface $subMenu = null;
 
     /**
+     * @var list<array<string|int, mixed>|string>
+     */
+    protected array $matchRoutes = [];
+
+    protected ?bool $ignoreQueryString = null;
+
+    protected bool $fuzzyMatch = false;
+
+    /**
      * @phpstan-param \Menu\Link\LinkInterface|array<string|int, mixed>|string|null $link
      */
     public function __construct(
@@ -192,6 +201,9 @@ class Item implements ItemInterface
 
     public function setSubMenu(MenuInterface $menu): static
     {
+        if ($menu instanceof Menu) {
+            $menu->setOwnerItem($this);
+        }
         $this->subMenu = $menu;
 
         return $this;
@@ -200,7 +212,7 @@ class Item implements ItemInterface
     public function getSubMenu(): MenuInterface
     {
         if ($this->subMenu === null) {
-            $this->subMenu = new Menu();
+            $this->subMenu = (new Menu())->setOwnerItem($this);
         }
 
         return $this->subMenu;
@@ -296,5 +308,60 @@ class Item implements ItemInterface
         }
 
         return $this->data[$name] ?? null;
+    }
+
+    /**
+     * @phpstan-param list<array<string|int, mixed>|string> $routes
+     */
+    public function setMatchRoutes(array $routes): static
+    {
+        $this->matchRoutes = [];
+        foreach ($routes as $route) {
+            $this->addMatchRoute($route);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @phpstan-param array<string|int, mixed>|string $route
+     */
+    public function addMatchRoute(string|array $route): static
+    {
+        $this->matchRoutes[] = $route;
+
+        return $this;
+    }
+
+    /**
+     * @phpstan-return list<array<string|int, mixed>|string>
+     */
+    public function getMatchRoutes(): array
+    {
+        return $this->matchRoutes;
+    }
+
+    public function setIgnoreQueryString(?bool $ignoreQueryString): static
+    {
+        $this->ignoreQueryString = $ignoreQueryString;
+
+        return $this;
+    }
+
+    public function getIgnoreQueryString(): ?bool
+    {
+        return $this->ignoreQueryString;
+    }
+
+    public function setFuzzyMatch(bool $fuzzyMatch = true): static
+    {
+        $this->fuzzyMatch = $fuzzyMatch;
+
+        return $this;
+    }
+
+    public function isFuzzyMatch(): bool
+    {
+        return $this->fuzzyMatch;
     }
 }

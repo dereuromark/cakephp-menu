@@ -73,4 +73,18 @@ class MenuTest extends TestCase
         $this->assertFalse($parent->isActive());
         $this->assertTrue($menu->get('view')?->isActive());
     }
+
+    public function testClearActiveAndGetActiveItem(): void
+    {
+        $menu = Menu::create();
+        $parent = $menu->addItem('Articles', '/articles', ['id' => 'articles']);
+        $child = $parent->getSubMenu()->addItem('View', '/articles/view', ['id' => 'view', 'active' => true]);
+
+        $this->assertSame($child, $menu->getActiveItem());
+
+        $menu->clearActive();
+
+        $this->assertNull($menu->getActiveItem());
+        $this->assertFalse($child->isActive());
+    }
 }

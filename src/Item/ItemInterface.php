@@ -87,4 +87,27 @@ interface ItemInterface
     public function setData(string $name, mixed $value): static;
 
     public function getData(?string $name = null): mixed;
+
+    /**
+     * @phpstan-param list<array<string|int, mixed>|string> $routes
+     */
+    public function setMatchRoutes(array $routes): static;
+
+    /**
+     * @phpstan-param array<string|int, mixed>|string $route
+     */
+    public function addMatchRoute(string|array $route): static;
+
+    /**
+     * @phpstan-return list<array<string|int, mixed>|string>
+     */
+    public function getMatchRoutes(): array;
+
+    public function setIgnoreQueryString(?bool $ignoreQueryString): static;
+
+    public function getIgnoreQueryString(): ?bool;
+
+    public function setFuzzyMatch(bool $fuzzyMatch = true): static;
+
+    public function isFuzzyMatch(): bool;
 }

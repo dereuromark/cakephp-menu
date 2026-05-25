@@ -25,6 +25,17 @@ $products->add($menu->newItem('Books', ['controller' => 'Products', 'action' => 
 $products->add($menu->newItem('Games', ['controller' => 'Products', 'action' => 'games']));
 ```
 
+### Named Menus via Helper
+
+```php
+$menu = $this->Menu->create('main', [
+    'menuAttributes' => ['class' => 'nav nav-pills'],
+]);
+$menu->addItem('Home', '/');
+
+echo $this->Menu->render('main');
+```
+
 ## Item Options
 
 `Menu::addItem()` and `Menu::newItem()` accept these options:
@@ -38,6 +49,9 @@ $products->add($menu->newItem('Games', ['controller' => 'Products', 'action' => 
 - `data`: arbitrary metadata consumed by your app or resolvers
 - `visible`: initial visibility
 - `active`: initial active state
+- `matchRoutes`: alternate string or Cake array routes used for active matching
+- `ignoreQueryString`: per-item override for string URL query matching
+- `fuzzy`: enables subset matching for Cake array routes
 - `raw`: render raw HTML inside the item
 - `divider`: render a divider item
 
@@ -49,6 +63,8 @@ $menu->has('account');
 $menu->remove('account');
 $menu->sortBy('weight');
 $menu->filter(fn ($item) => $item->isVisible());
+$menu->clearActive();
+$menu->getActiveItem();
 ```
 
 ## Resolvers
@@ -64,6 +80,14 @@ use Menu\Resolver\UrlArrayResolver;
 $menu->resolve(new Psr7UrlResolver($request));
 $menu->resolve(new UrlArrayResolver($request));
 ```
+
+`UrlArrayResolver` supports fuzzy matching, so a route like:
+
+```php
+['controller' => 'Articles', 'action' => 'view']
+```
+
+can match requests with additional passed parameters such as `/articles/view/42` when the item uses `fuzzy => true`.
 
 ### Login Visibility Resolver
 
@@ -100,6 +124,13 @@ $menu->resolve(
 echo $this->Menu->render($menu);
 ```
 
+You can also fetch the resolved active item and extract its path:
+
+```php
+$current = $this->Menu->getCurrentItem('main');
+$path = $current ? $this->Menu->extractPath($current) : [];
+```
+
 You can override templates per render call:
 
 ```php
@@ -115,3 +146,4 @@ echo $this->Menu->render($menu, [
 - Item labels are escaped by default.
 - `before`, `after`, and `raw` are treated as trusted markup.
 - String URLs and array URLs are both supported.
+- Active matching is automatic in the helper by default and uses both array and string resolvers.

@@ -13,6 +13,7 @@ use function array_filter;
 use function array_map;
 use function array_merge;
 use function array_unique;
+use function count;
 use function htmlspecialchars;
 use function implode;
 use function in_array;
@@ -30,8 +31,17 @@ class StringTemplateRenderer implements RendererInterface
      */
     protected array $_defaultConfig = [
         'activeClass' => 'active',
+        'ancestorClass' => 'active-ancestor',
         'dividerClass' => 'divider',
+        'branchClass' => 'has-children',
+        'leafClass' => null,
         'submenuClass' => 'has-children',
+        'nestedMenuClass' => 'submenu',
+        'menuLevelClass' => null,
+        'firstClass' => null,
+        'lastClass' => null,
+        'depth' => null,
+        'currentAsLink' => true,
         'templates' => [
             'menuWrapper' => '<ul{{attributes}}>{{items}}</ul>',
             'item' => '<li{{attributes}}>{{content}}</li>',
@@ -58,22 +68,7 @@ class StringTemplateRenderer implements RendererInterface
             $this->setConfig('templates', array_merge($this->getConfig('templates'), $options['templates']));
         }
 
-        $items = [];
-        foreach ($menu->getItems() as $item) {
-            $html = $this->renderItem($item, $options);
-            if ($html !== '') {
-                $items[] = $html;
-            }
-        }
-
-        return $this->templater()->format('menuWrapper', [
-            'attributes' => $this->renderAttributes(
-                isset($options['attributes']) && is_array($options['attributes'])
-                    ? $options['attributes']
-                    : $menu->getAttributes(),
-            ),
-            'items' => implode('', $items),
-        ]);
+        return $this->renderMenu($menu, $options, 1);
     }
 
     /**
@@ -81,6 +76,62 @@ class StringTemplateRenderer implements RendererInterface
      */
     public function renderItem(ItemInterface $item, array $options = []): string
     {
+        return $this->renderMenuItem($item, $options, 0, 1, 1);
+    }
+
+    /**
+     * @phpstan-param array<string, mixed> $options
+     */
+    protected function renderMenu(MenuInterface $menu, array $options, int $level): string
+    {
+        $depth = $this->getIntegerOption($options, 'depth');
+        if ($depth !== null && $level > $depth) {
+            return '';
+        }
+
+        $visibleItems = array_values(array_filter(
+            $menu->getItems(),
+            static fn (ItemInterface $item): bool => $item->isVisible(),
+        ));
+        $count = count($visibleItems);
+
+        $items = [];
+        foreach ($visibleItems as $index => $item) {
+            $html = $this->renderMenuItem($item, $options, $index, $count, $level);
+            if ($html !== '') {
+                $items[] = $html;
+            }
+        }
+
+        $attributes = $menu->getAttributes();
+        if ($level > 1) {
+            $nestedMenuClass = $this->getStringOption($options, 'nestedMenuClass');
+            if ($nestedMenuClass !== '') {
+                $attributes = $this->appendClass($attributes, $nestedMenuClass);
+            }
+        }
+
+        $menuLevelClass = $this->getStringOption($options, 'menuLevelClass');
+        if ($menuLevelClass !== '') {
+            $attributes = $this->appendClass($attributes, $menuLevelClass . $level);
+        }
+
+        return $this->templater()->format('menuWrapper', [
+            'attributes' => $this->renderAttributes($attributes),
+            'items' => implode('', $items),
+        ]);
+    }
+
+    /**
+     * @phpstan-param array<string, mixed> $options
+     */
+    protected function renderMenuItem(
+        ItemInterface $item,
+        array $options,
+        int $index,
+        int $count,
+        int $level,
+    ): string {
         if (!$item->isVisible()) {
             return '';
         }
@@ -90,25 +141,32 @@ class StringTemplateRenderer implements RendererInterface
         }
 
         if ($item->isDivider()) {
-            $attributes = $item->getAttributes();
-            $attributes = $this->appendClass($attributes, $this->getConfig('dividerClass'));
+            $attributes = $this->applyPositionClasses($item->getAttributes(), $options, $index, $count);
+            $attributes = $this->appendConfiguredClass($attributes, $options, 'dividerClass');
 
             return $this->templater()->format('divider', [
                 'attributes' => $this->renderAttributes($attributes),
             ]);
         }
 
-        $content = $item->getBefore() . $this->renderContent($item) . $item->getAfter();
-        if ($item->hasSubMenu()) {
-            $content .= $this->render($item->getSubMenu(), $options);
-        }
-
         $attributes = $item->getAttributes();
+        $hasSubMenu = $item->hasSubMenu();
         if ($item->isActive()) {
-            $attributes = $this->appendClass($attributes, $this->getConfig('activeClass'));
+            $attributes = $this->appendConfiguredClass($attributes, $options, 'activeClass');
+        } elseif ($this->hasActiveDescendant($item)) {
+            $attributes = $this->appendConfiguredClass($attributes, $options, 'ancestorClass');
         }
-        if ($item->hasSubMenu()) {
-            $attributes = $this->appendClass($attributes, $this->getConfig('submenuClass'));
+        if ($hasSubMenu) {
+            $attributes = $this->appendConfiguredClass($attributes, $options, 'branchClass');
+            $attributes = $this->appendConfiguredClass($attributes, $options, 'submenuClass');
+        } else {
+            $attributes = $this->appendConfiguredClass($attributes, $options, 'leafClass');
+        }
+        $attributes = $this->applyPositionClasses($attributes, $options, $index, $count);
+
+        $content = $item->getBefore() . $this->renderContent($item, $options) . $item->getAfter();
+        if ($hasSubMenu) {
+            $content .= $this->renderMenu($item->getSubMenu(), $options, $level + 1);
         }
 
         return $this->templater()->format('item', [
@@ -117,25 +175,33 @@ class StringTemplateRenderer implements RendererInterface
         ]);
     }
 
-    protected function renderContent(ItemInterface $item): string
+    /**
+     * @phpstan-param array<string, mixed> $options
+     */
+    protected function renderContent(ItemInterface $item, array $options): string
     {
         if ($item->isRaw()) {
             return (string)$item->getRaw();
         }
 
-        if ($item->getLink() !== null) {
-            $attributes = $item->getLink()->getAttributes();
-            $attributes['href'] = $item->getLink()->getUrl() ?? '#';
+        $label = $this->escapeLabel($item);
+        $link = $item->getLink();
+        if ($link === null || ($item->isActive() && !$this->getBooleanOption($options, 'currentAsLink', true))) {
+            $attributes = $link?->getAttributes() ?? [];
+            unset($attributes['href']);
 
-            return $this->templater()->format('link', [
+            return $this->templater()->format('label', [
                 'attributes' => $this->renderAttributes($attributes),
-                'title' => $this->escapeLabel($item),
+                'title' => $label,
             ]);
         }
 
-        return $this->templater()->format('label', [
-            'attributes' => '',
-            'title' => $this->escapeLabel($item),
+        $attributes = $link->getAttributes();
+        $attributes['href'] = $link->getUrl() ?? '#';
+
+        return $this->templater()->format('link', [
+            'attributes' => $this->renderAttributes($attributes),
+            'title' => $label,
         ]);
     }
 
@@ -148,6 +214,21 @@ class StringTemplateRenderer implements RendererInterface
         }
 
         return htmlspecialchars($label, ENT_QUOTES, 'UTF-8');
+    }
+
+    protected function hasActiveDescendant(ItemInterface $item): bool
+    {
+        if (!$item->hasSubMenu()) {
+            return false;
+        }
+
+        foreach ($item->getSubMenu()->getItems() as $child) {
+            if ($child->isActive() || $this->hasActiveDescendant($child)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -182,6 +263,44 @@ class StringTemplateRenderer implements RendererInterface
 
     /**
      * @phpstan-param array<string, mixed> $attributes
+     * @phpstan-param array<string, mixed> $options
+     *
+     * @phpstan-return array<string, mixed>
+     */
+    protected function applyPositionClasses(array $attributes, array $options, int $index, int $count): array
+    {
+        if ($count <= 0) {
+            return $attributes;
+        }
+
+        if ($index === 0) {
+            $attributes = $this->appendConfiguredClass($attributes, $options, 'firstClass');
+        }
+        if ($index === $count - 1) {
+            $attributes = $this->appendConfiguredClass($attributes, $options, 'lastClass');
+        }
+
+        return $attributes;
+    }
+
+    /**
+     * @phpstan-param array<string, mixed> $attributes
+     * @phpstan-param array<string, mixed> $options
+     *
+     * @phpstan-return array<string, mixed>
+     */
+    protected function appendConfiguredClass(array $attributes, array $options, string $configKey): array
+    {
+        $class = $this->getStringOption($options, $configKey);
+        if ($class === '') {
+            return $attributes;
+        }
+
+        return $this->appendClass($attributes, $class);
+    }
+
+    /**
+     * @phpstan-param array<string, mixed> $attributes
      *
      * @phpstan-return array<string, mixed>
      */
@@ -202,5 +321,35 @@ class StringTemplateRenderer implements RendererInterface
         $attributes['class'] = array_unique($existing);
 
         return $attributes;
+    }
+
+    /**
+     * @phpstan-param array<string, mixed> $options
+     */
+    protected function getStringOption(array $options, string $key): string
+    {
+        $value = $options[$key] ?? $this->getConfig($key);
+
+        return is_string($value) ? $value : '';
+    }
+
+    /**
+     * @phpstan-param array<string, mixed> $options
+     */
+    protected function getIntegerOption(array $options, string $key): ?int
+    {
+        $value = $options[$key] ?? $this->getConfig($key);
+
+        return is_int($value) ? $value : null;
+    }
+
+    /**
+     * @phpstan-param array<string, mixed> $options
+     */
+    protected function getBooleanOption(array $options, string $key, bool $default): bool
+    {
+        $value = $options[$key] ?? $this->getConfig($key);
+
+        return is_bool($value) ? $value : $default;
     }
 }

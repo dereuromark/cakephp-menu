@@ -22,4 +22,29 @@ class Psr7UrlResolverTest extends TestCase
 
         $this->assertTrue($item->isActive());
     }
+
+    public function testIgnoresQueryStringByDefault(): void
+    {
+        $item = new Item('User Listing', '/users');
+        $request = new ServerRequest(['url' => '/users?sort=desc']);
+        $request = $request->withUri($request->getUri()->withPath('/users')->withQuery('sort=desc'));
+
+        $resolver = new Psr7UrlResolver($request);
+        $resolver->resolve($item);
+
+        $this->assertTrue($item->isActive());
+    }
+
+    public function testMatchesAdditionalStringRoutes(): void
+    {
+        $item = (new Item('Dashboard', '/dashboard'))
+            ->addMatchRoute('/users');
+        $request = new ServerRequest(['url' => '/users']);
+        $request = $request->withUri($request->getUri()->withPath('/users'));
+
+        $resolver = new Psr7UrlResolver($request);
+        $resolver->resolve($item);
+
+        $this->assertTrue($item->isActive());
+    }
 }

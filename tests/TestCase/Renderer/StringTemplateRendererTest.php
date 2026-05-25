@@ -31,4 +31,39 @@ class StringTemplateRendererTest extends TestCase
 
         $this->assertStringContainsString('<li><strong>Raw</strong></li>', $result);
     }
+
+    public function testRendersAncestorAndCurrentAsText(): void
+    {
+        $menu = Menu::create();
+        $parent = $menu->addItem('Articles', '/articles');
+        $parent->getSubMenu()->addItem('View', '/articles/view', ['active' => true]);
+
+        $result = (new StringTemplateRenderer([
+            'currentAsLink' => false,
+        ]))->render($menu);
+
+        $this->assertStringContainsString('class="active-ancestor has-children"', $result);
+        $this->assertStringContainsString('<span>View</span>', $result);
+        $this->assertStringNotContainsString('<a href="/articles/view">View</a>', $result);
+    }
+
+    public function testRendersPositionAndLevelClasses(): void
+    {
+        $menu = Menu::create(['class' => 'main']);
+        $menu->addItem('First', '/first');
+        $parent = $menu->addItem('Second', '/second');
+        $parent->getSubMenu()->addItem('Child', '/second/child');
+
+        $result = (new StringTemplateRenderer([
+            'firstClass' => 'first',
+            'lastClass' => 'last',
+            'menuLevelClass' => 'level-',
+            'nestedMenuClass' => 'submenu',
+        ]))->render($menu);
+
+        $this->assertStringContainsString('<ul class="main level-1">', $result);
+        $this->assertStringContainsString('<li class="first">', $result);
+        $this->assertStringContainsString('class="has-children last"', $result);
+        $this->assertStringContainsString('<ul class="submenu level-2">', $result);
+    }
 }

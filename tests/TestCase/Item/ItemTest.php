@@ -45,4 +45,20 @@ class ItemTest extends TestCase
         $this->assertSame('<i class="icon"></i>', $item->getBefore());
         $this->assertSame('<span>!</span>', $item->getAfter());
     }
+
+    public function testMatchRouteMetadata(): void
+    {
+        $item = (new Item('Articles', ['controller' => 'Articles', 'action' => 'index']))
+            ->addMatchRoute('/articles')
+            ->addMatchRoute(['controller' => 'Articles', 'action' => 'view', 42])
+            ->setIgnoreQueryString(true)
+            ->setFuzzyMatch();
+
+        $this->assertSame([
+            '/articles',
+            ['controller' => 'Articles', 'action' => 'view', 42],
+        ], $item->getMatchRoutes());
+        $this->assertTrue($item->getIgnoreQueryString());
+        $this->assertTrue($item->isFuzzyMatch());
+    }
 }

@@ -29,7 +29,7 @@ class NestedUlListIntegrationTest extends TestCase
         $this->assertStringContainsString('<ul id="menu1" class="dropdown-menu">', $result);
         $this->assertStringContainsString('<a href="/users/dashboard">Dashboard</a>', $result);
         $this->assertStringContainsString('class="dropdown-submenu has-children"', $result);
-        $this->assertStringContainsString('<ul class="dropdown-submenu">', $result);
+        $this->assertStringContainsString('<ul class="dropdown-submenu submenu">', $result);
         $this->assertStringContainsString('<li class="divider"></li>', $result);
         $this->assertStringContainsString('<i class="fa fa-sign-out"></i><a href="/logout">Logout</a>', $result);
     }

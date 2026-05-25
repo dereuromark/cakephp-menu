@@ -17,9 +17,10 @@ This plugin provides a small menu tree API with:
 
 - nested menu items and submenus
 - string and Cake-style array URLs
+- alternate match routes and fuzzy route matching
 - renderer abstraction with a Cake `StringTemplate` implementation
-- request/user resolvers for active and visible items
-- Cake view helper integration
+- request-aware active item resolution
+- named-menu Cake view helper integration
 
 ## Installation
 
@@ -67,12 +68,31 @@ $account->add($menu->newItem('Logout', ['controller' => 'Users', 'action' => 'lo
 echo $this->Menu->render($menu);
 ```
 
+## Helper Workflow
+
+For view-driven menus you can let the helper manage named menus and active-state resolution:
+
+```php
+$menu = $this->Menu->create('main', [
+    'menuAttributes' => ['class' => 'nav'],
+]);
+$menu->addItem('Home', '/');
+$menu->addItem('Articles', ['controller' => 'Articles', 'action' => 'index'], [
+    'matchRoutes' => [
+        ['controller' => 'Articles', 'action' => 'view'],
+    ],
+    'fuzzy' => true,
+]);
+
+echo $this->Menu->render('main');
+```
+
 ## Resolvers
 
 Resolvers let you decorate menu items after construction:
 
 - `Psr7UrlResolver`: marks string URL items active based on the current request URI
-- `UrlArrayResolver`: marks Cake array URL items active from request params
+- `UrlArrayResolver`: marks Cake array URL items active from request params, including fuzzy route matching
 - `LoggedInResolver`: hides items marked with `auth = loggedIn|loggedOut`
 - `ResolverCollection`: applies multiple resolvers in order
 
@@ -105,7 +125,9 @@ It outputs nested `<ul>` / `<li>` markup and supports:
 - `before` / `after` inline markup
 - dividers
 - raw HTML items
-- active item CSS class
+- active and active-ancestor CSS classes
+- first/last/branch/leaf/menu-level classes
+- rendering the active item as text instead of a link
 
 You can override templates through helper options/config.
 

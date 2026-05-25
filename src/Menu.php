@@ -33,6 +33,8 @@ class Menu implements MenuInterface
      */
     protected string $itemClass = Item::class;
 
+    protected ?ItemInterface $ownerItem = null;
+
     /**
      * @phpstan-param array<string, mixed> $attributes
      */
@@ -48,6 +50,10 @@ class Menu implements MenuInterface
 
     public function add(ItemInterface $item): static
     {
+        if ($this->ownerItem !== null && !$item->hasParent()) {
+            $item->setParent($this->ownerItem);
+        }
+
         $this->items[] = $item;
 
         return $this;
@@ -142,6 +148,16 @@ class Menu implements MenuInterface
         if (isset($options['submenuAttributes']) && is_array($options['submenuAttributes'])) {
             $item->getSubMenu()->setAttributes($options['submenuAttributes']);
         }
+        if (isset($options['matchRoutes']) && is_array($options['matchRoutes'])) {
+            $item->setMatchRoutes(array_values($options['matchRoutes']));
+        }
+        if (array_key_exists('ignoreQueryString', $options)) {
+            $ignoreQueryString = $options['ignoreQueryString'];
+            $item->setIgnoreQueryString(is_bool($ignoreQueryString) ? $ignoreQueryString : null);
+        }
+        if (!empty($options['fuzzy'])) {
+            $item->setFuzzyMatch();
+        }
 
         return $item;
     }
@@ -209,6 +225,35 @@ class Menu implements MenuInterface
         $this->items = $items;
 
         return $this;
+    }
+
+    public function clearActive(): static
+    {
+        foreach ($this->items as $item) {
+            $item->setActive(false);
+            if ($item->hasSubMenu()) {
+                $item->getSubMenu()->clearActive();
+            }
+        }
+
+        return $this;
+    }
+
+    public function getActiveItem(): ?ItemInterface
+    {
+        foreach ($this->items as $item) {
+            if ($item->isActive()) {
+                return $item;
+            }
+            if ($item->hasSubMenu()) {
+                $activeItem = $item->getSubMenu()->getActiveItem();
+                if ($activeItem !== null) {
+                    return $activeItem;
+                }
+            }
+        }
+
+        return null;
     }
 
     public function setData(string $name, mixed $value): static
@@ -297,6 +342,13 @@ class Menu implements MenuInterface
                 $item->getSubMenu()->resolve($resolver);
             }
         }
+
+        return $this;
+    }
+
+    public function setOwnerItem(ItemInterface $ownerItem): static
+    {
+        $this->ownerItem = $ownerItem;
 
         return $this;
     }

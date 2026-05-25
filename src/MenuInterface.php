@@ -76,6 +76,10 @@ interface MenuInterface
 
     public function remove(string $id): static;
 
+    public function clearActive(): static;
+
+    public function getActiveItem(): ?ItemInterface;
+
     public function setData(string $name, mixed $value): static;
 
     public function getData(?string $name = null): mixed;

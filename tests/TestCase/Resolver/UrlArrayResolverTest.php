@@ -31,4 +31,55 @@ class UrlArrayResolverTest extends TestCase
 
         $this->assertTrue($item->isActive());
     }
+
+    public function testMatchesFuzzyControllerActionWithoutPass(): void
+    {
+        $item = (new Item('Articles', [
+            'controller' => 'Articles',
+            'action' => 'index',
+        ]))
+            ->addMatchRoute([
+                'controller' => 'Articles',
+                'action' => 'view',
+            ])
+            ->setFuzzyMatch();
+
+        $request = (new ServerRequest())
+            ->withAttribute('params', [
+                'controller' => 'Articles',
+                'action' => 'view',
+                'pass' => [42],
+            ]);
+
+        $resolver = new UrlArrayResolver($request);
+        $resolver->resolve($item);
+
+        $this->assertTrue($item->isActive());
+    }
+
+    public function testMatchesQueryStringInFuzzyRoute(): void
+    {
+        $item = (new Item('Filtered Articles', [
+            'controller' => 'Articles',
+            'action' => 'index',
+        ]))
+            ->addMatchRoute([
+                'controller' => 'Articles',
+                'action' => 'index',
+                '?' => ['sort' => 'desc'],
+            ])
+            ->setFuzzyMatch();
+
+        $request = (new ServerRequest())
+            ->withAttribute('params', [
+                'controller' => 'Articles',
+                'action' => 'index',
+            ])
+            ->withQueryParams(['sort' => 'desc', 'page' => '2']);
+
+        $resolver = new UrlArrayResolver($request);
+        $resolver->resolve($item);
+
+        $this->assertTrue($item->isActive());
+    }
 }
