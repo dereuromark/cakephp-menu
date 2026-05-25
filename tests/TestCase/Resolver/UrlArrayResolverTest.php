@@ -184,6 +184,42 @@ class UrlArrayResolverTest extends TestCase
         $this->assertFalse($item->isActive());
     }
 
+    public function testMatchesArrayMatchRouteOnStringLinkItem(): void
+    {
+        $item = (new Item('Dashboard', '/dashboard'))
+            ->addMatchRoute(['controller' => 'Articles', 'action' => 'index']);
+
+        $request = (new ServerRequest())->withAttribute('params', [
+            'controller' => 'Articles',
+            'action' => 'index',
+            'plugin' => null,
+            'pass' => [],
+        ]);
+
+        $resolver = new UrlArrayResolver($request);
+        $resolver->resolve($item);
+
+        $this->assertTrue($item->isActive());
+    }
+
+    public function testMatchesArrayMatchRouteOnLinklessItem(): void
+    {
+        $item = (new Item('Section'))
+            ->addMatchRoute(['controller' => 'Articles', 'action' => 'index']);
+
+        $request = (new ServerRequest())->withAttribute('params', [
+            'controller' => 'Articles',
+            'action' => 'index',
+            'plugin' => null,
+            'pass' => [],
+        ]);
+
+        $resolver = new UrlArrayResolver($request);
+        $resolver->resolve($item);
+
+        $this->assertTrue($item->isActive());
+    }
+
     public function testExactQueryConstraintIsNotMaskedByRoutingKey(): void
     {
         $item = (new Item('Edit query', [
@@ -192,7 +228,8 @@ class UrlArrayResolverTest extends TestCase
             '?' => ['action' => 'edit'],
         ]))->setFuzzyMatch(false);
 
-        // Request hits the routing action `edit` but carries no `?action=edit` query string.
+        // Link targets Articles/index?action=edit; the request is Articles/index with no query,
+        // so the `?action=edit` constraint must not be satisfied by the routing `action` key.
         $request = (new ServerRequest())->withAttribute('params', [
             'controller' => 'Articles',
             'action' => 'index',

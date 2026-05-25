@@ -9,7 +9,6 @@ use Menu\Item\Item;
 use Menu\Item\ItemInterface;
 use Menu\Item\StateResetInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use function array_filter;
 use function array_intersect_key;
 use function array_key_exists;
 use function array_merge;
@@ -54,18 +53,13 @@ class UrlArrayResolver implements ContextAwareResolverInterface
             return;
         }
 
-        $link = $item->getLink();
-        if ($link === null) {
-            return;
-        }
-
-        $linkArray = $link->getRawUrl();
-        if (!is_array($linkArray)) {
+        $routes = $this->extractRoutes($item);
+        if ($routes === []) {
             return;
         }
 
         $requestParams = (array)$this->request->getAttribute('params');
-        foreach ($this->extractRoutes($item, $linkArray) as $route) {
+        foreach ($routes as $route) {
             if ($this->matches($requestParams, $route, $item)) {
                 if ($item instanceof StateResetInterface) {
                     $item->setRuntimeActive(true);
@@ -272,21 +266,32 @@ class UrlArrayResolver implements ContextAwareResolverInterface
     }
 
     /**
-     * @phpstan-param array<string|int, mixed> $linkArray
+     * Collects all array routes for the item: the link itself (when it is an array URL) and any
+     * array `matchRoutes`. String/null links still contribute their array match routes, so an
+     * alternate Cake-array route is honored regardless of the primary link type.
      *
      * @return list<array<string|int, mixed>>
      */
-    protected function extractRoutes(ItemInterface $item, array $linkArray): array
+    protected function extractRoutes(ItemInterface $item): array
     {
-        $routes = [$linkArray];
-        if ($item instanceof Item) {
-            $routes = array_merge(
-                $routes,
-                array_filter($item->getMatchRoutes(), static fn (mixed $route): bool => is_array($route)),
-            );
+        $routes = [];
+
+        $link = $item->getLink();
+        if ($link !== null) {
+            $rawUrl = $link->getRawUrl();
+            if (is_array($rawUrl)) {
+                $routes[] = $rawUrl;
+            }
         }
 
-        /** @var list<array<string|int, mixed>> $routes */
+        if ($item instanceof Item) {
+            foreach ($item->getMatchRoutes() as $route) {
+                if (is_array($route)) {
+                    $routes[] = $route;
+                }
+            }
+        }
+
         return $routes;
     }
 }
