@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Menu;
 
 use InvalidArgumentException;
+use LogicException;
 use Menu\Item\Item;
 use Menu\Item\ItemInterface;
+use Menu\Link\Link;
 use Menu\Link\LinkInterface;
 use Menu\Resolver\ContextAwareResolverInterface;
 use Menu\Resolver\ResolverCollectionInterface;
@@ -37,6 +39,8 @@ class Menu implements MenuInterface
 
     protected ?ItemInterface $ownerItem = null;
 
+    protected bool $frozen = false;
+
     /**
      * @phpstan-param array<string, mixed> $attributes
      */
@@ -50,8 +54,66 @@ class Menu implements MenuInterface
         return $menu;
     }
 
+    public static function fromArray(array $config): static
+    {
+        $menu = static::create((array)($config['attributes'] ?? []));
+        foreach ((array)($config['data'] ?? []) as $name => $value) {
+            $menu->setData((string)$name, $value);
+        }
+
+        foreach ((array)($config['items'] ?? []) as $itemConfig) {
+            if (!is_array($itemConfig)) {
+                continue;
+            }
+
+            $item = $menu->newItem(
+                $itemConfig['label'] ?? null,
+                $itemConfig['link'] ?? null,
+                [
+                    'id' => $itemConfig['id'] ?? null,
+                    'key' => $itemConfig['key'] ?? null,
+                    'escape' => $itemConfig['escape'] ?? true,
+                    'before' => $itemConfig['before'] ?? null,
+                    'after' => $itemConfig['after'] ?? null,
+                    'attributes' => $itemConfig['attributes'] ?? [],
+                    'data' => $itemConfig['data'] ?? [],
+                    'visible' => $itemConfig['visible'] ?? true,
+                    'active' => $itemConfig['active'] ?? false,
+                    'raw' => $itemConfig['raw'] ?? null,
+                    'divider' => $itemConfig['divider'] ?? false,
+                    'submenuAttributes' => $itemConfig['submenu']['attributes'] ?? [],
+                    'matchRoutes' => $itemConfig['matchRoutes'] ?? [],
+                    'ignoreQueryString' => $itemConfig['ignoreQueryString'] ?? null,
+                    'fuzzy' => $itemConfig['fuzzy'] ?? false,
+                ],
+            );
+
+            if (!empty($itemConfig['linkAttributes']) && $item->getLink() !== null) {
+                $item->getLink()->setAttributes((array)$itemConfig['linkAttributes']);
+            }
+            if (!empty($itemConfig['external']) && $item->getLink() !== null) {
+                $item->setLink(Link::create(
+                    $item->getLink()->getRawUrl(),
+                    (array)$itemConfig['linkAttributes'],
+                    true,
+                ));
+            }
+            if (!empty($itemConfig['expanded'])) {
+                $item->setExpanded();
+            }
+            if (!empty($itemConfig['submenu']['items'])) {
+                $item->setSubMenu(static::fromArray((array)$itemConfig['submenu']));
+            }
+
+            $menu->add($item);
+        }
+
+        return $menu;
+    }
+
     public function add(ItemInterface $item): static
     {
+        $this->assertMutable();
         if ($this->ownerItem !== null && !$item->hasParent()) {
             $item->setParent($this->ownerItem);
         }
@@ -177,6 +239,7 @@ class Menu implements MenuInterface
      */
     public function setItems(array $items): static
     {
+        $this->assertMutable();
         $validatedItems = [];
         foreach ($items as $item) {
             if (!$item instanceof ItemInterface) {
@@ -215,6 +278,7 @@ class Menu implements MenuInterface
 
     public function remove(string $id): static
     {
+        $this->assertMutable();
         $items = [];
         foreach ($this->items as $item) {
             if ($item->getId() === $id) {
@@ -262,6 +326,7 @@ class Menu implements MenuInterface
 
     public function setData(string $name, mixed $value): static
     {
+        $this->assertMutable();
         $this->data[$name] = $value;
 
         return $this;
@@ -286,6 +351,7 @@ class Menu implements MenuInterface
 
     public function setAttribute(string $name, mixed $value): static
     {
+        $this->assertMutable();
         $this->attributes[$name] = $value;
 
         return $this;
@@ -296,6 +362,7 @@ class Menu implements MenuInterface
      */
     public function setAttributes(array $attributes, bool $merge = false): static
     {
+        $this->assertMutable();
         $this->attributes = $merge ? $attributes + $this->attributes : $attributes;
 
         return $this;
@@ -303,6 +370,7 @@ class Menu implements MenuInterface
 
     public function filter(callable $callback): static
     {
+        $this->assertMutable();
         $items = [];
         foreach ($this->items as $item) {
             if ($item->hasSubMenu()) {
@@ -320,6 +388,7 @@ class Menu implements MenuInterface
 
     public function sortBy(callable|string $by, string $direction = self::SORT_ASC): static
     {
+        $this->assertMutable();
         usort($this->items, function (ItemInterface $left, ItemInterface $right) use ($by, $direction): int {
             $leftValue = $this->extractSortValue($left, $by);
             $rightValue = $this->extractSortValue($right, $by);
@@ -388,9 +457,37 @@ class Menu implements MenuInterface
 
     public function setOwnerItem(ItemInterface $ownerItem): static
     {
+        $this->assertMutable();
         $this->ownerItem = $ownerItem;
 
         return $this;
+    }
+
+    public function freeze(): static
+    {
+        $this->frozen = true;
+        foreach ($this->items as $item) {
+            $item->freeze();
+        }
+
+        return $this;
+    }
+
+    public function isFrozen(): bool
+    {
+        return $this->frozen;
+    }
+
+    public function toArray(): array
+    {
+        return [
+            'attributes' => $this->attributes,
+            'data' => $this->data,
+            'items' => array_map(
+                static fn (ItemInterface $item): array => $item->toArray(),
+                $this->items,
+            ),
+        ];
     }
 
     protected function extractSortValue(ItemInterface $item, callable|string $by): mixed
@@ -431,10 +528,25 @@ class Menu implements MenuInterface
         }
         $ids[$id] = true;
 
+        if ($item->hasExplicitKey()) {
+            $keyId = '__key__' . $item->getKey();
+            if (isset($ids[$keyId])) {
+                throw new InvalidArgumentException(sprintf('Duplicate explicit menu item key `%s` detected.', $item->getKey()));
+            }
+            $ids[$keyId] = true;
+        }
+
         if ($item->hasSubMenu()) {
             foreach ($item->getSubMenu()->getItems() as $child) {
                 $this->collectIdentifiers($child, $ids);
             }
+        }
+    }
+
+    protected function assertMutable(): void
+    {
+        if ($this->frozen) {
+            throw new LogicException('Cannot mutate a frozen menu.');
         }
     }
 }

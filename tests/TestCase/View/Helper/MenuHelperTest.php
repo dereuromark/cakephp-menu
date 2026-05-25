@@ -164,6 +164,18 @@ class MenuHelperTest extends TestCase
         $menuHelper->create('main');
     }
 
+    public function testRegisterBuildsMenuLazily(): void
+    {
+        $menuHelper = $this->createHelper(new ServerRequest());
+
+        $menu = $menuHelper->register('main', static function ($menu): void {
+            $menu->addItem('Articles', '/articles');
+        });
+
+        $this->assertSame($menu, $menuHelper->get('main'));
+        $this->assertCount(1, $menu->getItems());
+    }
+
     public function testAuthorizationResolverAndDepthLimit(): void
     {
         $request = (new ServerRequest(['url' => '/articles/view/42']))

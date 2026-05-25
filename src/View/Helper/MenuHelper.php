@@ -96,6 +96,19 @@ class MenuHelper extends Helper
         return $this->create($name, $options);
     }
 
+    /**
+     * @param string $name
+     * @param callable(\Menu\MenuInterface, self): void $callback
+     * @param array<string, mixed> $options
+     */
+    public function register(string $name, callable $callback, array $options = []): MenuInterface
+    {
+        $menu = $this->getOrCreate($name, $options);
+        $callback($menu, $this);
+
+        return $menu;
+    }
+
     public function remove(string $name): static
     {
         unset($this->menus[$name], $this->menuConfigs[$name]);

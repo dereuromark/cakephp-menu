@@ -26,6 +26,11 @@ interface MenuInterface
      */
     public static function create(array $attributes = []): static;
 
+    /**
+     * @phpstan-param array<string, mixed> $config
+     */
+    public static function fromArray(array $config): static;
+
     public function add(ItemInterface $item): static;
 
     /**
@@ -101,4 +106,13 @@ interface MenuInterface
     public function sortBy(callable|string $by, string $direction = self::SORT_ASC): static;
 
     public function resolve(ResolverInterface|ResolverCollectionInterface $resolver): static;
+
+    public function freeze(): static;
+
+    public function isFrozen(): bool;
+
+    /**
+     * @phpstan-return array<string, mixed>
+     */
+    public function toArray(): array;
 }

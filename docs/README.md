@@ -48,6 +48,15 @@ if ($this->Menu->has('main')) {
 $this->Menu->reset();
 ```
 
+You can also register menus lazily:
+
+```php
+$this->Menu->register('main', static function ($menu): void {
+    $menu->addItem('Home', '/');
+    $menu->addItem('Articles', '/articles');
+});
+```
+
 ## Item Options
 
 `Menu::addItem()` and `Menu::newItem()` accept these options:
@@ -67,6 +76,41 @@ $this->Menu->reset();
 - `fuzzy`: enables subset matching for Cake array routes
 - `raw`: render raw HTML inside the item
 - `divider`: render a divider item
+- `expanded`: runtime state for open branches
+
+## Import / Export
+
+Menu trees can be created from arrays and exported back:
+
+```php
+$menu = Menu::fromArray([
+    'attributes' => ['class' => 'nav'],
+    'items' => [
+        [
+            'id' => 'articles',
+            'label' => 'Articles',
+            'link' => '/articles',
+            'submenu' => [
+                'items' => [
+                    ['label' => 'View', 'link' => '/articles/view'],
+                ],
+            ],
+        ],
+    ],
+]);
+
+$data = $menu->toArray();
+```
+
+## Freeze Mode
+
+If you want to lock the structural definition after building it:
+
+```php
+$menu->freeze();
+```
+
+Frozen menus still allow runtime state updates from resolvers such as `active`, `visible`, and `expanded`, but block structural/content changes.
 
 ## Item Lookup and Mutation
 
@@ -106,6 +150,25 @@ It also supports named routes:
 
 ```php
 $menu->addItem('View', ['_name' => 'articles:view']);
+```
+
+### Section Resolver
+
+`SectionResolver` activates items from request parameter subsets:
+
+```php
+use Menu\Resolver\SectionResolver;
+
+$menu->addItem('Admin Articles', '/admin/articles', [
+    'data' => [
+        'section' => [
+            'prefix' => 'Admin',
+            'controller' => 'Articles',
+        ],
+    ],
+]);
+
+$menu->resolve(new SectionResolver($request));
 ```
 
 ### Login Visibility Resolver
@@ -150,6 +213,20 @@ $menu->resolve(new CallbackResolver(
         }
     }
 ));
+```
+
+### Permission Resolver
+
+For Authorization-style `can()` services there is also a convenience resolver:
+
+```php
+use Menu\Resolver\PermissionResolver;
+
+$menu->addItem('Admin', '/admin', [
+    'data' => ['permission' => 'admin.access'],
+]);
+
+$menu->resolve(new PermissionResolver($authorization, $identity));
 ```
 
 ### Multiple Resolvers
@@ -204,6 +281,25 @@ echo $this->Menu->renderBreadcrumbs('main', [
 ]);
 ```
 
+### Alternate Renderers
+
+JSON export:
+
+```php
+echo $this->Menu->render($menu, [
+    'renderer' => \Menu\Renderer\JsonRenderer::class,
+    'pretty' => true,
+]);
+```
+
+Bootstrap-flavored markup:
+
+```php
+echo $this->Menu->render($menu, [
+    'renderer' => \Menu\Renderer\Bootstrap5Renderer::class,
+]);
+```
+
 You can override templates per render call:
 
 ```php
@@ -221,3 +317,47 @@ echo $this->Menu->render($menu, [
 - String URLs and array URLs are both supported.
 - Active matching is automatic in the helper by default and uses both array and string resolvers.
 - The default renderer emits `aria-current="page"` for the active link and `aria-expanded` for branch items.
+
+## Recipes
+
+### Admin Sidebar
+
+```php
+$this->Menu->register('admin', static function ($menu): void {
+    $menu->addItem('Dashboard', ['prefix' => 'Admin', 'controller' => 'Dashboard', 'action' => 'index'], [
+        'data' => ['section' => ['prefix' => 'Admin', 'controller' => 'Dashboard']],
+    ]);
+    $menu->addItem('Articles', ['prefix' => 'Admin', 'controller' => 'Articles', 'action' => 'index'], [
+        'data' => ['section' => ['prefix' => 'Admin', 'controller' => 'Articles']],
+    ]);
+});
+
+echo $this->Menu->render('admin', [
+    'resolver' => (new \Menu\Resolver\ResolverCollection())
+        ->add(new \Menu\Resolver\SectionResolver($this->request)),
+]);
+```
+
+### Account Dropdown
+
+```php
+$account = $menu->addItem('Account', '#');
+$account->getSubMenu()->addItem('Profile', '/profile');
+$account->getSubMenu()->addItem('Logout', '/logout');
+
+echo $this->Menu->render($menu, [
+    'renderer' => \Menu\Renderer\Bootstrap5Renderer::class,
+]);
+```
+
+### Breadcrumbs From Navigation
+
+```php
+$this->Menu->register('main', static function ($menu): void {
+    $articles = $menu->addItem('Articles', '/articles');
+    $articles->getSubMenu()->addItem('View', '/articles/view/42');
+});
+
+echo $this->Menu->render('main');
+echo $this->Menu->renderBreadcrumbs('main');
+```
