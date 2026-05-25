@@ -25,6 +25,22 @@ $products->add($menu->newItem('Books', ['controller' => 'Products', 'action' => 
 $products->add($menu->newItem('Games', ['controller' => 'Products', 'action' => 'games']));
 ```
 
+### Section Headers and Dividers
+
+Group items under a non-link header, and separate groups with a divider:
+
+```php
+$menu->addHeader('Account');
+$menu->addItem('Profile', '/profile');
+$menu->addItem('Logout', '/logout');
+$menu->addDivider();
+$menu->addHeader('Admin');
+$menu->addItem('Users', ['prefix' => 'Admin', 'controller' => 'Users', 'action' => 'index']);
+```
+
+A header renders as a plain `<li>` with the `headerClass` (`menu-header`, or `nav-header` in the
+sidebar renderer), not a link.
+
 ### Named Menus via Helper
 
 ```php
@@ -78,6 +94,7 @@ $this->Menu->register('main', static function ($menu): void {
 - `fuzzy`: enables subset matching for Cake array routes
 - `raw`: render raw HTML inside the item
 - `divider`: render a divider item
+- `header`: render a non-link section header (or use `Menu::addHeader()`)
 - `expanded`: runtime state for open branches
 
 ## Import / Export
@@ -427,6 +444,7 @@ BS4/other setups work without subclassing: `linkClass` (`nav-link`, top-level li
 | `submenuClass` | `null` | Extra class for branch items, in addition to `branchClass`. |
 | `leafClass` | `null` | Class for items without a submenu. |
 | `dividerClass` | `divider` | Class for divider items. |
+| `headerClass` | `menu-header` | Class for non-link section headers (`nav-header` in the sidebar renderer). |
 | `nestedMenuClass` | `submenu` | Class added to nested `<ul>` elements. |
 | `menuLevelClass` | `null` | Prefix for a per-level class (e.g. `level-` produces `level-1`, `level-2`). |
 | `firstClass` / `lastClass` | `null` | Class for the first / last item in a list. |
