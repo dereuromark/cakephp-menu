@@ -11,7 +11,7 @@
 
 Composable menu builder and renderer for CakePHP applications.
 
-This branch is for **CakePHP 5.3+**. See the [version matrix](https://github.com/dereuromark/cakephp-menu/wiki/Version-Matrix) for details.
+This branch is for **CakePHP 5.3+**. See the [version map](https://github.com/dereuromark/cakephp-menu/wiki#cakephp-version-map) for details.
 
 This plugin provides a small menu tree API with:
 
@@ -21,6 +21,12 @@ This plugin provides a small menu tree API with:
 - request/user resolvers for active and visible items
 - Cake view helper integration
 
+## Requirements
+
+- PHP 8.2+
+- CakePHP 5.3+
+
+See the [version map](https://github.com/dereuromark/cakephp-menu/wiki#cakephp-version-map).
 ## Installation
 
 ```bash
@@ -112,7 +118,7 @@ You can override templates through helper options/config.
 ## Documentation
 
 - [Usage Guide](docs/README.md)
-- [Version Matrix](https://github.com/dereuromark/cakephp-menu/wiki/Version-Matrix)
+- [Version Map](https://github.com/dereuromark/cakephp-menu/wiki#cakephp-version-map)
 - [Wiki](https://github.com/dereuromark/cakephp-menu/wiki)
 
 Full documentation: https://github.com/dereuromark/cakephp-menu/wiki
