@@ -35,7 +35,8 @@ class StringTemplateRenderer implements RendererInterface
         'dividerClass' => 'divider',
         'branchClass' => 'has-children',
         'leafClass' => null,
-        'submenuClass' => 'has-children',
+        // Extra class for branch <li>s, in addition to `branchClass`; off by default.
+        'submenuClass' => null,
         'nestedMenuClass' => 'submenu',
         'menuLevelClass' => null,
         'firstClass' => null,
@@ -201,6 +202,9 @@ class StringTemplateRenderer implements RendererInterface
         if ($link === null || ($item->isActive() && !$this->getBooleanOption($options, 'currentAsLink', true))) {
             $attributes = $link?->getAttributes() ?? [];
             unset($attributes['href']);
+            if ($item->isActive() && $this->getBooleanOption($options, 'addAriaCurrent', true)) {
+                $attributes['aria-current'] = 'page';
+            }
 
             return $this->templater()->format('label', [
                 'attributes' => $this->renderAttributes($attributes),

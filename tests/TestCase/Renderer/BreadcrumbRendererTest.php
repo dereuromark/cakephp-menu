@@ -21,7 +21,7 @@ class BreadcrumbRendererTest extends TestCase
         $this->assertStringContainsString('<nav aria-label="breadcrumb">', $result);
         $this->assertStringContainsString('<ol class="breadcrumb">', $result);
         $this->assertStringContainsString('<a href="/articles">Articles</a>', $result);
-        $this->assertStringContainsString('<li class="breadcrumb-item active"><span>View</span></li>', $result);
+        $this->assertStringContainsString('<li class="breadcrumb-item active"><span aria-current="page">View</span></li>', $result);
     }
 
     public function testEscapesAriaLabel(): void
