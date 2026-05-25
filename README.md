@@ -21,13 +21,6 @@ This plugin provides a small menu tree API with:
 - request/user resolvers for active and visible items
 - Cake view helper integration
 
-## Requirements
-
-- PHP 8.2+
-- CakePHP 5.3+
-
-See the [version matrix](https://github.com/dereuromark/cakephp-menu/wiki/Version-Matrix).
-
 ## Installation
 
 ```bash
