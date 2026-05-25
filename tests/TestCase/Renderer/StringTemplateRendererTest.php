@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Menu\Test\TestCase\Renderer;
 
 use Cake\TestSuite\TestCase;
+use Menu\Item\Item;
+use Menu\Item\SelfRendererInterface;
 use Menu\Menu;
 use Menu\Renderer\StringTemplateRenderer;
 
@@ -124,6 +126,43 @@ class StringTemplateRendererTest extends TestCase
 
         $result = (new StringTemplateRenderer())->render($menu);
 
+        $this->assertStringContainsString('Admin', $result);
+    }
+
+    public function testHideEmptyBranchesRecursesThroughNestedBranches(): void
+    {
+        $menu = Menu::create();
+        $admin = $menu->addItem('Admin', '#');
+        $settings = $admin->getSubMenu()->addItem('Settings', '#');
+        $settings->getSubMenu()->addItem('Users', '/admin/users')->setVisibility(false);
+        $reports = $menu->addItem('Reports', '#');
+        $reports->getSubMenu()->addItem('Daily', '/reports/daily');
+
+        $result = (new StringTemplateRenderer())->render($menu, ['hideEmptyBranches' => true]);
+
+        $this->assertStringNotContainsString('Admin', $result);
+        $this->assertStringNotContainsString('Settings', $result);
+        $this->assertStringContainsString('Reports', $result);
+        $this->assertStringContainsString('Daily', $result);
+    }
+
+    public function testHideEmptyBranchesKeepsSelfRenderingChild(): void
+    {
+        $menu = Menu::create();
+        $group = $menu->addItem('Admin', '#');
+        $self = new class ('Self', '/self') extends Item implements SelfRendererInterface {
+            public function render(): string
+            {
+                return '<li class="self-item">self</li>';
+            }
+        };
+        // The self-rendering child has only hidden descendants, but it still renders itself.
+        $self->getSubMenu()->addItem('Hidden', '/hidden')->setVisibility(false);
+        $group->add($self);
+
+        $result = (new StringTemplateRenderer())->render($menu, ['hideEmptyBranches' => true]);
+
+        $this->assertStringContainsString('self-item', $result);
         $this->assertStringContainsString('Admin', $result);
     }
 }

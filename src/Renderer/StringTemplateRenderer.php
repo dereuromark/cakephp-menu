@@ -257,6 +257,10 @@ class StringTemplateRenderer implements RendererInterface
             if (!$child->isVisible()) {
                 continue;
             }
+            if ($child instanceof SelfRendererInterface) {
+                // A self-rendering item always emits markup, regardless of its submenu.
+                return true;
+            }
             if (!$child->hasSubMenu()) {
                 return true;
             }
