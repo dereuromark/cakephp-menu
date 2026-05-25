@@ -69,6 +69,9 @@ $this->Menu->register('main', static function ($menu): void {
 - `submenuAttributes`: nested `<ul>` attributes
 - `before`: raw markup before the label/link
 - `after`: raw markup after the label/link
+- `icon`: icon class rendered before the label (e.g. `fa fa-inbox`)
+- `badge`: badge text/count rendered after the label
+- `badgeType`: extra CSS class for the badge (e.g. `bg-danger`)
 - `data`: arbitrary metadata consumed by your app or resolvers
 - `visible`: initial visibility
 - `active`: initial active state
@@ -317,6 +320,19 @@ echo $this->Menu->render('main', [
 
 This looks at child *visibility*, not the `depth` cutoff: a branch with visible children is still a
 valid top-level entry when its submenu is truncated by `depth`, so it is kept.
+
+### Single Active Item
+
+When several items match the current URL (e.g. a parent and a child both pointing at the same
+route), `getActiveItem()` and breadcrumbs follow the first match in document order. Enable
+`singleActive` to keep only the **best** match active — the deepest item in the tree, breaking ties
+by document order — so the active trail is unambiguous:
+
+```php
+echo $this->Menu->render('main', [
+    'singleActive' => true,
+]);
+```
 
 ### Breadcrumb Integration
 
@@ -593,21 +609,24 @@ echo $this->Menu->render('admin');
 
 ### Icons and Badges
 
-`before`, `after`, and `raw` are emitted as trusted markup, so they are handy for icon fonts and
-counters:
+Icons and badges are first-class: `setIcon()` and `setBadge()` (or the `icon`/`badge`/`badgeType`
+options) are escaped for you and rendered around the label.
 
 ```php
-$menu->addItem('Dashboard', ['controller' => 'Dashboard', 'action' => 'index'], [
-    'before' => '<i class="fa fa-gauge"></i> ',
-]);
+$menu->addItem('Dashboard', ['controller' => 'Dashboard', 'action' => 'index'])
+    ->setIcon('fa fa-gauge');
 
-$menu->addItem('Inbox', ['controller' => 'Messages', 'action' => 'index'], [
-    'after' => ' <span class="badge">' . (int)$unread . '</span>',
-]);
+$menu->addItem('Inbox', ['controller' => 'Messages', 'action' => 'index'])
+    ->setBadge($unread, 'bg-danger');
+
+// Same via options:
+$menu->addItem('Profile', '/profile', ['icon' => 'fa fa-user', 'badge' => 'new']);
 ```
 
-Because `before`/`after`/`raw` are emitted verbatim, cast or escape any dynamic value you put in
-them (here `(int)$unread`).
+The markup is overridable per render with the `iconTemplate` / `badgeTemplate` options
+(`{{icon}}`, and `{{class}}`/`{{text}}` placeholders). For anything more custom, `before`, `after`,
+and `raw` are still emitted as trusted markup — cast or escape dynamic values you put there yourself
+(e.g. `(int)$count`).
 
 ### Defining a Menu in Config
 
