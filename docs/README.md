@@ -610,30 +610,16 @@ echo $this->Menu->render('admin');
 
 ### Icons and Badges
 
-Icons and badges are first-class: the `icon`/`badge`/`badgeType` options are escaped for you and
-rendered around the label.
+Icons and badges are first-class: `setIcon()` / `setBadge()` (on `ItemInterface`) or the
+`icon`/`badge`/`badgeType` options are escaped for you and rendered around the label.
 
 ```php
-$menu->addItem('Dashboard', ['controller' => 'Dashboard', 'action' => 'index'], [
-    'icon' => 'fa fa-gauge',
-]);
+$menu->addItem('Inbox', ['controller' => 'Messages', 'action' => 'index'])
+    ->setIcon('fa fa-inbox')
+    ->setBadge($unread, 'bg-danger');
 
-$menu->addItem('Inbox', ['controller' => 'Messages', 'action' => 'index'], [
-    'icon' => 'fa fa-inbox',
-    'badge' => $unread,
-    'badgeType' => 'bg-danger',
-]);
-```
-
-The fluent `setIcon()` / `setBadge()` setters are also available on a concrete `Item`
-(`Menu::addItem()` / `newItem()` are typed to return `ItemInterface`, so prefer the options above for
-the common case):
-
-```php
-use Menu\Item\Item;
-
-$item = (new Item('Profile', '/profile'))->setIcon('fa fa-user')->setBadge('new');
-$menu->add($item);
+// Same via options:
+$menu->addItem('Profile', '/profile', ['icon' => 'fa fa-user', 'badge' => 'new']);
 ```
 
 The markup is overridable per render with the `iconTemplate` / `badgeTemplate` options

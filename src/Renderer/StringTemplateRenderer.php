@@ -6,7 +6,6 @@ namespace Menu\Renderer;
 
 use Cake\Core\InstanceConfigTrait;
 use Cake\View\StringTemplateTrait;
-use Menu\Item\Item;
 use Menu\Item\ItemInterface;
 use Menu\Item\SelfRendererInterface;
 use Menu\MenuInterface;
@@ -261,7 +260,7 @@ class StringTemplateRenderer implements RendererInterface
      */
     protected function renderIcon(ItemInterface $item, array $options): string
     {
-        $icon = $item instanceof Item ? (string)$item->getIcon() : '';
+        $icon = (string)$item->getIcon();
         if ($icon === '') {
             return '';
         }
@@ -276,9 +275,6 @@ class StringTemplateRenderer implements RendererInterface
      */
     protected function renderBadge(ItemInterface $item, array $options): string
     {
-        if (!$item instanceof Item) {
-            return '';
-        }
         $badge = (string)$item->getBadge();
         if ($badge === '') {
             return '';
