@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Menu\Test\TestCase\Resolver;
 
 use Cake\Http\ServerRequest;
+use Cake\Routing\Route\Route;
 use Cake\TestSuite\TestCase;
 use Menu\Item\Item;
 use Menu\Resolver\UrlArrayResolver;
@@ -76,6 +77,23 @@ class UrlArrayResolverTest extends TestCase
                 'action' => 'index',
             ])
             ->withQueryParams(['sort' => 'desc', 'page' => '2']);
+
+        $resolver = new UrlArrayResolver($request);
+        $resolver->resolve($item);
+
+        $this->assertTrue($item->isActive());
+    }
+
+    public function testMatchesNamedRoute(): void
+    {
+        $item = new Item('View Article', ['_name' => 'articles:view']);
+
+        $request = (new ServerRequest())
+            ->withAttribute('params', [
+                'controller' => 'Articles',
+                'action' => 'view',
+                '_route' => new Route('/articles/{id}', ['controller' => 'Articles', 'action' => 'view'], ['_name' => 'articles:view']),
+            ]);
 
         $resolver = new UrlArrayResolver($request);
         $resolver->resolve($item);

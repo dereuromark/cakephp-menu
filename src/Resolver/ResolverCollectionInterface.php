@@ -23,4 +23,6 @@ interface ResolverCollectionInterface
     public function all(): array;
 
     public function resolve(ItemInterface $item): void;
+
+    public function resolveWithContext(ItemInterface $item, ResolverContext $context): void;
 }

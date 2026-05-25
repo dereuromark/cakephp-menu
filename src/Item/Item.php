@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Menu\Item;
 
 use Cake\Utility\Text;
+use LogicException;
 use Menu\Link\Link;
 use Menu\Link\LinkInterface;
 use Menu\Menu;
@@ -15,6 +16,8 @@ class Item implements ItemInterface
     protected string $id;
 
     protected string $key = '';
+
+    protected bool $explicitKey = false;
 
     protected ?string $label = null;
 
@@ -57,6 +60,10 @@ class Item implements ItemInterface
 
     protected bool $fuzzyMatch = false;
 
+    protected bool $expanded = false;
+
+    protected bool $frozen = false;
+
     /**
      * @phpstan-param \Menu\Link\LinkInterface|array<string|int, mixed>|string|null $link
      */
@@ -75,6 +82,7 @@ class Item implements ItemInterface
 
     public function setId(string $id): static
     {
+        $this->assertMutable();
         $this->id = $id;
 
         return $this;
@@ -87,7 +95,9 @@ class Item implements ItemInterface
 
     public function setKey(string $key): static
     {
+        $this->assertMutable();
         $this->key = $key;
+        $this->explicitKey = true;
 
         return $this;
     }
@@ -101,8 +111,14 @@ class Item implements ItemInterface
         return $this->key;
     }
 
+    public function hasExplicitKey(): bool
+    {
+        return $this->explicitKey;
+    }
+
     public function setLabel(string $label, bool $escape = true): static
     {
+        $this->assertMutable();
         $this->label = $label;
         $this->escapeLabel = $escape;
 
@@ -124,6 +140,7 @@ class Item implements ItemInterface
      */
     public function setLink(LinkInterface|string|array|null $link): static
     {
+        $this->assertMutable();
         if (!$link instanceof LinkInterface) {
             $link = Link::create($link);
         }
@@ -140,6 +157,7 @@ class Item implements ItemInterface
 
     public function setRaw(string $content): static
     {
+        $this->assertMutable();
         $this->raw = $content;
 
         return $this;
@@ -157,6 +175,7 @@ class Item implements ItemInterface
 
     public function setDivider(bool $divider = true): static
     {
+        $this->assertMutable();
         $this->divider = $divider;
 
         return $this;
@@ -193,6 +212,7 @@ class Item implements ItemInterface
 
     public function add(ItemInterface $item): static
     {
+        $this->assertMutable();
         $item->setParent($this);
         $this->getSubMenu()->add($item);
 
@@ -201,6 +221,7 @@ class Item implements ItemInterface
 
     public function setSubMenu(MenuInterface $menu): static
     {
+        $this->assertMutable();
         if ($menu instanceof Menu) {
             $menu->setOwnerItem($this);
         }
@@ -225,6 +246,7 @@ class Item implements ItemInterface
 
     public function setParent(ItemInterface $item): static
     {
+        $this->assertMutable();
         $this->parent = $item;
 
         return $this;
@@ -247,6 +269,7 @@ class Item implements ItemInterface
 
     public function setBefore(string $before): static
     {
+        $this->assertMutable();
         $this->before = $before;
 
         return $this;
@@ -259,6 +282,7 @@ class Item implements ItemInterface
 
     public function setAfter(string $after): static
     {
+        $this->assertMutable();
         $this->after = $after;
 
         return $this;
@@ -271,6 +295,7 @@ class Item implements ItemInterface
 
     public function setAttribute(string $name, mixed $value): static
     {
+        $this->assertMutable();
         $this->attributes[$name] = $value;
 
         return $this;
@@ -281,6 +306,7 @@ class Item implements ItemInterface
      */
     public function setAttributes(array $attributes, bool $merge = false): static
     {
+        $this->assertMutable();
         $this->attributes = $merge ? $attributes + $this->attributes : $attributes;
 
         return $this;
@@ -296,6 +322,7 @@ class Item implements ItemInterface
 
     public function setData(string $name, mixed $value): static
     {
+        $this->assertMutable();
         $this->data[$name] = $value;
 
         return $this;
@@ -315,6 +342,7 @@ class Item implements ItemInterface
      */
     public function setMatchRoutes(array $routes): static
     {
+        $this->assertMutable();
         $this->matchRoutes = [];
         foreach ($routes as $route) {
             $this->addMatchRoute($route);
@@ -328,6 +356,7 @@ class Item implements ItemInterface
      */
     public function addMatchRoute(string|array $route): static
     {
+        $this->assertMutable();
         $this->matchRoutes[] = $route;
 
         return $this;
@@ -343,6 +372,7 @@ class Item implements ItemInterface
 
     public function setIgnoreQueryString(?bool $ignoreQueryString): static
     {
+        $this->assertMutable();
         $this->ignoreQueryString = $ignoreQueryString;
 
         return $this;
@@ -355,6 +385,7 @@ class Item implements ItemInterface
 
     public function setFuzzyMatch(bool $fuzzyMatch = true): static
     {
+        $this->assertMutable();
         $this->fuzzyMatch = $fuzzyMatch;
 
         return $this;
@@ -363,5 +394,65 @@ class Item implements ItemInterface
     public function isFuzzyMatch(): bool
     {
         return $this->fuzzyMatch;
+    }
+
+    public function setExpanded(bool $expanded = true): static
+    {
+        $this->expanded = $expanded;
+
+        return $this;
+    }
+
+    public function isExpanded(): bool
+    {
+        return $this->expanded;
+    }
+
+    public function freeze(): static
+    {
+        $this->frozen = true;
+        if ($this->subMenu instanceof MenuInterface) {
+            $this->subMenu->freeze();
+        }
+
+        return $this;
+    }
+
+    public function isFrozen(): bool
+    {
+        return $this->frozen;
+    }
+
+    public function toArray(): array
+    {
+        return [
+            'id' => $this->id,
+            'key' => $this->key !== '' ? $this->key : null,
+            'label' => $this->label,
+            'escape' => $this->escapeLabel,
+            'link' => $this->link?->getRawUrl(),
+            'linkAttributes' => $this->link?->getAttributes() ?? [],
+            'external' => $this->link?->isExternal() ?? false,
+            'raw' => $this->raw,
+            'divider' => $this->divider,
+            'visible' => $this->visible,
+            'active' => $this->active,
+            'expanded' => $this->expanded,
+            'before' => $this->before,
+            'after' => $this->after,
+            'attributes' => $this->attributes,
+            'data' => $this->data,
+            'matchRoutes' => $this->matchRoutes,
+            'ignoreQueryString' => $this->ignoreQueryString,
+            'fuzzy' => $this->fuzzyMatch,
+            'submenu' => $this->subMenu?->toArray(),
+        ];
+    }
+
+    protected function assertMutable(): void
+    {
+        if ($this->frozen) {
+            throw new LogicException('Cannot mutate a frozen menu item.');
+        }
     }
 }

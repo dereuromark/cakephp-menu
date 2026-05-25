@@ -42,6 +42,9 @@ class StringTemplateRenderer implements RendererInterface
         'lastClass' => null,
         'depth' => null,
         'currentAsLink' => true,
+        'ariaLabel' => null,
+        'addAriaCurrent' => true,
+        'addAriaExpanded' => true,
         'templates' => [
             'menuWrapper' => '<ul{{attributes}}>{{items}}</ul>',
             'item' => '<li{{attributes}}>{{content}}</li>',
@@ -104,6 +107,10 @@ class StringTemplateRenderer implements RendererInterface
         }
 
         $attributes = $menu->getAttributes();
+        $ariaLabel = $this->getStringOption($options, 'ariaLabel');
+        if ($level === 1 && $ariaLabel !== '' && !isset($attributes['aria-label'])) {
+            $attributes['aria-label'] = $ariaLabel;
+        }
         if ($level > 1) {
             $nestedMenuClass = $this->getStringOption($options, 'nestedMenuClass');
             if ($nestedMenuClass !== '') {
@@ -159,6 +166,11 @@ class StringTemplateRenderer implements RendererInterface
         if ($hasSubMenu) {
             $attributes = $this->appendConfiguredClass($attributes, $options, 'branchClass');
             $attributes = $this->appendConfiguredClass($attributes, $options, 'submenuClass');
+            if ($this->getBooleanOption($options, 'addAriaExpanded', true)) {
+                $attributes['aria-expanded'] = $item->isExpanded() || $item->isActive() || $this->hasActiveDescendant($item)
+                    ? 'true'
+                    : 'false';
+            }
         } else {
             $attributes = $this->appendConfiguredClass($attributes, $options, 'leafClass');
         }
@@ -198,6 +210,9 @@ class StringTemplateRenderer implements RendererInterface
 
         $attributes = $link->getAttributes();
         $attributes['href'] = $link->getUrl() ?? '#';
+        if ($item->isActive() && $this->getBooleanOption($options, 'addAriaCurrent', true)) {
+            $attributes['aria-current'] = 'page';
+        }
 
         return $this->templater()->format('link', [
             'attributes' => $this->renderAttributes($attributes),

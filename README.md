@@ -13,14 +13,12 @@ Composable menu builder and renderer for CakePHP applications.
 
 This branch is for **CakePHP 5.3+**. See the [version map](https://github.com/dereuromark/cakephp-menu/wiki#cakephp-version-map) for details.
 
-This plugin provides a small menu tree API with:
+Features:
 
-- nested menu items and submenus
-- string and Cake-style array URLs
-- alternate match routes and fuzzy route matching
-- renderer abstraction with a Cake `StringTemplate` implementation
-- request-aware active item resolution
-- named-menu Cake view helper integration
+- nested menu trees with string and Cake-style array URLs
+- active-state matching with alternate routes, named routes, and fuzzy matching
+- helper-managed named menus and breadcrumb integration
+- extensible resolvers and renderers for app-specific rules
 
 ## Installation
 
@@ -67,69 +65,6 @@ $account->add($menu->newItem('Logout', ['controller' => 'Users', 'action' => 'lo
 
 echo $this->Menu->render($menu);
 ```
-
-## Helper Workflow
-
-For view-driven menus you can let the helper manage named menus and active-state resolution:
-
-```php
-$menu = $this->Menu->create('main', [
-    'menuAttributes' => ['class' => 'nav'],
-]);
-$menu->addItem('Home', '/');
-$menu->addItem('Articles', ['controller' => 'Articles', 'action' => 'index'], [
-    'matchRoutes' => [
-        ['controller' => 'Articles', 'action' => 'view'],
-    ],
-    'fuzzy' => true,
-]);
-
-echo $this->Menu->render('main');
-```
-
-## Resolvers
-
-Resolvers let you decorate menu items after construction:
-
-- `Psr7UrlResolver`: marks string URL items active based on the current request URI
-- `UrlArrayResolver`: marks Cake array URL items active from request params, including fuzzy route matching
-- `LoggedInResolver`: hides items marked with `auth = loggedIn|loggedOut`
-- `ResolverCollection`: applies multiple resolvers in order
-
-Example:
-
-```php
-use Menu\Resolver\LoggedInResolver;
-use Menu\Resolver\ResolverCollection;
-use Menu\Resolver\UrlArrayResolver;
-
-$menu->addItem('Login', ['controller' => 'Users', 'action' => 'login'], [
-    'data' => ['auth' => 'loggedOut'],
-]);
-
-$menu->resolve(
-    (new ResolverCollection())
-        ->add(new UrlArrayResolver($this->request))
-        ->add(new LoggedInResolver($this->Authentication->getIdentity() !== null))
-);
-```
-
-## Rendering
-
-The default renderer is `Menu\Renderer\StringTemplateRenderer`.
-
-It outputs nested `<ul>` / `<li>` markup and supports:
-
-- root menu attributes
-- item attributes
-- `before` / `after` inline markup
-- dividers
-- raw HTML items
-- active and active-ancestor CSS classes
-- first/last/branch/leaf/menu-level classes
-- rendering the active item as text instead of a link
-
-You can override templates through helper options/config.
 
 ## Documentation
 

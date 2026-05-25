@@ -17,6 +17,8 @@ interface ItemInterface
 
     public function getKey(): string;
 
+    public function hasExplicitKey(): bool;
+
     public function setLabel(string $label, bool $escape = true): static;
 
     public function getLabel(): ?string;
@@ -110,4 +112,17 @@ interface ItemInterface
     public function setFuzzyMatch(bool $fuzzyMatch = true): static;
 
     public function isFuzzyMatch(): bool;
+
+    public function setExpanded(bool $expanded = true): static;
+
+    public function isExpanded(): bool;
+
+    public function freeze(): static;
+
+    public function isFrozen(): bool;
+
+    /**
+     * @phpstan-return array<string, mixed>
+     */
+    public function toArray(): array;
 }

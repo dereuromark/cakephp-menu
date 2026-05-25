@@ -6,7 +6,9 @@ namespace Menu\Test\TestCase\Menu;
 
 use Cake\Http\ServerRequest;
 use Cake\TestSuite\TestCase;
+use LogicException;
 use Menu\Menu;
+use Menu\Resolver\CallbackResolver;
 use Menu\Resolver\UrlArrayResolver;
 
 class MenuTest extends TestCase
@@ -86,5 +88,82 @@ class MenuTest extends TestCase
 
         $this->assertNull($menu->getActiveItem());
         $this->assertFalse($child->isActive());
+    }
+
+    public function testRejectsDuplicateIds(): void
+    {
+        $this->expectExceptionMessage('Duplicate menu item id `articles` detected.');
+
+        $menu = Menu::create();
+        $menu->addItem('Articles', '/articles', ['id' => 'articles']);
+        $menu->addItem('Articles 2', '/articles-2', ['id' => 'articles']);
+    }
+
+    public function testResolveWithCallbackResolverIncludesContextDepth(): void
+    {
+        $menu = Menu::create();
+        $parent = $menu->addItem('Articles', '/articles', ['id' => 'articles']);
+        $parent->getSubMenu()->addItem('View', '/articles/view', ['id' => 'view']);
+
+        $depths = [];
+        $menu->resolve(new CallbackResolver(function ($item, $context) use (&$depths): void {
+            $depths[$item->getId()] = $context->getDepth();
+        }));
+
+        $this->assertSame([
+            'articles' => 1,
+            'view' => 2,
+        ], $depths);
+    }
+
+    public function testFromArrayToArrayRoundTrip(): void
+    {
+        $menu = Menu::fromArray([
+            'attributes' => ['class' => 'nav'],
+            'data' => ['area' => 'main'],
+            'items' => [
+                [
+                    'id' => 'articles',
+                    'label' => 'Articles',
+                    'link' => '/articles',
+                    'data' => ['weight' => 10],
+                    'submenu' => [
+                        'items' => [
+                            [
+                                'id' => 'view',
+                                'label' => 'View',
+                                'link' => '/articles/view',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $export = $menu->toArray();
+
+        $this->assertSame('nav', $export['attributes']['class']);
+        $this->assertSame('main', $export['data']['area']);
+        $this->assertSame('articles', $export['items'][0]['id']);
+        $this->assertSame('view', $export['items'][0]['submenu']['items'][0]['id']);
+    }
+
+    public function testFreezePreventsStructuralMutation(): void
+    {
+        $menu = Menu::create();
+        $menu->addItem('Articles', '/articles');
+        $menu->freeze();
+
+        $this->expectException(LogicException::class);
+        $menu->addItem('Users', '/users');
+    }
+
+    public function testRejectsDuplicateExplicitKeys(): void
+    {
+        $this->expectExceptionMessage('Duplicate explicit menu item key `content` detected.');
+
+        $menu = Menu::create();
+        $menu->addItem('Articles', '/articles', ['key' => 'content']);
+        $menu->addItem('Pages', '/pages', ['key' => 'content']);
     }
 }

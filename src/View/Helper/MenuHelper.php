@@ -9,6 +9,7 @@ use InvalidArgumentException;
 use Menu\Item\ItemInterface;
 use Menu\Menu;
 use Menu\MenuInterface;
+use Menu\Renderer\BreadcrumbRenderer;
 use Menu\Renderer\RendererInterface;
 use Menu\Renderer\StringTemplateRenderer;
 use Menu\Resolver\Psr7UrlResolver;
@@ -19,9 +20,15 @@ use Menu\Resolver\UrlArrayResolver;
 
 /**
  * @extends \Cake\View\Helper<\Cake\View\View>
+ * @property \Cake\View\Helper\BreadcrumbsHelper $Breadcrumbs
  */
 class MenuHelper extends Helper
 {
+    /**
+     * @var list<string>
+     */
+    protected array $helpers = ['Breadcrumbs'];
+
     /**
      * @var array<string, \Menu\MenuInterface>
      */
@@ -40,6 +47,7 @@ class MenuHelper extends Helper
         'ignoreQueryString' => true,
         'fuzzy' => true,
         'currentAsLink' => true,
+        'resolveDepth' => null,
     ];
 
     /**
@@ -51,6 +59,9 @@ class MenuHelper extends Helper
     {
         if ($name === '') {
             throw new InvalidArgumentException('Menu name must not be empty.');
+        }
+        if (isset($this->menus[$name]) && empty($options['overwrite'])) {
+            throw new InvalidArgumentException(sprintf('Menu `%s` already exists.', $name));
         }
 
         $attributes = [];
@@ -66,6 +77,55 @@ class MenuHelper extends Helper
         $this->lastMenuName = $name;
 
         return $menu;
+    }
+
+    public function has(string $name): bool
+    {
+        return isset($this->menus[$name]);
+    }
+
+    /**
+     * @phpstan-param array<string, mixed> $options
+     */
+    public function getOrCreate(string $name, array $options = []): MenuInterface
+    {
+        if ($this->has($name)) {
+            return $this->get($name);
+        }
+
+        return $this->create($name, $options);
+    }
+
+    /**
+     * @param string $name
+     * @param callable(\Menu\MenuInterface, self): void $callback
+     * @param array<string, mixed> $options
+     */
+    public function register(string $name, callable $callback, array $options = []): MenuInterface
+    {
+        $menu = $this->getOrCreate($name, $options);
+        $callback($menu, $this);
+
+        return $menu;
+    }
+
+    public function remove(string $name): static
+    {
+        unset($this->menus[$name], $this->menuConfigs[$name]);
+        if ($this->lastMenuName === $name) {
+            $this->lastMenuName = null;
+        }
+
+        return $this;
+    }
+
+    public function reset(): static
+    {
+        $this->menus = [];
+        $this->menuConfigs = [];
+        $this->lastMenuName = null;
+
+        return $this;
     }
 
     /**
@@ -115,6 +175,88 @@ class MenuHelper extends Helper
         }
 
         return array_reverse($path);
+    }
+
+    /**
+     * @phpstan-param array<string, mixed> $options
+     *
+     * @return list<array{title: string, url: array<string|int, mixed>|string|null, options: array<string, mixed>}>
+     */
+    public function getBreadcrumbs(MenuInterface|string|null $menu = null, array $options = []): array
+    {
+        [$menu, $resolvedOptions] = $this->resolveMenuAndOptions($menu, $options);
+        $this->applyResolvers($menu, $resolvedOptions);
+
+        $currentItem = $menu->getActiveItem();
+        if ($currentItem === null) {
+            return [];
+        }
+
+        $path = $this->extractPath($currentItem);
+        $linkCurrent = (bool)($resolvedOptions['linkCurrent'] ?? false);
+
+        $crumbs = [];
+        foreach ($path as $index => $item) {
+            $isCurrent = $index === count($path) - 1;
+            $link = $item->getLink();
+            $optionsForCrumb = (array)($item->getData('breadcrumbOptions') ?? []);
+            if ($isCurrent) {
+                $optionsForCrumb['innerAttrs']['aria-current'] = 'page';
+            }
+
+            $crumbs[] = [
+                'title' => (string)$item->getLabel(),
+                'url' => $link !== null && (!$isCurrent || $linkCurrent) ? $link->getRawUrl() : null,
+                'options' => $optionsForCrumb,
+            ];
+        }
+
+        return $crumbs;
+    }
+
+    /**
+     * @phpstan-param array<string, mixed> $options
+     */
+    public function populateBreadcrumbs(MenuInterface|string|null $menu = null, array $options = []): static
+    {
+        $reset = !array_key_exists('resetBreadcrumbs', $options) || (bool)$options['resetBreadcrumbs'];
+        if ($reset) {
+            $this->Breadcrumbs->reset();
+        }
+
+        $this->Breadcrumbs->addMany($this->getBreadcrumbs($menu, $options));
+
+        return $this;
+    }
+
+    /**
+     * @phpstan-param array<string, mixed> $options
+     * @phpstan-param array<string, mixed> $attributes
+     * @phpstan-param array<string, mixed> $separator
+     */
+    public function renderBreadcrumbs(
+        MenuInterface|string|null $menu = null,
+        array $options = [],
+        array $attributes = [],
+        array $separator = [],
+    ): string {
+        $renderer = $options['renderer'] ?? null;
+        if ($renderer === BreadcrumbRenderer::class || $renderer instanceof BreadcrumbRenderer) {
+            [$resolvedMenu, $resolvedOptions] = $this->resolveMenuAndOptions($menu, $options);
+            $this->applyResolvers($resolvedMenu, $resolvedOptions);
+            $activeItem = $resolvedMenu->getActiveItem();
+            if ($activeItem === null) {
+                return '';
+            }
+
+            $resolvedOptions['path'] = $this->extractPath($activeItem);
+
+            return $this->getRenderer(['renderer' => BreadcrumbRenderer::class] + $resolvedOptions)->render($resolvedMenu, $resolvedOptions);
+        }
+
+        $this->populateBreadcrumbs($menu, $options);
+
+        return $this->Breadcrumbs->render($attributes, $separator);
     }
 
     /**
@@ -173,11 +315,17 @@ class MenuHelper extends Helper
         return (new ResolverCollection())
             ->add(new UrlArrayResolver(
                 $this->getView()->getRequest(),
-                ['fuzzy' => $options['fuzzy'] ?? true],
+                [
+                    'fuzzy' => $options['fuzzy'] ?? true,
+                    'maxDepth' => $options['resolveDepth'] ?? null,
+                ],
             ))
             ->add(new Psr7UrlResolver(
                 $this->getView()->getRequest(),
-                ['ignoreQueryString' => $options['ignoreQueryString'] ?? true],
+                [
+                    'ignoreQueryString' => $options['ignoreQueryString'] ?? true,
+                    'maxDepth' => $options['resolveDepth'] ?? null,
+                ],
             ));
     }
 
