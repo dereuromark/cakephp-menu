@@ -26,7 +26,7 @@ This plugin provides a small menu tree API with:
 - PHP 8.2+
 - CakePHP 5.3+
 
-See the [version matrix](docs/version-matrix.md).
+See the [version matrix](https://github.com/dereuromark/cakephp-menu/wiki/Version-Matrix).
 
 ## Installation
 
@@ -119,7 +119,7 @@ You can override templates through helper options/config.
 ## Documentation
 
 - [Usage Guide](docs/README.md)
-- [Version Matrix](docs/version-matrix.md)
+- [Version Matrix](https://github.com/dereuromark/cakephp-menu/wiki/Version-Matrix)
 - [Wiki](https://github.com/dereuromark/cakephp-menu/wiki)
 
 Full documentation: https://github.com/dereuromark/cakephp-menu/wiki
