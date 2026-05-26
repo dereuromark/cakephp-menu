@@ -75,7 +75,10 @@ class Bootstrap5Renderer extends StringTemplateRenderer
             ? $this->getStringOption($options, 'linkClass')
             : $this->getStringOption($options, 'childLinkClass');
         $attributes = $this->appendClass($attributes, $baseLinkClass);
-        if ($item->hasSubMenu()) {
+        // Only treat as a dropdown when the submenu will actually render. Without the
+        // displaysChildren() guard, an item with setDisplayChildren(false) still got
+        // dropdown-toggle + data-bs-toggle even though its submenu is suppressed.
+        if ($item->hasSubMenu() && $item->displaysChildren()) {
             $attributes = $this->appendClass($attributes, $this->getStringOption($options, 'toggleClass'));
             $toggleAttribute = $this->getStringOption($options, 'toggleAttribute');
             if ($toggleAttribute !== '') {
