@@ -36,6 +36,13 @@ Cache::setConfig([
         'serialize' => true,
         'duration' => '+10 seconds',
     ],
+    '_cake_translations_' => [
+        'className' => 'File',
+        'prefix' => 'menu_cake_translations_',
+        'path' => CACHE . 'translations/',
+        'serialize' => true,
+        'duration' => '+10 seconds',
+    ],
     '_cake_model_' => [
         'className' => 'File',
         'prefix' => 'menu_cake_model_',

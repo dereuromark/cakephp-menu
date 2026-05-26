@@ -6,6 +6,7 @@ namespace Menu\Test\TestCase\Menu;
 
 use Cake\Http\ServerRequest;
 use Cake\TestSuite\TestCase;
+use InvalidArgumentException;
 use LogicException;
 use Menu\Item\Item;
 use Menu\ItemCollection;
@@ -224,6 +225,138 @@ class MenuTest extends TestCase
         $this->assertCount(4, $collection);
         $this->assertSame('profile', $collection->findByKey('profile')?->getKey());
         $this->assertCount(2, $collection->findByParent($account));
+    }
+
+    public function testFindReturnsMatchingItemsRecursively(): void
+    {
+        $menu = Menu::create();
+        $parent = $menu->addItem('X Parent', '/parent', ['key' => 'x-parent']);
+        $parent->getSubMenu()->addItem('Child', '/child', ['key' => 'child']);
+        $parent->getSubMenu()->addItem('X Child', '/x-child', ['key' => 'x-child']);
+        $menu->addItem('X Root', '/x-root', ['key' => 'x-root']);
+        $beforeCount = count($menu->getItems());
+
+        $collection = $menu->find(
+            static fn ($item): bool => $item->getLabel() !== null && str_contains($item->getLabel(), 'X'),
+        );
+
+        $this->assertSame(['x-parent', 'x-child', 'x-root'], array_map(
+            static fn ($item): string => $item->getKey(),
+            $collection->all(),
+        ));
+        $this->assertSame($beforeCount, count($menu->getItems()));
+    }
+
+    public function testFindReturnsEmptyCollectionWhenNoMatch(): void
+    {
+        $menu = Menu::create();
+        $menu->addItem('Home', '/home');
+
+        $collection = $menu->find(static fn ($item): bool => $item->getLabel() === 'Missing');
+
+        $this->assertCount(0, $collection);
+    }
+
+    public function testAddItemsAddsInOrder(): void
+    {
+        $menu = Menu::create();
+        $first = $menu->newItem('First', '/first', ['key' => 'first']);
+        $second = $menu->newItem('Second', '/second', ['key' => 'second']);
+        $third = $menu->newItem('Third', '/third', ['key' => 'third']);
+
+        $menu->addItems([$first, $second, $third]);
+
+        $this->assertSame([$first, $second, $third], $menu->getItems());
+    }
+
+    public function testAddItemsRejectsNonItem(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        $menu = Menu::create();
+        $menu->addItems([
+            $menu->newItem('First', '/first'),
+            'not-an-item',
+        ]);
+    }
+
+    public function testAddItemsIsAtomicOnInvalidBatch(): void
+    {
+        $menu = Menu::create();
+        $valid = $menu->newItem('First', '/first');
+
+        try {
+            $menu->addItems([$valid, 'not-an-item']);
+            $this->fail('Expected InvalidArgumentException');
+        } catch (InvalidArgumentException) {
+            // Expected.
+        }
+
+        // The valid entry was not partially applied before the throw.
+        $this->assertSame([], $menu->getItems());
+    }
+
+    public function testAddItemsRollbackLeavesItemParentsUntouched(): void
+    {
+        // Add to a submenu, where add() reparents items to the owner — verify a mid-batch failure
+        // doesn't leave the earlier item with a rewritten parent pointer.
+        $menu = Menu::create();
+        $owner = $menu->addItem('Owner', '#');
+        $submenu = $owner->getSubMenu();
+        $submenu->addItem('Existing', '/existing', ['id' => 'shared']);
+
+        $valid = $submenu->newItem('Valid', '/valid');
+        $duplicate = $submenu->newItem('Dup', '/dup')->setId('shared');
+
+        try {
+            $submenu->addItems([$valid, $duplicate]);
+            $this->fail('Expected InvalidArgumentException');
+        } catch (InvalidArgumentException) {
+            // Expected.
+        }
+
+        // The valid item's parent was never rewritten because the batch was rejected pre-mutation.
+        $this->assertNull($valid->getParent());
+        $this->assertCount(1, $submenu->getItems());
+    }
+
+    public function testAddItemsRejectsFrozenItemBatchIntoSubmenu(): void
+    {
+        $menu = Menu::create();
+        $owner = $menu->addItem('Owner', '#');
+        $submenu = $owner->getSubMenu();
+
+        $frozen = $submenu->newItem('Frozen', '/frozen');
+        $frozen->freeze();
+
+        try {
+            $submenu->addItems([$frozen]);
+            $this->fail('Expected LogicException');
+        } catch (LogicException) {
+            // Expected — reparenting a frozen item would mutate it.
+        }
+
+        $this->assertSame([], $submenu->getItems(), 'No item was added on rejection.');
+    }
+
+    public function testAddItemsIsAtomicOnDuplicateId(): void
+    {
+        $menu = Menu::create();
+        $menu->addItem('Existing', '/existing', ['id' => 'shared']);
+
+        $valid = $menu->newItem('First', '/first');
+        $duplicate = $menu->newItem('Second', '/second')->setId('shared');
+
+        try {
+            $menu->addItems([$valid, $duplicate]);
+            $this->fail('Expected InvalidArgumentException');
+        } catch (InvalidArgumentException) {
+            // Expected: add() rejects the duplicate id.
+        }
+
+        // Roll-back: only the pre-existing item remains; the first batch entry did not stick.
+        $this->assertCount(1, $menu->getItems());
+        $this->assertSame('shared', $menu->getItems()[0]->getId());
     }
 
     public function testFromFlatBuildsTreeFromUnorderedRows(): void

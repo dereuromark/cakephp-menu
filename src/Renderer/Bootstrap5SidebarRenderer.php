@@ -127,7 +127,7 @@ class Bootstrap5SidebarRenderer extends StringTemplateRenderer
         }
         if ($item->isHeader()) {
             $attributes = $this->appendClass($item->getAttributes(), $this->getStringOption($options, 'headerClass') ?: 'nav-header');
-            $title = $item->getBefore() . $this->escapeLabel($item) . $item->getAfter();
+            $title = $item->getBefore() . $this->escapeLabel($item, $options) . $item->getAfter();
 
             return sprintf('<li%s>%s</li>', $this->renderAttributes($attributes), $title);
         }
@@ -145,7 +145,7 @@ class Bootstrap5SidebarRenderer extends StringTemplateRenderer
         }
 
         $label = $item->getBefore()
-            . $this->decorateTitle($item, $this->escapeLabel($item), $options)
+            . $this->decorateTitle($item, $this->escapeLabel($item, $options), $options)
             . $item->getAfter();
 
         $content = $hasSubMenu

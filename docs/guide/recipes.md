@@ -182,6 +182,21 @@ and `raw` are still emitted as trusted markup — cast or escape dynamic values 
 
 ## Defining a Menu in Config
 
+Generate a starter config file from the CLI:
+
+```bash
+bin/cake make_menu Main
+```
+
+That creates `config/menu_main.php`. Load it during bootstrap and render the configured menu:
+
+```php
+use Cake\Core\Configure;
+
+Configure::load('menu_main', 'default', true);
+echo $this->Menu->render('main');
+```
+
 The helper auto-registers menus declared under `Configure::read('Menu.menus')` (each a
 `Menu::fromArray()` spec keyed by name), so a config-defined menu renders without any wiring:
 
@@ -258,4 +273,3 @@ public function initialize(): void
 // any template
 echo $this->Menu->render('main');
 ```
-

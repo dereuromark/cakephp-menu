@@ -20,6 +20,7 @@ Menu::fromFlat(iterable $rows, Closure $mapper): static  // build a tree from fl
 | Method | Purpose |
 |--------|---------|
 | `add(ItemInterface $item)` | Add an existing item. |
+| `addItems(array $items)` | Add multiple existing items in order. |
 | `addItem(string $label, $link = null, array $options = [])` | Create and add an item. |
 | `addRaw(string $html, array $options = [])` | Add a raw-HTML item. |
 | `addDivider(array $options = [])` | Add a divider. |
@@ -40,6 +41,7 @@ Menu::fromFlat(iterable $rows, Closure $mapper): static  // build a tree from fl
 | `getAttributes()` / `setAttribute()` / `setAttributes()` | Root HTML attributes. |
 | `getData()` / `setData()` | Menu-level metadata. |
 | `filter(callable)` | Keep only matching items. |
+| `find(callable)` | Return matching items as an `ItemCollection` without mutating the tree. |
 | `sortBy(callable\|string $by, string $direction = Menu::SORT_ASC)` | Sort items. |
 | `resolve(ResolverInterface\|ResolverCollectionInterface)` | Apply a resolver. |
 | `resetState()` | Reset active/visible/expanded to defaults. |

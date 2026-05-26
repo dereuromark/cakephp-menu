@@ -207,6 +207,48 @@ class Menu implements MenuInterface
     }
 
     /**
+     * @phpstan-param array<mixed> $items
+     *
+     * @throws \InvalidArgumentException
+     * @throws \LogicException
+     */
+    public function addItems(array $items): static
+    {
+        $this->assertMutable();
+        // Validate the entire batch up-front so a bad entry never leaves the menu half-mutated.
+        foreach ($items as $item) {
+            if (!$item instanceof ItemInterface) {
+                throw new InvalidArgumentException('All menu items must implement ' . ItemInterface::class);
+            }
+        }
+        // Pre-check id/key uniqueness against the current tree and within the batch itself, so a
+        // duplicate fails before any mutation (avoiding partial parent-pointer rewriting from add()).
+        $ids = [];
+        foreach ($this->items as $existing) {
+            $this->collectIdentifiers($existing, $ids);
+        }
+        foreach ($items as $item) {
+            $this->collectIdentifiers($item, $ids);
+        }
+        // When this menu owns a parent item, add() reparents children via setParent(); a frozen
+        // item would fail that reparenting mid-batch, so reject up-front.
+        if ($this->ownerItem !== null) {
+            foreach ($items as $item) {
+                if (!$item->hasParent() && $item->isFrozen()) {
+                    throw new LogicException(
+                        'Cannot add a frozen item to a submenu: reparenting it would require mutation.',
+                    );
+                }
+            }
+        }
+        foreach ($items as $item) {
+            $this->add($item);
+        }
+
+        return $this;
+    }
+
+    /**
      * @phpstan-param \Menu\Link\LinkInterface|array<string|int, mixed>|string|null $link
      * @phpstan-param array<string, mixed> $options
      */
@@ -349,6 +391,20 @@ class Menu implements MenuInterface
         $this->collectInto($collection, $this->items);
 
         return $collection;
+    }
+
+    /**
+     * Deep-clone direct items while preserving their concrete classes.
+     */
+    public function __clone(): void
+    {
+        // A clone is detached from any source-tree owner; if the clone is itself the submenu of a
+        // cloned Item, Item::__clone reattaches it via setOwnerItemDuringClone().
+        $this->ownerItem = null;
+        // A clone is a mutable working copy (the source's frozen flag tracked the source object);
+        // re-freeze the clone explicitly when you want the structure locked again.
+        $this->frozen = false;
+        $this->items = array_map(static fn (ItemInterface $item): ItemInterface => clone $item, $this->items);
     }
 
     /**
@@ -676,12 +732,8 @@ class Menu implements MenuInterface
     }
 
     /**
-     * Deep-clones a set of items (via array round-trip) so derived menus from slice()/split()/merge()
-     * own independent item objects and leave the source tree untouched.
-     *
-     * Note: cloning goes through toArray()/fromArray(), so items are rebuilt as the base item class;
-     * custom ItemInterface implementations (e.g. SelfRendererInterface) are not preserved in the
-     * derived menu.
+     * Deep-clones a set of items so derived menus from slice()/split()/merge() own independent item
+     * objects and leave the source tree untouched.
      *
      * @param list<\Menu\Item\ItemInterface> $items
      *
@@ -689,14 +741,7 @@ class Menu implements MenuInterface
      */
     protected function cloneItems(array $items): array
     {
-        $config = [
-            'items' => array_map(
-                static fn (ItemInterface $item): array => $item->toArray(),
-                $items,
-            ),
-        ];
-
-        return static::fromArray($config)->getItems();
+        return array_map(static fn (ItemInterface $item): ItemInterface => clone $item, $items);
     }
 
     public function clearActive(): static
@@ -794,6 +839,14 @@ class Menu implements MenuInterface
         return $this;
     }
 
+    public function find(callable $callback): ItemCollection
+    {
+        $collection = new ItemCollection();
+        $this->findInto($collection, $callback, $this->items);
+
+        return $collection;
+    }
+
     public function sortBy(callable|string $by, string $direction = self::SORT_ASC): static
     {
         $this->assertMutable();
@@ -874,6 +927,46 @@ class Menu implements MenuInterface
         }
 
         return $this;
+    }
+
+    protected function setOwnerItemDuringClone(ItemInterface $ownerItem): static
+    {
+        $this->ownerItem = $ownerItem;
+        $reparent = Closure::bind(
+            static function (Item $item, ItemInterface $owner): void {
+                $item->parent = $owner;
+            },
+            null,
+            Item::class,
+        );
+        foreach ($this->items as $item) {
+            if ($item instanceof Item) {
+                $reparent($item, $ownerItem);
+
+                continue;
+            }
+            // Custom ItemInterface implementation — go through the public interface.
+            $item->setParent($ownerItem);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @param \Menu\ItemCollection $collection
+     * @param callable(\Menu\Item\ItemInterface): mixed $callback
+     * @param list<\Menu\Item\ItemInterface> $items
+     */
+    protected function findInto(ItemCollection $collection, callable $callback, array $items): void
+    {
+        foreach ($items as $item) {
+            if ($callback($item)) {
+                $collection->add($item);
+            }
+            if ($item->hasSubMenu()) {
+                $this->findInto($collection, $callback, $item->getSubMenu()->getItems());
+            }
+        }
     }
 
     public function resetState(): static

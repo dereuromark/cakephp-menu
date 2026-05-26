@@ -164,6 +164,20 @@ This adds `role="menubar"` (root) / `role="menu"` (nested) on the lists, `role="
 `role="menuitem"` (plus `aria-haspopup="true"` on branches) on links, and `role="separator"` /
 `role="presentation"` on dividers / headers. It is off by default so existing markup is unchanged.
 
+### Auto-translation
+
+If your labels are message keys or untranslated source strings, enable `translate` to pass them
+through Cake's default translator before escaping:
+
+```php
+echo $this->Menu->render('main', [
+    'translate' => true,
+]);
+```
+
+This applies to normal items and headers. It does not translate trusted markup fields such as
+`before`, `after`, `raw`, `icon`, or `badge`.
+
 ## Good to know
 
 ::: warning Escaping
@@ -182,4 +196,3 @@ times per request. Custom item classes should extend `Menu\Item\Item` or impleme
   string resolvers.
 - The default renderer emits `aria-current="page"` for the active item (link or label) and
   `aria-expanded` for branch items.
-

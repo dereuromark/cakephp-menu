@@ -49,6 +49,7 @@ The dependency-free default.
 | `addAriaCurrent` | `true` | Add `aria-current="page"` to active items. |
 | `addAriaExpanded` | `true` | Add `aria-expanded` to branch toggles. |
 | `roles` | `false` | Opt-in WAI-ARIA menu roles: `menubar`/`menu` on lists, `none` on items, `menuitem` (+ `aria-haspopup` on branches) on links, `separator`/`presentation` on dividers/headers. |
+| `translate` | `false` | Translate item and header labels through Cake's default translator before escaping. |
 
 ### Template keys
 
