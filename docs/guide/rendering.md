@@ -151,6 +151,19 @@ Pass options per render call, as constructor config, or via `setConfig()`.
 (`linkClass`, `childLinkClass`, `toggleClass`, `toggleAttribute`, `toggleValue`) so Bootstrap 4 or
 other setups work without subclassing.
 
+### WAI-ARIA menu roles
+
+By default the renderers emit `aria-current`/`aria-expanded`/`aria-label`. For the full WAI-ARIA menu
+pattern, opt in with `roles => true`:
+
+```php
+echo $this->Menu->render('main', ['roles' => true]);
+```
+
+This adds `role="menubar"` (root) / `role="menu"` (nested) on the lists, `role="none"` on items,
+`role="menuitem"` (plus `aria-haspopup="true"` on branches) on links, and `role="separator"` /
+`role="presentation"` on dividers / headers. It is off by default so existing markup is unchanged.
+
 ## Good to know
 
 ::: warning Escaping

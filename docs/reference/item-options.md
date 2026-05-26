@@ -44,6 +44,8 @@ $menu->addItem('Inbox', ['controller' => 'Messages', 'action' => 'index'], [
 | `ignoreQueryString` | `bool\|null` | `null` | Ignore the query string when matching (overrides the resolver default). |
 | `fuzzy` | `bool` | `false` | Enable fuzzy (prefix) route matching for this item. |
 | `expanded` | `bool` | `false` | Show the submenu expanded by default. |
+| `displayChildren` | `bool` | `true` | When `false`, render the item but not its submenu (treated as a leaf). |
+| `labelAttributes` | `array` | `[]` | HTML attributes on the rendered link/label element (classes merge). |
 
 ::: warning Trusted markup
 `before`, `after`, `raw`, and the icon/badge markup are emitted **as-is** — they are not escaped.
@@ -84,5 +86,7 @@ $item = $menu->addItem('Profile', '/profile')
 | `ignoreQueryString` | `setIgnoreQueryString()` |
 | `fuzzy` | `setFuzzyMatch()` |
 | `expanded` | `setExpanded()` |
+| `displayChildren` | `setDisplayChildren()` |
+| `labelAttributes` | `setLabelAttributes()` |
 
 See the full method list in the [API Cheat Sheet](/reference/cheatsheet#item).

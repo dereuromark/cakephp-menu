@@ -76,6 +76,13 @@ class Item implements ItemInterface, StateResetInterface
 
     protected bool $defaultExpanded = false;
 
+    protected bool $displayChildren = true;
+
+    /**
+     * @var array<string, mixed>
+     */
+    protected array $labelAttributes = [];
+
     protected bool $frozen = false;
 
     /**
@@ -473,6 +480,38 @@ class Item implements ItemInterface, StateResetInterface
         return $this->expanded;
     }
 
+    public function setDisplayChildren(bool $displayChildren = true): static
+    {
+        $this->assertMutable();
+        $this->displayChildren = $displayChildren;
+
+        return $this;
+    }
+
+    public function displaysChildren(): bool
+    {
+        return $this->displayChildren;
+    }
+
+    /**
+     * @phpstan-param array<string, mixed> $attributes
+     */
+    public function setLabelAttributes(array $attributes, bool $merge = false): static
+    {
+        $this->assertMutable();
+        $this->labelAttributes = $merge ? $attributes + $this->labelAttributes : $attributes;
+
+        return $this;
+    }
+
+    /**
+     * @phpstan-return array<string, mixed>
+     */
+    public function getLabelAttributes(): array
+    {
+        return $this->labelAttributes;
+    }
+
     public function freeze(): static
     {
         $this->frozen = true;
@@ -504,12 +543,14 @@ class Item implements ItemInterface, StateResetInterface
             'visible' => $this->visible,
             'active' => $this->active,
             'expanded' => $this->expanded,
+            'displayChildren' => $this->displayChildren,
             'before' => $this->before,
             'after' => $this->after,
             'icon' => $this->icon,
             'badge' => $this->badge,
             'badgeType' => $this->badgeType,
             'attributes' => $this->attributes,
+            'labelAttributes' => $this->labelAttributes,
             'data' => $this->data,
             'matchRoutes' => $this->matchRoutes,
             'ignoreQueryString' => $this->ignoreQueryString,

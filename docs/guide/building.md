@@ -123,6 +123,18 @@ $menu->addItem('Inbox', ['controller' => 'Messages', 'action' => 'index'])
 values yourself. The `label` is escaped unless you pass `escape => false`.
 :::
 
+Two more rendering-related options:
+
+```php
+// Render the item but not its submenu (treated as a leaf):
+$menu->addItem('Reports', '/reports', ['displayChildren' => false]);
+
+// Attributes on the rendered link/label element (classes merge with existing ones):
+$menu->addItem('Help', '/help', [
+    'labelAttributes' => ['title' => 'Get help', 'class' => 'text-muted'],
+]);
+```
+
 ## Import / Export
 
 Menu trees can be created from arrays and exported back:
@@ -159,15 +171,57 @@ Frozen menus still allow runtime state updates from resolvers such as `active`, 
 
 ## Item Lookup and Mutation
 
+Look items up by id or by key (explicit, or the slug of the label):
+
 ```php
-$menu->get('account');
+$menu->get('account');           // by id
 $menu->has('account');
 $menu->remove('account');
+
+$menu->getByKey('profile');      // by key (explicit or label slug)
+$menu->hasKey('profile');
+$menu->removeByKey('profile');   // removes the first match
+
 $menu->sortBy('weight');
 $menu->filter(fn ($item) => $item->isVisible());
 $menu->clearActive();
 $menu->getActiveItem();
 ```
+
+::: tip
+Key lookups match the explicit key or, if none was set, the label slug. When labels may collide,
+assign explicit keys (`['key' => 'profile']`) so operations target a specific item.
+:::
+
+## Tree Manipulation
+
+Reorder, insert, move, merge, and split a menu's direct items (by id or key):
+
+```php
+// Insert relative to a sibling:
+$menu->insertBefore($menu->newItem('New', '/new'), 'articles');
+$menu->insertAfter($menu->newItem('New', '/new'), 'home');
+
+// Move an existing item:
+$menu->moveToFirstPosition('account');
+$menu->moveToLastPosition('home');
+$menu->moveToPosition('articles', 2);
+
+// Reorder by id/key (unlisted items keep their order, appended after):
+$menu->reorder(['home', 'articles', 'account']);
+
+// Merge another menu's items in (a deep copy; the source menu is left intact):
+$menu->merge($otherMenu);
+
+// Derive new menus (e.g. for columns) — items are copied, the original is untouched:
+$firstTwo = $menu->slice(0, 2);
+['primary' => $left, 'secondary' => $right] = $menu->split(2);
+```
+
+::: info
+`slice()`, `split()`, and `merge()` copy items via the array round-trip, so the derived menu contains
+base `Item` objects (custom item classes are not preserved).
+:::
 
 ### Flattened Collection
 

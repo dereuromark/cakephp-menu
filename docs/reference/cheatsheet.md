@@ -28,6 +28,13 @@ Menu::fromFlat(iterable $rows, Closure $mapper): static  // build a tree from fl
 | `getItems()` / `setItems(array)` | Root items as an array. |
 | `collect()` | All items (root + descendants) as an `ItemCollection`. |
 | `get(string $id)` / `has(string $id)` / `remove(string $id)` | Find/check/remove by id (recursive). |
+| `getByKey(string $key)` / `hasKey(string $key)` / `removeByKey(string $key)` | Find/check/remove by key — explicit or label slug; targets the first match (recursive). |
+| `insertBefore(ItemInterface $item, string $idOrKey)` / `insertAfter(...)` | Insert relative to a sibling (by id/key). |
+| `moveToPosition(string $idOrKey, int $pos)` / `moveToFirstPosition(...)` / `moveToLastPosition(...)` | Reposition a child. |
+| `reorder(list<string> $order)` | Reorder children by id/key; unlisted keep order, appended. |
+| `merge(MenuInterface $menu, bool $mergeAttributes = false)` | Append a deep copy of another menu's items (source untouched). |
+| `slice(int\|string $offset, int\|string\|null $length = null)` | New menu with a copy of a range of items. |
+| `split(int\|string $length)` | `['primary' => ..., 'secondary' => ...]` menus split at a boundary. |
 | `getActiveItem()` | Deepest active item. |
 | `clearActive()` | Deactivate all items. |
 | `getAttributes()` / `setAttribute()` / `setAttributes()` | Root HTML attributes. |
@@ -52,7 +59,8 @@ A single entry. (`ItemInterface`)
 | Type | `setDivider()` / `isDivider()`, `setHeader()` / `isHeader()` |
 | Icon/badge | `setIcon()` / `getIcon()`, `setBadge($badge, $type)` / `getBadge()` / `getBadgeType()` |
 | State | `setActive()` / `isActive()`, `setVisibility()` / `isVisible()`, `setExpanded()` / `isExpanded()` |
-| Submenu | `add()`, `setSubMenu()` / `getSubMenu()` / `hasSubMenu()` |
+| Submenu | `add()`, `setSubMenu()` / `getSubMenu()` / `hasSubMenu()`, `setDisplayChildren(bool)` / `displaysChildren()` |
+| Label attrs | `setLabelAttributes(array, bool $merge = false)` / `getLabelAttributes()` |
 | Tree | `setParent()` / `getParent()` / `hasParent()` / `getParentId()` |
 | Matching | `setMatchRoutes()` / `addMatchRoute()` / `getMatchRoutes()`, `setIgnoreQueryString()` / `getIgnoreQueryString()`, `setFuzzyMatch()` / `isFuzzyMatch()` |
 | Attributes/data | `setAttribute()` / `setAttributes()` / `getAttributes()`, `setData()` / `getData()` |

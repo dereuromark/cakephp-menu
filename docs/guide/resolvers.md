@@ -59,6 +59,25 @@ $menu->addItem('Admin Articles', '/admin/articles', [
 $menu->resolve(new SectionResolver($request));
 ```
 
+## Regex Resolver
+
+`RegexResolver` activates items whose regular expression (stored in `data['match']`) matches the
+current request path — handy for lighting up a whole URL section that a route-array match can't
+express. A value may be a single pattern or a list; invalid patterns are ignored.
+
+```php
+use Menu\Resolver\RegexResolver;
+
+$menu->addItem('Admin', '/admin', [
+    'data' => ['match' => '#^/admin/(users|roles)#'],
+]);
+
+$menu->resolve(new RegexResolver($request->getUri()->getPath()));
+```
+
+Pass a second argument to read patterns from a different data key, e.g.
+`new RegexResolver($path, 'activePattern')`.
+
 ## Login Visibility Resolver
 
 Mark items with metadata:

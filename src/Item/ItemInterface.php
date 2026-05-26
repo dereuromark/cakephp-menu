@@ -131,6 +131,20 @@ interface ItemInterface
 
     public function isExpanded(): bool;
 
+    public function setDisplayChildren(bool $displayChildren = true): static;
+
+    public function displaysChildren(): bool;
+
+    /**
+     * @phpstan-param array<string, mixed> $attributes
+     */
+    public function setLabelAttributes(array $attributes, bool $merge = false): static;
+
+    /**
+     * @phpstan-return array<string, mixed>
+     */
+    public function getLabelAttributes(): array;
+
     public function freeze(): static;
 
     public function isFrozen(): bool;

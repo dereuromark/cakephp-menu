@@ -96,35 +96,51 @@ visible.
 
 ## Caching Role-Based Menus
 
-Access checks are cheap, but for a large ACL menu you can resolve visibility once per role-set and
-cache the filtered tree. Active-state is request-specific, so cache the *structure*, not the HTML:
+Access checks are cheap, but for a large ACL menu you can build and visibility-filter the tree once
+per role-set and cache its *structure* (active state is request-specific and always resolved fresh).
+The simplest way is the helper's built-in `cache` option on `register()`, keyed per role-set:
 
 ```php
-use Cake\Cache\Cache;
 use Menu\Item\ItemInterface;
-use Menu\Menu;
+use Menu\MenuInterface;
 use Menu\Resolver\AuthorizationResolver;
 
 $cacheKey = 'menu_main_' . implode('-', $this->AuthUser->roles());
-$tree = Cache::read($cacheKey);
-if ($tree === null) {
-    $menu = $this->Menu->create('main');
-    // ...addItem() calls...
 
+$this->Menu->register('main', function (MenuInterface $menu): void {
+    // ...addItem() calls...
     $menu->resolve(new AuthorizationResolver(function (ItemInterface $item): ?bool {
         $url = $item->getLink()?->getRawUrl();
 
         return is_array($url) ? $this->AuthUser->hasAccess($url) : null;
     }));
     $menu->filter(static fn (ItemInterface $item): bool => $item->isVisible());
+}, ['cache' => ['key' => $cacheKey, 'config' => 'long']]);
 
+// The build callback runs once per role-set; rendering re-resolves active state per request.
+echo $this->Menu->render('main');
+```
+
+::: details Managing the cache manually
+
+If you'd rather control the cache yourself, cache `toArray()` and rebuild with `Menu::fromArray()`:
+
+```php
+use Cake\Cache\Cache;
+use Menu\Menu;
+
+$tree = Cache::read($cacheKey);
+if ($tree === null) {
+    $menu = $this->Menu->create('main');
+    // ...build, resolve visibility, filter...
     $tree = $menu->toArray();
     Cache::write($cacheKey, $tree);
 }
 
-// Rendering re-resolves active-state for the current request.
 echo $this->Menu->render(Menu::fromArray($tree));
 ```
+
+:::
 
 ## TinyAuth Backend Navigation
 
@@ -166,18 +182,30 @@ and `raw` are still emitted as trusted markup — cast or escape dynamic values 
 
 ## Defining a Menu in Config
 
-`Menu::fromArray()` accepts the same shape `toArray()` produces, so a menu can live in a config file:
+The helper auto-registers menus declared under `Configure::read('Menu.menus')` (each a
+`Menu::fromArray()` spec keyed by name), so a config-defined menu renders without any wiring:
 
 ```php
-// config/menu.php
-return [
-    'attributes' => ['class' => 'nav'],
-    'items' => [
-        ['label' => 'Home', 'link' => '/'],
-        ['label' => 'Articles', 'link' => ['controller' => 'Articles', 'action' => 'index']],
+// config/app.php (or a dedicated config/menu.php loaded with Configure::load('menu'))
+'Menu' => [
+    'menus' => [
+        'main' => [
+            'attributes' => ['class' => 'nav'],
+            'items' => [
+                ['label' => 'Home', 'link' => '/'],
+                ['label' => 'Articles', 'link' => ['controller' => 'Articles', 'action' => 'index']],
+            ],
+        ],
     ],
-];
+],
 ```
+
+```php
+echo $this->Menu->render('main'); // no create()/register() needed
+```
+
+An explicit `create()`/`register()` of the same name overrides the configured menu. To build a menu
+from an arbitrary array yourself, `Menu::fromArray()` accepts the same shape `toArray()` produces:
 
 ```php
 use Menu\Menu;

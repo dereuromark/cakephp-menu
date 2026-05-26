@@ -48,6 +48,7 @@ The dependency-free default.
 | `ariaLabel` | `null` | Optional `aria-label` on the root menu. |
 | `addAriaCurrent` | `true` | Add `aria-current="page"` to active items. |
 | `addAriaExpanded` | `true` | Add `aria-expanded` to branch toggles. |
+| `roles` | `false` | Opt-in WAI-ARIA menu roles: `menubar`/`menu` on lists, `none` on items, `menuitem` (+ `aria-haspopup` on branches) on links, `separator`/`presentation` on dividers/headers. |
 
 ### Template keys
 
