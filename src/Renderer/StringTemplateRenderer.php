@@ -106,7 +106,19 @@ class StringTemplateRenderer implements RendererInterface
      */
     public function renderItem(ItemInterface $item, array $options = []): string
     {
-        return $this->renderMenuItem($item, $options, 0, 1, 1);
+        $hasOverrides = isset($options['templates']) && is_array($options['templates']) && $options['templates'] !== [];
+        if (!$hasOverrides) {
+            return $this->renderMenuItem($item, $options, 0, 1, 1);
+        }
+
+        $this->templater()->push();
+        try {
+            $this->templater()->add($options['templates']);
+
+            return $this->renderMenuItem($item, $options, 0, 1, 1);
+        } finally {
+            $this->templater()->pop();
+        }
     }
 
     /**
