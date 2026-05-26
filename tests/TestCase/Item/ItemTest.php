@@ -8,8 +8,8 @@ use Cake\TestSuite\TestCase;
 use LogicException;
 use Menu\Item\Item;
 use Menu\Link\Link;
-use Menu\MenuInterface;
 use Menu\Menu;
+use Menu\MenuInterface;
 use RuntimeException;
 
 class ItemTest extends TestCase
