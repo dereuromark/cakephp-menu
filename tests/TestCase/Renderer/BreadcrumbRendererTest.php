@@ -46,4 +46,17 @@ class BreadcrumbRendererTest extends TestCase
 
         $this->assertStringContainsString('<i class="fa fa-home" aria-hidden="true"></i> ', $result);
     }
+
+    public function testRenderItemHonorsPerCallTemplateOverrides(): void
+    {
+        $item = Menu::create()->newItem('Home', '/');
+
+        $result = (new BreadcrumbRenderer())->renderItem($item, [
+            'templates' => [
+                'link' => '<a data-test="custom"{{attributes}}>{{title}}</a>',
+            ],
+        ]);
+
+        $this->assertSame('<li class="breadcrumb-item"><a data-test="custom" href="/">Home</a></li>', $result);
+    }
 }
