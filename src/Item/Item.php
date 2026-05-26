@@ -71,7 +71,7 @@ class Item implements ItemInterface, StateResetInterface
 
     protected ?bool $ignoreQueryString = null;
 
-    protected bool $fuzzyMatch = false;
+    protected ?bool $fuzzyMatch = null;
 
     protected bool $expanded = false;
 
@@ -504,6 +504,11 @@ class Item implements ItemInterface, StateResetInterface
     }
 
     public function isFuzzyMatch(): bool
+    {
+        return $this->fuzzyMatch ?? false;
+    }
+
+    public function getFuzzyMatchSetting(): ?bool
     {
         return $this->fuzzyMatch;
     }

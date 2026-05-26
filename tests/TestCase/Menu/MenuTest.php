@@ -211,6 +211,48 @@ class MenuTest extends TestCase
         $this->assertSame($child, $secondParent->getSubMenu()->get('child'));
     }
 
+    public function testSetItemsDetachesItemsMovedToRootMenu(): void
+    {
+        $menu = Menu::create();
+        $parent = $menu->addItem('Parent', '#', ['id' => 'parent']);
+        $child = (new Item('Child', '/child'))->setId('child');
+
+        $parent->getSubMenu()->setItems([$child]);
+        $this->assertSame($parent, $child->getParent());
+
+        $menu->setItems([$child]);
+
+        $this->assertNull($child->getParent());
+        $this->assertSame($child, $menu->get('child'));
+    }
+
+    public function testAddReparentsItemMovedBetweenSubmenus(): void
+    {
+        $menu = Menu::create();
+        $firstParent = $menu->addItem('First', '#', ['id' => 'first']);
+        $secondParent = $menu->addItem('Second', '#', ['id' => 'second']);
+        $child = (new Item('Child', '/child'))->setId('child');
+
+        $firstParent->getSubMenu()->add($child);
+        $this->assertSame($firstParent, $child->getParent());
+
+        $secondParent->getSubMenu()->add($child);
+
+        $this->assertSame($secondParent, $child->getParent());
+    }
+
+    public function testRemoveDetachesRemovedItem(): void
+    {
+        $menu = Menu::create();
+        $parent = $menu->addItem('Parent', '#', ['id' => 'parent']);
+        $child = $parent->getSubMenu()->addItem('Child', '/child', ['id' => 'child']);
+
+        $parent->getSubMenu()->remove('child');
+
+        $this->assertNull($child->getParent());
+        $this->assertNull($menu->get('child'));
+    }
+
     public function testCollectFlattensTheTree(): void
     {
         $menu = Menu::create();
