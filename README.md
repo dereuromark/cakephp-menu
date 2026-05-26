@@ -68,7 +68,14 @@ echo $this->Menu->render($menu);
 
 ## Documentation
 
-- [Usage Guide](docs/README.md)
+Full documentation lives at **<https://dereuromark.github.io/cakephp-menu/>**.
+
+- [Getting Started](https://dereuromark.github.io/cakephp-menu/guide/)
+- [Building Menus](https://dereuromark.github.io/cakephp-menu/guide/building)
+- [Resolvers & Active State](https://dereuromark.github.io/cakephp-menu/guide/resolvers)
+- [Rendering](https://dereuromark.github.io/cakephp-menu/guide/rendering)
+- [Recipes](https://dereuromark.github.io/cakephp-menu/guide/recipes)
+- [Extending](https://dereuromark.github.io/cakephp-menu/guide/extending)
 
 ## Development
 

@@ -11,11 +11,11 @@
         "helper"
     ],
     "license": "MIT",
-    "homepage": "https://github.com/dereuromark/cakephp-menu",
+    "homepage": "https://dereuromark.github.io/cakephp-menu/",
     "support": {
         "issues": "https://github.com/dereuromark/cakephp-menu/issues",
         "source": "https://github.com/dereuromark/cakephp-menu",
-        "docs": "https://github.com/dereuromark/cakephp-menu/wiki"
+        "docs": "https://dereuromark.github.io/cakephp-menu/"
     },
     "authors": [
         {
