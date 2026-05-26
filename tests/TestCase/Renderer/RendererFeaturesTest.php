@@ -255,6 +255,25 @@ class RendererFeaturesTest extends TestCase
         $this->assertStringNotContainsString('dropdown-item', $result);
     }
 
+    public function testBootstrap5RendererHonorsDisplayChildrenFalse(): void
+    {
+        // setDisplayChildren(false) should render the item as a leaf — no dropdown-toggle class,
+        // no data-bs-toggle, no submenu. Previously Bootstrap5Renderer kept the dropdown wiring
+        // even though the submenu was suppressed, producing a toggle to nothing.
+        $menu = Menu::create();
+        $parent = $menu->addItem('Account', '/account');
+        $parent->setDisplayChildren(false);
+        $parent->getSubMenu()->addItem('Hidden', '/hidden');
+
+        $result = (new Bootstrap5Renderer())->render($menu);
+
+        $this->assertStringContainsString('href="/account"', $result);
+        $this->assertStringNotContainsString('dropdown-toggle', $result);
+        $this->assertStringNotContainsString('data-bs-toggle', $result);
+        $this->assertStringNotContainsString('href="/hidden"', $result);
+        $this->assertStringNotContainsString('dropdown-menu', $result);
+    }
+
     public function testStringTemplateRendererItemClassOptIn(): void
     {
         $menu = Menu::create();
