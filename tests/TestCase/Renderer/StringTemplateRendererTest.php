@@ -165,4 +165,17 @@ class StringTemplateRendererTest extends TestCase
         $this->assertStringContainsString('self-item', $result);
         $this->assertStringContainsString('Admin', $result);
     }
+
+    public function testRootClassAppliesToTheRootListOnly(): void
+    {
+        $menu = Menu::create();
+        $parent = $menu->addItem('Parent', '#');
+        $parent->getSubMenu()->addItem('Child', '/child');
+
+        $result = (new StringTemplateRenderer())->render($menu, ['rootClass' => 'navbar-nav']);
+
+        $this->assertStringContainsString('<ul class="navbar-nav">', $result);
+        // Nested lists keep their nestedMenuClass and are not given the root class.
+        $this->assertStringContainsString('<ul class="submenu">', $result);
+    }
 }
