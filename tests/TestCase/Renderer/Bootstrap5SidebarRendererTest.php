@@ -193,4 +193,45 @@ class Bootstrap5SidebarRendererTest extends TestCase
         $this->assertStringContainsString('<i class="fa fa-inbox" aria-hidden="true"></i> ', $result);
         $this->assertStringContainsString('<span class="badge bg-danger">3</span>', $result);
     }
+
+    public function testDisplayChildrenFalseSuppressesSubmenu(): void
+    {
+        // setDisplayChildren(false) should render the item as a leaf (no collapse, no submenu),
+        // matching StringTemplateRenderer's behavior.
+        $menu = Menu::create();
+        $parent = $menu->addItem('Account', '/account');
+        $parent->setDisplayChildren(false);
+        $parent->getSubMenu()->addItem('Hidden', '/hidden');
+
+        $result = (new Bootstrap5SidebarRenderer())->render($menu);
+
+        // Parent renders as a leaf <a>, not a collapse toggle; submenu suppressed.
+        $this->assertStringContainsString('href="/account"', $result);
+        $this->assertStringNotContainsString('data-bs-toggle="collapse"', $result);
+        $this->assertStringNotContainsString('href="/hidden"', $result);
+        $this->assertStringNotContainsString('class="collapse', $result);
+    }
+
+    public function testRolesAppliedToRootAndNestedLists(): void
+    {
+        // With roles=true, the root <ul> gets role=menubar and nested <ul>s get role=menu, regular
+        // <li>s get role=none (so menubar/menu only contain menuitems), and divider/header <li>s
+        // get role=separator/role=presentation respectively — mirrors StringTemplateRenderer.
+        $menu = Menu::create();
+        $menu->addItem('Home', '/');
+        $branch = $menu->addItem('Account', '#', ['id' => 'account']);
+        $branch->getSubMenu()->addItem('Profile', '/profile');
+        $menu->addDivider();
+        $menu->addHeader('Section');
+
+        $result = (new Bootstrap5SidebarRenderer())->render($menu, ['roles' => true]);
+
+        $this->assertMatchesRegularExpression('/<ul[^>]*\brole="menubar"/', $result);
+        $this->assertMatchesRegularExpression('/<ul[^>]*\brole="menu"/', $result);
+        // Regular item <li> carries role=none so the menubar children are menuitems on the <a>.
+        $this->assertMatchesRegularExpression('/<li[^>]*\brole="none"[^>]*><a[^>]*href="\/"/', $result);
+        // Divider and header carry the correct ARIA roles.
+        $this->assertMatchesRegularExpression('/<li[^>]*\brole="separator"/', $result);
+        $this->assertMatchesRegularExpression('/<li[^>]*\brole="presentation"/', $result);
+    }
 }

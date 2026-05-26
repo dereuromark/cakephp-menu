@@ -102,6 +102,11 @@ class Bootstrap5SidebarRenderer extends StringTemplateRenderer
             ? $this->getStringOption($options, 'navClass')
             : $this->getStringOption($options, 'nestedNavClass');
         $attributes = $this->appendClass($menu->getAttributes(), $class);
+        // Mirror StringTemplateRenderer: when `roles` is enabled, the root <ul> is `menubar` and
+        // nested <ul>s are `menu`. Sidebar previously skipped this, leaving the ARIA tree partial.
+        if ($this->getBooleanOption($options, 'roles', false) && !isset($attributes['role'])) {
+            $attributes['role'] = $level === 1 ? 'menubar' : 'menu';
+        }
 
         return sprintf('<ul%s>%s</ul>', $this->renderAttributes($attributes), implode('', $items));
     }
@@ -122,17 +127,28 @@ class Bootstrap5SidebarRenderer extends StringTemplateRenderer
         if ($item instanceof SelfRendererInterface) {
             return $item->render();
         }
+        $roles = $this->getBooleanOption($options, 'roles', false);
         if ($item->isDivider()) {
-            return $this->li($item, $options, '<hr class="dropdown-divider">');
+            $attributes = $this->appendClass($item->getAttributes(), $this->getStringOption($options, 'itemClass'));
+            if ($roles && !isset($attributes['role'])) {
+                $attributes['role'] = 'separator';
+            }
+
+            return sprintf('<li%s><hr class="dropdown-divider"></li>', $this->renderAttributes($attributes));
         }
         if ($item->isHeader()) {
             $attributes = $this->appendClass($item->getAttributes(), $this->getStringOption($options, 'headerClass') ?: 'nav-header');
+            if ($roles && !isset($attributes['role'])) {
+                $attributes['role'] = 'presentation';
+            }
             $title = $item->getBefore() . $this->escapeLabel($item, $options) . $item->getAfter();
 
             return sprintf('<li%s>%s</li>', $this->renderAttributes($attributes), $title);
         }
 
-        $hasSubMenu = $item->hasSubMenu();
+        // Mirror StringTemplateRenderer: an item with a submenu still renders as a leaf when
+        // `displayChildren=false`. Without this, setDisplayChildren(false) silently failed here.
+        $hasSubMenu = $item->hasSubMenu() && $item->displaysChildren();
         if (
             $hasSubMenu
             && $this->getBooleanOption($options, 'hideEmptyBranches', false)
@@ -163,6 +179,12 @@ class Bootstrap5SidebarRenderer extends StringTemplateRenderer
     protected function li(ItemInterface $item, array $options, string $content): string
     {
         $attributes = $this->appendClass($item->getAttributes(), $this->getStringOption($options, 'itemClass'));
+        // Mirror StringTemplateRenderer: when `roles` is enabled, regular item <li>s take
+        // `role="none"` so the menubar/menu ARIA tree stays valid (menuitems on the <a>).
+        // Divider/header <li>s set their own roles in renderMenuItem and bypass this helper.
+        if ($this->getBooleanOption($options, 'roles', false) && !isset($attributes['role'])) {
+            $attributes['role'] = 'none';
+        }
 
         return sprintf('<li%s>%s</li>', $this->renderAttributes($attributes), $content);
     }

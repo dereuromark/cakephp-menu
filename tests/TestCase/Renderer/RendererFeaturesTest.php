@@ -205,4 +205,74 @@ class RendererFeaturesTest extends TestCase
         $this->assertStringContainsString('title="Go home"', $result);
         $this->assertMatchesRegularExpression('/class="[^"]*\bnav-link\b[^"]*\btext-primary\b/', $result);
     }
+
+    // ---------------------------------------------------------------------
+    // Bootstrap navbar `<li class="nav-item">` markup parity + level-aware
+    // class selection for standalone submenu renders.
+    // ---------------------------------------------------------------------
+
+    public function testBootstrap5RendererAddsNavItemToTopLevelLi(): void
+    {
+        $menu = Menu::create();
+        $menu->addItem('Home', '/home');
+        $account = $menu->addItem('Account', '#');
+        $account->getSubMenu()->addItem('Profile', '/profile');
+
+        $result = (new Bootstrap5Renderer())->render($menu);
+
+        // Top-level <li>s carry `nav-item` (the canonical Bootstrap navbar pattern).
+        $this->assertMatchesRegularExpression('/<li class="nav-item"><a[^>]*href="\/home"/', $result);
+        // Branch <li>s combine `dropdown` (branchClass) with `nav-item`.
+        $this->assertMatchesRegularExpression('/<li class="[^"]*\bdropdown\b[^"]*\bnav-item\b[^"]*"/', $result);
+        // Submenu <li> (the `Profile` child) carries no `nav-item` — Bootstrap dropdown items
+        // use a plain <li> with `<a class="dropdown-item">`.
+        $this->assertMatchesRegularExpression('/<li><a[^>]*href="\/profile"[^>]*\bdropdown-item\b/', $result);
+    }
+
+    public function testNavbarRendererInheritsNavItem(): void
+    {
+        $menu = Menu::create();
+        $menu->addItem('Home', '/home');
+
+        $result = (new NavbarRenderer())->render($menu);
+
+        $this->assertMatchesRegularExpression('/<li class="nav-item"><a[^>]*href="\/home"/', $result);
+    }
+
+    public function testStandaloneSubmenuRenderUsesTopLevelClasses(): void
+    {
+        // A child rendered standalone should receive the top-level <li> class (`nav-item`) AND
+        // the top-level link class (`nav-link`), not their child counterparts. Render level —
+        // not the item's parent pointer — decides what "top" means.
+        $menu = Menu::create();
+        $parent = $menu->addItem('Account', '/account');
+        $parent->getSubMenu()->addItem('Profile', '/profile');
+
+        $result = (new Bootstrap5Renderer())->render($parent->getSubMenu());
+
+        $this->assertMatchesRegularExpression('/<li class="nav-item"><a[^>]*href="\/profile"/', $result);
+        $this->assertStringContainsString('class="nav-link"', $result);
+        $this->assertStringNotContainsString('dropdown-item', $result);
+    }
+
+    public function testStringTemplateRendererItemClassOptIn(): void
+    {
+        $menu = Menu::create();
+        $menu->addItem('Home', '/home');
+        $branch = $menu->addItem('Account', '#');
+        $branch->getSubMenu()->addItem('Profile', '/profile');
+
+        // Off by default: no extra <li> class on plain StringTemplateRenderer.
+        $defaultResult = (new StringTemplateRenderer())->render($menu);
+        $this->assertStringContainsString('<li><a href="/home">Home</a></li>', $defaultResult);
+
+        // Opt-in via config: top <li> gets `itemClass`, submenu <li> gets `childItemClass`.
+        $tunedResult = (new StringTemplateRenderer([
+            'itemClass' => 'top',
+            'childItemClass' => 'sub',
+        ]))->render($menu);
+
+        $this->assertMatchesRegularExpression('/<li class="top"><a[^>]*href="\/home"/', $tunedResult);
+        $this->assertMatchesRegularExpression('/<li class="sub"><a[^>]*href="\/profile"/', $tunedResult);
+    }
 }

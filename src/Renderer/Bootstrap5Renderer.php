@@ -15,6 +15,9 @@ class Bootstrap5Renderer extends StringTemplateRenderer
         'activeClass' => 'active',
         'ancestorClass' => 'active',
         'branchClass' => 'dropdown',
+        // Bootstrap navbar pattern: `<li class="nav-item">` at the root, plain `<li>` in dropdowns.
+        'itemClass' => 'nav-item',
+        'childItemClass' => null,
         'submenuClass' => null,
         'addAriaExpanded' => false,
         'nestedMenuClass' => 'dropdown-menu',
@@ -40,7 +43,7 @@ class Bootstrap5Renderer extends StringTemplateRenderer
     /**
      * @phpstan-param array<string, mixed> $options
      */
-    protected function renderContent(ItemInterface $item, array $options): string
+    protected function renderContent(ItemInterface $item, array $options, int $level = 1): string
     {
         if ($item->isRaw()) {
             return (string)$item->getRaw();
@@ -65,9 +68,12 @@ class Bootstrap5Renderer extends StringTemplateRenderer
 
         $attributes = $link->getAttributes();
         $attributes['href'] = $link->getUrl() ?? '#';
-        $baseLinkClass = $item->hasParent()
-            ? $this->getStringOption($options, 'childLinkClass')
-            : $this->getStringOption($options, 'linkClass');
+        // Render level decides the link class: a standalone submenu render (`render($submenu)` or
+        // `renderItem($child)`) treats its items as top-level, so they get `linkClass` (`nav-link`)
+        // rather than `childLinkClass` (`dropdown-item`), matching the surrounding `<li>` class.
+        $baseLinkClass = $level === 1
+            ? $this->getStringOption($options, 'linkClass')
+            : $this->getStringOption($options, 'childLinkClass');
         $attributes = $this->appendClass($attributes, $baseLinkClass);
         if ($item->hasSubMenu()) {
             $attributes = $this->appendClass($attributes, $this->getStringOption($options, 'toggleClass'));
