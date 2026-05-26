@@ -208,6 +208,46 @@ class MenuTest extends TestCase
 
         $this->assertSame($secondParent, $child->getParent());
         $this->assertSame($child, $secondParent->getSubMenu()->get('child'));
+        $this->assertNull($firstParent->getSubMenu()->get('child'));
+    }
+
+    public function testAddMovingItemDetachesItFromOldParent(): void
+    {
+        $menu = Menu::create();
+        $firstParent = $menu->addItem('First', '/first', ['id' => 'first']);
+        $secondParent = $menu->addItem('Second', '/second', ['id' => 'second']);
+        $child = (new Item('Child', '/child'))->setId('child');
+
+        $firstParent->add($child);
+        $secondParent->add($child);
+
+        $this->assertSame($secondParent, $child->getParent());
+        $this->assertNull($firstParent->getSubMenu()->get('child'));
+        $this->assertSame($child, $secondParent->getSubMenu()->get('child'));
+    }
+
+    public function testRemoveClearsParentReference(): void
+    {
+        $menu = Menu::create();
+        $parent = $menu->addItem('Parent', '/parent');
+        $child = $parent->getSubMenu()->addItem('Child', '/child', ['id' => 'child']);
+
+        $parent->getSubMenu()->remove('child');
+
+        $this->assertFalse($child->hasParent());
+        $this->assertNull($child->getParent());
+    }
+
+    public function testFilterClearsParentReferenceForRemovedItems(): void
+    {
+        $menu = Menu::create();
+        $parent = $menu->addItem('Parent', '/parent');
+        $child = $parent->getSubMenu()->addItem('Child', '/child', ['id' => 'child']);
+
+        $parent->getSubMenu()->filter(static fn (): bool => false);
+
+        $this->assertFalse($child->hasParent());
+        $this->assertNull($child->getParent());
     }
 
     public function testCollectFlattensTheTree(): void

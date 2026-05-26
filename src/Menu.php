@@ -196,7 +196,8 @@ class Menu implements MenuInterface
     public function add(ItemInterface $item): static
     {
         $this->assertMutable();
-        if ($this->ownerItem !== null && !$item->hasParent()) {
+        $this->detachFromCurrentParentIfNeeded($item);
+        if ($this->ownerItem !== null && $item->getParent() !== $this->ownerItem) {
             $item->setParent($this->ownerItem);
         }
 
@@ -382,10 +383,26 @@ class Menu implements MenuInterface
         }
 
         $this->assertUniqueItems($validatedItems);
+        $preserved = [];
+        foreach ($validatedItems as $item) {
+            $preserved[spl_object_id($item)] = true;
+        }
+        foreach ($this->items as $existingItem) {
+            if (!isset($preserved[spl_object_id($existingItem)])) {
+                $this->clearParentReference($existingItem);
+            }
+        }
+
+        foreach ($validatedItems as $item) {
+            $this->detachFromCurrentParentIfNeeded($item);
+        }
+
         $this->items = $validatedItems;
         if ($this->ownerItem !== null) {
             foreach ($this->items as $item) {
-                $item->setParent($this->ownerItem);
+                if ($item->getParent() !== $this->ownerItem) {
+                    $item->setParent($this->ownerItem);
+                }
             }
         }
 
@@ -420,6 +437,7 @@ class Menu implements MenuInterface
         $items = [];
         foreach ($this->items as $item) {
             if ($item->getId() === $id) {
+                $this->clearParentReference($item);
                 continue;
             }
             if ($item->hasSubMenu()) {
@@ -480,6 +498,7 @@ class Menu implements MenuInterface
     {
         foreach ($this->items as $index => $item) {
             if ($item->getKey() === $key) {
+                $this->clearParentReference($item);
                 array_splice($this->items, $index, 1);
 
                 return true;
@@ -667,7 +686,8 @@ class Menu implements MenuInterface
 
     protected function insertItemAt(ItemInterface $item, int $position): void
     {
-        if ($this->ownerItem !== null && !$item->hasParent()) {
+        $this->detachFromCurrentParentIfNeeded($item);
+        if ($this->ownerItem !== null && $item->getParent() !== $this->ownerItem) {
             $item->setParent($this->ownerItem);
         }
         $this->assertUniqueItemTree($item);
@@ -786,6 +806,8 @@ class Menu implements MenuInterface
             }
             if ($callback($item) !== false) {
                 $items[] = $item;
+            } else {
+                $this->clearParentReference($item);
             }
         }
 
@@ -970,6 +992,35 @@ class Menu implements MenuInterface
                 $this->collectIdentifiers($child, $ids);
             }
         }
+    }
+
+    protected function detachFromCurrentParentIfNeeded(ItemInterface $item): void
+    {
+        $parent = $item->getParent();
+        if ($parent === null) {
+            return;
+        }
+        if ($this->ownerItem !== null && $parent === $this->ownerItem) {
+            return;
+        }
+
+        $parent->getSubMenu()->remove($item->getId());
+    }
+
+    protected function clearParentReference(ItemInterface $item): void
+    {
+        if (!$item instanceof Item || $item->getParent() === null) {
+            return;
+        }
+
+        $clearParent = Closure::bind(
+            static function (Item $item): void {
+                $item->parent = null;
+            },
+            null,
+            Item::class,
+        );
+        $clearParent($item);
     }
 
     protected function assertMutable(): void

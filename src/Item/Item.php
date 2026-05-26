@@ -252,8 +252,15 @@ class Item implements ItemInterface, StateResetInterface
     public function add(ItemInterface $item): static
     {
         $this->assertMutable();
+        $subMenu = $this->getSubMenu();
+        if ($subMenu instanceof Menu) {
+            $subMenu->add($item);
+
+            return $this;
+        }
+
         $item->setParent($this);
-        $this->getSubMenu()->add($item);
+        $subMenu->add($item);
 
         return $this;
     }
