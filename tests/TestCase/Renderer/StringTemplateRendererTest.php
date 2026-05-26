@@ -212,4 +212,35 @@ class StringTemplateRendererTest extends TestCase
         // Nested lists keep their nestedMenuClass and are not given the root class.
         $this->assertStringContainsString('<ul class="submenu">', $result);
     }
+
+    public function testPerRenderTemplatesDoNotLeakAcrossSubsequentRenders(): void
+    {
+        $menu = Menu::create();
+        $menu->addItem('Home', '/');
+        $renderer = new StringTemplateRenderer();
+
+        $custom = $renderer->render($menu, [
+            'templates' => [
+                'link' => '<a data-test="custom"{{attributes}}>{{title}}</a>',
+            ],
+        ]);
+        $default = $renderer->render($menu);
+
+        $this->assertStringContainsString('data-test="custom"', $custom);
+        $this->assertStringNotContainsString('data-test="custom"', $default);
+        $this->assertSame('<ul><li><a href="/">Home</a></li></ul>', $default);
+    }
+
+    public function testRenderItemHonorsPerCallTemplateOverrides(): void
+    {
+        $item = Menu::create()->newItem('Home', '/');
+
+        $result = (new StringTemplateRenderer())->renderItem($item, [
+            'templates' => [
+                'link' => '<a data-test="custom"{{attributes}}>{{title}}</a>',
+            ],
+        ]);
+
+        $this->assertSame('<li><a data-test="custom" href="/">Home</a></li>', $result);
+    }
 }

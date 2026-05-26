@@ -76,11 +76,10 @@ class StringTemplateRenderer implements RendererInterface
      */
     public function render(MenuInterface $menu, array $options = []): string
     {
-        if (isset($options['templates']) && is_array($options['templates'])) {
-            $this->setConfig('templates', array_merge($this->getConfig('templates'), $options['templates']));
-        }
-
-        return $this->renderMenu($menu, $options, 1);
+        return $this->withTemporaryTemplates(
+            $options,
+            fn (): string => $this->renderMenu($menu, $options, 1),
+        );
     }
 
     /**
@@ -88,7 +87,34 @@ class StringTemplateRenderer implements RendererInterface
      */
     public function renderItem(ItemInterface $item, array $options = []): string
     {
-        return $this->renderMenuItem($item, $options, 0, 1, 1);
+        return $this->withTemporaryTemplates(
+            $options,
+            fn (): string => $this->renderMenuItem($item, $options, 0, 1, 1),
+        );
+    }
+
+    /**
+     * Applies per-call template overrides without leaking them into later renders on the same
+     * renderer instance.
+     *
+     * @phpstan-param array<string, mixed> $options
+     * @param callable(): string $callback
+     */
+    protected function withTemporaryTemplates(array $options, callable $callback): string
+    {
+        if (!isset($options['templates']) || !is_array($options['templates'])) {
+            return $callback();
+        }
+
+        /** @var array<string, string> $originalTemplates */
+        $originalTemplates = $this->getTemplates();
+        $this->setTemplates($options['templates']);
+
+        try {
+            return $callback();
+        } finally {
+            $this->setTemplates($originalTemplates);
+        }
     }
 
     /**
