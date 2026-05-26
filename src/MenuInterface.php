@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Menu;
 
+use Closure;
 use Menu\Item\ItemInterface;
 use Menu\Link\LinkInterface;
 use Menu\Resolver\ResolverCollectionInterface;
@@ -30,6 +31,12 @@ interface MenuInterface
      * @phpstan-param array<string, mixed> $config
      */
     public static function fromArray(array $config): static;
+
+    /**
+     * @phpstan-param iterable<mixed> $rows
+     * @phpstan-param \Closure(mixed): array<string, mixed> $mapper
+     */
+    public static function fromFlat(iterable $rows, Closure $mapper): static;
 
     public function add(ItemInterface $item): static;
 

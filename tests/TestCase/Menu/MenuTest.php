@@ -225,4 +225,64 @@ class MenuTest extends TestCase
         $this->assertSame('profile', $collection->findByKey('profile')?->getKey());
         $this->assertCount(2, $collection->findByParent($account));
     }
+
+    public function testFromFlatBuildsTreeFromUnorderedRows(): void
+    {
+        $rows = [
+            ['id' => 3, 'parent' => 1, 'title' => 'Profile', 'url' => '/profile'],
+            ['id' => 1, 'parent' => null, 'title' => 'Account', 'url' => '#'],
+            ['id' => 2, 'parent' => null, 'title' => 'Home', 'url' => '/'],
+            ['id' => 4, 'parent' => 1, 'title' => 'Logout', 'url' => '/logout'],
+        ];
+
+        $menu = Menu::fromFlat($rows, fn (array $row): array => [
+            'key' => (string)$row['id'],
+            'parent' => $row['parent'] !== null ? (string)$row['parent'] : null,
+            'label' => $row['title'],
+            'link' => $row['url'],
+        ]);
+
+        $this->assertCount(2, $menu->getItems());
+        $account = $menu->getItems()[0];
+        $this->assertSame('Account', $account->getLabel());
+        $this->assertSame('Home', $menu->getItems()[1]->getLabel());
+        $this->assertSame(['Profile', 'Logout'], [
+            $account->getSubMenu()->getItems()[0]->getLabel(),
+            $account->getSubMenu()->getItems()[1]->getLabel(),
+        ]);
+    }
+
+    public function testFromFlatTreatsUnknownParentAsRoot(): void
+    {
+        $menu = Menu::fromFlat(
+            [['id' => 5, 'parent' => 99, 'title' => 'Lost', 'url' => '/lost']],
+            fn (array $row): array => [
+                'key' => (string)$row['id'],
+                'parent' => (string)$row['parent'],
+                'label' => $row['title'],
+                'link' => $row['url'],
+            ],
+        );
+
+        $this->assertCount(1, $menu->getItems());
+        $this->assertSame('Lost', $menu->getItems()[0]->getLabel());
+    }
+
+    public function testFromFlatBreaksCyclicParentReferences(): void
+    {
+        $rows = [
+            ['id' => 1, 'parent' => 2, 'title' => 'A', 'url' => '/a'],
+            ['id' => 2, 'parent' => 1, 'title' => 'B', 'url' => '/b'],
+        ];
+
+        $menu = Menu::fromFlat($rows, fn (array $row): array => [
+            'key' => (string)$row['id'],
+            'parent' => (string)$row['parent'],
+            'label' => $row['title'],
+            'link' => $row['url'],
+        ]);
+
+        // The cycle is broken, so tree traversal terminates and keeps both items.
+        $this->assertCount(2, $menu->collect());
+    }
 }
