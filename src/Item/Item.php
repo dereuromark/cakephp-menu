@@ -62,6 +62,8 @@ class Item implements ItemInterface, StateResetInterface
 
     protected ?ItemInterface $parent = null;
 
+    protected ?MenuInterface $ownerMenu = null;
+
     protected ?MenuInterface $subMenu = null;
 
     /**
@@ -111,6 +113,7 @@ class Item implements ItemInterface, StateResetInterface
         // Detach from any source-tree parent; nested submenus reparent their children to this clone
         // below. Callers that re-attach the clone (add(), setOwnerItem) will set parent again.
         $this->parent = null;
+        $this->ownerMenu = null;
         // A clone is a mutable working copy — the source's `frozen` flag tracks that source object,
         // not this independent one. Callers can re-freeze the clone after any edits.
         $this->frozen = false;
