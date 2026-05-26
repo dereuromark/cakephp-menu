@@ -404,6 +404,9 @@ class Menu implements MenuInterface
         // re-freeze the clone explicitly when you want the structure locked again.
         $this->frozen = false;
         $this->items = array_map(static fn (ItemInterface $item): ItemInterface => clone $item, $this->items);
+        foreach ($this->items as $item) {
+            $this->setItemOwnerMenu($item, $this);
+        }
     }
 
     /**
@@ -437,6 +440,15 @@ class Menu implements MenuInterface
         }
 
         $this->assertUniqueItems($validatedItems);
+        $preserved = [];
+        foreach ($validatedItems as $item) {
+            $preserved[spl_object_id($item)] = true;
+        }
+        foreach ($this->items as $existingItem) {
+            if (!isset($preserved[spl_object_id($existingItem)])) {
+                $this->clearItemOwnership($existingItem);
+            }
+        }
         $this->items = $validatedItems;
         foreach ($this->items as $item) {
             $this->synchronizeItemParent($item);
@@ -473,7 +485,7 @@ class Menu implements MenuInterface
         $items = [];
         foreach ($this->items as $item) {
             if ($item->getId() === $id) {
-                $this->clearItemParent($item);
+                $this->clearItemOwnership($item);
 
                 continue;
             }
@@ -535,7 +547,7 @@ class Menu implements MenuInterface
     {
         foreach ($this->items as $index => $item) {
             if ($item->getKey() === $key) {
-                $this->clearItemParent($item);
+                $this->clearItemOwnership($item);
                 array_splice($this->items, $index, 1);
 
                 return true;
@@ -829,6 +841,8 @@ class Menu implements MenuInterface
             }
             if ($callback($item) !== false) {
                 $items[] = $item;
+            } else {
+                $this->clearItemOwnership($item);
             }
         }
 
@@ -927,24 +941,26 @@ class Menu implements MenuInterface
 
     protected function synchronizeItemParent(ItemInterface $item): void
     {
+        $currentOwnerMenu = $this->getItemOwnerMenu($item);
         $currentParent = $item->getParent();
         $desiredParent = $this->ownerItem;
-        if ($currentParent === $desiredParent) {
+        if ($currentOwnerMenu === $this && $currentParent === $desiredParent) {
             return;
         }
         if ($item->isFrozen()) {
             throw new LogicException('Cannot move a frozen item to a different parent.');
         }
-        if ($currentParent !== null) {
+        if ($currentOwnerMenu !== null && $currentOwnerMenu !== $this) {
+            $currentOwnerMenu->remove($item->getId());
+        } elseif ($currentParent !== null && $currentOwnerMenu === null) {
             $currentParent->getSubMenu()->remove($item->getId());
         }
         if ($desiredParent !== null) {
             $item->setParent($desiredParent);
-
-            return;
+        } else {
+            $this->clearItemParent($item);
         }
-
-        $this->clearItemParent($item);
+        $this->setItemOwnerMenu($item, $this);
     }
 
     protected function clearItemParent(ItemInterface $item): void
@@ -979,6 +995,68 @@ class Menu implements MenuInterface
         );
     }
 
+    protected function clearItemOwnership(ItemInterface $item): void
+    {
+        $this->clearItemParent($item);
+        $this->setItemOwnerMenu($item, null);
+    }
+
+    protected function getItemOwnerMenu(ItemInterface $item): ?MenuInterface
+    {
+        if ($item instanceof Item) {
+            $getOwnerMenu = Closure::bind(
+                static function (Item $boundItem): ?MenuInterface {
+                    return $boundItem->ownerMenu;
+                },
+                null,
+                Item::class,
+            );
+
+            return $getOwnerMenu($item);
+        }
+
+        $reflection = new ReflectionObject($item);
+        while ($reflection !== false) {
+            if ($reflection->hasProperty('ownerMenu')) {
+                $property = $reflection->getProperty('ownerMenu');
+                $property->setAccessible(true);
+
+                return $property->getValue($item);
+            }
+            $reflection = $reflection->getParentClass();
+        }
+
+        return null;
+    }
+
+    protected function setItemOwnerMenu(ItemInterface $item, ?MenuInterface $ownerMenu): void
+    {
+        if ($item instanceof Item) {
+            $setOwnerMenu = Closure::bind(
+                static function (Item $boundItem, ?MenuInterface $boundOwnerMenu): void {
+                    $boundItem->ownerMenu = $boundOwnerMenu;
+                },
+                null,
+                Item::class,
+            );
+            $setOwnerMenu($item, $ownerMenu);
+
+            return;
+        }
+
+        $reflection = new ReflectionObject($item);
+        while ($reflection !== false) {
+            if ($reflection->hasProperty('ownerMenu')) {
+                $property = $reflection->getProperty('ownerMenu');
+                $property->setAccessible(true);
+                $property->setValue($item, $ownerMenu);
+
+                return;
+            }
+            $reflection = $reflection->getParentClass();
+        }
+    }
+
     protected function setOwnerItemDuringClone(ItemInterface $ownerItem): static
     {
         $this->ownerItem = $ownerItem;
@@ -990,6 +1068,7 @@ class Menu implements MenuInterface
             Item::class,
         );
         foreach ($this->items as $item) {
+            $this->setItemOwnerMenu($item, $this);
             if ($item instanceof Item) {
                 $reparent($item, $ownerItem);
 
