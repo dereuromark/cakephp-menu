@@ -38,6 +38,11 @@ class StringTemplateRenderer implements RendererInterface
         'headerClass' => 'menu-header',
         'branchClass' => 'has-children',
         'leafClass' => null,
+        // Class on the top-level (root-menu) <li>; off by default. Bootstrap renderers use this
+        // for `nav-item`. Submenu <li>s use `childItemClass` instead, since the Bootstrap dropdown
+        // pattern is `<li><a class="dropdown-item">` (no `nav-item` on the child <li>).
+        'itemClass' => null,
+        'childItemClass' => null,
         // Extra class for branch <li>s, in addition to `branchClass`; off by default.
         'submenuClass' => null,
         'hideEmptyBranches' => false,
@@ -220,12 +225,21 @@ class StringTemplateRenderer implements RendererInterface
         } else {
             $attributes = $this->appendConfiguredClass($attributes, $options, 'leafClass');
         }
+        // Top-level <li> gets `itemClass`; submenu <li> gets `childItemClass`. Bootstrap5 uses
+        // `nav-item` on the root only, since dropdown <li>s carry no class in BS5's pattern.
+        // Key off the current render level so a submenu rendered standalone (`render($submenu)`
+        // or `renderItem($child)`) still gets the top-level class.
+        $attributes = $this->appendConfiguredClass(
+            $attributes,
+            $options,
+            $level === 1 ? 'itemClass' : 'childItemClass',
+        );
         $attributes = $this->applyPositionClasses($attributes, $options, $index, $count);
         if ($roles && !isset($attributes['role'])) {
             $attributes['role'] = 'none';
         }
 
-        $content = $item->getBefore() . $this->renderContent($item, $options) . $item->getAfter();
+        $content = $item->getBefore() . $this->renderContent($item, $options, $level) . $item->getAfter();
         if ($renderChildren) {
             $content .= $this->renderMenu($item->getSubMenu(), $options, $level + 1);
         }
@@ -239,7 +253,7 @@ class StringTemplateRenderer implements RendererInterface
     /**
      * @phpstan-param array<string, mixed> $options
      */
-    protected function renderContent(ItemInterface $item, array $options): string
+    protected function renderContent(ItemInterface $item, array $options, int $level = 1): string
     {
         if ($item->isRaw()) {
             return (string)$item->getRaw();
