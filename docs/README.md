@@ -385,6 +385,25 @@ Each branch is wired to its `collapse` element through a unique id, so it works 
 Bootstrap bundle and needs no custom JavaScript. Item and submenu attributes from the menu
 definition are preserved on the `<li>` and nested `<ul>`.
 
+Full Bootstrap 5 navbar — the complete `<nav>` chrome (brand, responsive toggler, and the
+collapsible `navbar-nav` with dropdowns), rather than just the inner `<ul>`:
+
+```php
+echo $this->Menu->render('main', [
+    'renderer' => \Menu\Renderer\NavbarRenderer::class,
+    'brand' => 'MyApp',
+    'brandUrl' => '/',
+    'expand' => 'lg',                 // navbar-expand-lg (collapse breakpoint)
+    'theme' => 'bg-body-tertiary',
+    'containerClass' => 'container-fluid',
+    'collapseId' => 'navbarNav',      // set per navbar if you have more than one on a page
+]);
+```
+
+`NavbarRenderer` generates the toggler/collapse wiring (matching `data-bs-target`, `id`, and
+`aria-controls`) for you. For just the `<ul class="navbar-nav">` to drop inside your own navbar
+markup, use `Bootstrap5Renderer` directly.
+
 A branch that only groups children (placeholder link `#`/none) renders a single toggle. A branch
 that *also* has a real URL stays navigable: it renders the link plus a separate collapse toggle
 button (`data-bs-target`), so the destination is reachable and its link attributes are kept.
@@ -446,6 +465,7 @@ BS4/other setups work without subclassing: `linkClass` (`nav-link`, top-level li
 | `dividerClass` | `divider` | Class for divider items. |
 | `headerClass` | `menu-header` | Class for non-link section headers (`nav-header` in the sidebar renderer). |
 | `nestedMenuClass` | `submenu` | Class added to nested `<ul>` elements. |
+| `rootClass` | `null` | Class appended to the root (level 1) `<ul>` only. |
 | `menuLevelClass` | `null` | Prefix for a per-level class (e.g. `level-` produces `level-1`, `level-2`). |
 | `firstClass` / `lastClass` | `null` | Class for the first / last item in a list. |
 | `depth` | `null` | Maximum number of levels to render (`null` = unlimited). |

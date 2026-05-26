@@ -40,6 +40,8 @@ class StringTemplateRenderer implements RendererInterface
         'submenuClass' => null,
         'hideEmptyBranches' => false,
         'nestedMenuClass' => 'submenu',
+        // Class appended to the root (level 1) <ul> only; off by default.
+        'rootClass' => null,
         'menuLevelClass' => null,
         'firstClass' => null,
         'lastClass' => null,
@@ -119,6 +121,11 @@ class StringTemplateRenderer implements RendererInterface
             $nestedMenuClass = $this->getStringOption($options, 'nestedMenuClass');
             if ($nestedMenuClass !== '') {
                 $attributes = $this->appendClass($attributes, $nestedMenuClass);
+            }
+        } else {
+            $rootClass = $this->getStringOption($options, 'rootClass');
+            if ($rootClass !== '') {
+                $attributes = $this->appendClass($attributes, $rootClass);
             }
         }
 
