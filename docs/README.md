@@ -687,6 +687,27 @@ $menu = Menu::fromArray(require CONFIG . 'menu.php');
 echo $this->Menu->render($menu);
 ```
 
+### Database-Backed Menus
+
+`Menu::fromFlat()` builds a tree from flat, parent-referenced rows (a `menu_items` table, an
+editable CMS nav, …). The mapper turns each row into a spec (`key`, `parent`, `label`, `link`, and
+any `newItem()` `options`); rows may be in any order, and unknown parents fall back to root:
+
+```php
+use Menu\Menu;
+
+$rows = $this->fetchTable('MenuItems')->find()->orderBy(['weight' => 'ASC'])->all();
+
+$menu = Menu::fromFlat($rows, fn ($row): array => [
+    'key' => (string)$row->id,
+    'parent' => $row->parent_id !== null ? (string)$row->parent_id : null,
+    'label' => $row->title,
+    'link' => $row->url,
+]);
+
+echo $this->Menu->render($menu);
+```
+
 ### Building Menus Once in AppView
 
 `register()` is idempotent, so define named menus once in `AppView::initialize()` and render them

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Menu;
 
+use Closure;
 use InvalidArgumentException;
 use LogicException;
 use Menu\Item\Item;
@@ -114,6 +115,80 @@ class Menu implements MenuInterface
         }
 
         return $menu;
+    }
+
+    /**
+     * Builds a menu from a flat list of rows (e.g. database records), linking children to parents.
+     *
+     * The mapper receives each row and returns a spec with `key`, optional `parent` (the key of the
+     * parent row, or `null` for a root item), `label`, `link`, and optional `options` (any
+     * `newItem()` option). Rows may arrive in any order; children are attached once all rows are
+     * read, and rows whose `parent` key is unknown are treated as root items.
+     *
+     * @phpstan-param iterable<mixed> $rows
+     * @phpstan-param \Closure(mixed): array<string, mixed> $mapper
+     */
+    public static function fromFlat(iterable $rows, Closure $mapper): static
+    {
+        $menu = static::create();
+        /** @var array<string, \Menu\Item\ItemInterface> $byKey */
+        $byKey = [];
+        /** @var list<array{item: \Menu\Item\ItemInterface, parent: string|null}> $pending */
+        $pending = [];
+
+        foreach ($rows as $row) {
+            $spec = $mapper($row);
+
+            $link = $spec['link'] ?? null;
+            if ($link !== null && !is_string($link) && !is_array($link) && !$link instanceof LinkInterface) {
+                $link = null;
+            }
+
+            $item = $menu->newItem(
+                isset($spec['label']) ? (string)$spec['label'] : null,
+                $link,
+                (array)($spec['options'] ?? []),
+            );
+
+            $key = isset($spec['key']) ? (string)$spec['key'] : '';
+            if ($key !== '') {
+                $item->setKey($key);
+                $byKey[$key] = $item;
+            }
+
+            $parent = isset($spec['parent']) ? (string)$spec['parent'] : null;
+            $pending[] = ['item' => $item, 'parent' => $parent];
+        }
+
+        foreach ($pending as $entry) {
+            $parent = $entry['parent'] !== null ? ($byKey[$entry['parent']] ?? null) : null;
+            if ($parent !== null && !static::wouldCycle($entry['item'], $parent)) {
+                $parent->add($entry['item']);
+
+                continue;
+            }
+            $menu->add($entry['item']);
+        }
+
+        return $menu;
+    }
+
+    /**
+     * Whether attaching $item under $parent would create a cycle — i.e. $parent is $item itself or
+     * already a descendant of $item (from a self-reference or a loop in the source data). Such an
+     * edge is dropped (the item becomes a root) so the tree stays acyclic and finite.
+     */
+    protected static function wouldCycle(ItemInterface $item, ItemInterface $parent): bool
+    {
+        $ancestor = $parent;
+        while ($ancestor !== null) {
+            if ($ancestor === $item) {
+                return true;
+            }
+            $ancestor = $ancestor->getParent();
+        }
+
+        return false;
     }
 
     public function add(ItemInterface $item): static
