@@ -8,7 +8,7 @@ use Cake\Console\CommandCollection;
 use Cake\Core\BasePlugin;
 use Menu\Command\MenuGenerateCommand;
 
-class Plugin extends BasePlugin
+class MenuPlugin extends BasePlugin
 {
     public function console(CommandCollection $commands): CommandCollection
     {
