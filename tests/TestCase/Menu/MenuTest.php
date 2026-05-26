@@ -209,6 +209,7 @@ class MenuTest extends TestCase
 
         $this->assertSame($secondParent, $child->getParent());
         $this->assertSame($child, $secondParent->getSubMenu()->get('child'));
+        $this->assertNull($firstParent->getSubMenu()->get('child'));
     }
 
     public function testSetItemsDetachesItemsMovedToRootMenu(): void
@@ -224,6 +225,7 @@ class MenuTest extends TestCase
 
         $this->assertNull($child->getParent());
         $this->assertSame($child, $menu->get('child'));
+        $this->assertNull($parent->getSubMenu()->get('child'));
     }
 
     public function testAddReparentsItemMovedBetweenSubmenus(): void
@@ -239,6 +241,8 @@ class MenuTest extends TestCase
         $secondParent->getSubMenu()->add($child);
 
         $this->assertSame($secondParent, $child->getParent());
+        $this->assertNull($firstParent->getSubMenu()->get('child'));
+        $this->assertSame($child, $secondParent->getSubMenu()->get('child'));
     }
 
     public function testRemoveDetachesRemovedItem(): void
