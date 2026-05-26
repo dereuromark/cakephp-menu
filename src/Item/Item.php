@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace Menu\Item;
 
 use Cake\Utility\Text;
-use Closure;
 use LogicException;
 use Menu\Link\Link;
 use Menu\Link\LinkInterface;
 use Menu\Menu;
 use Menu\MenuInterface;
+use Throwable;
 
 class Item implements ItemInterface, StateResetInterface
 {
@@ -106,7 +106,7 @@ class Item implements ItemInterface, StateResetInterface
 
     /**
      * Deep-clone linked value objects and nested menus. The clone is detached from its source
-     * parent — the caller (or `Menu::__clone`/`setOwnerItemDuringClone`) reparents it as needed.
+     * parent — the caller (or `Menu::__clone`/`setOwnerItem`) reparents it as needed.
      */
     public function __clone(): void
     {
@@ -122,27 +122,7 @@ class Item implements ItemInterface, StateResetInterface
         }
         if ($this->subMenu !== null) {
             $this->subMenu = clone $this->subMenu;
-            if ($this->subMenu instanceof Menu) {
-                $rebindOwner = Closure::bind(
-                    static function (Menu $menu, ItemInterface $owner): void {
-                        $menu->setOwnerItemDuringClone($owner);
-                    },
-                    null,
-                    Menu::class,
-                );
-                $rebindOwner($this->subMenu, $this);
-            } else {
-                foreach ($this->subMenu->getItems() as $item) {
-                    $item->setOwnerMenu($this->subMenu);
-                    if ($item instanceof self) {
-                        $item->parent = $this;
-
-                        continue;
-                    }
-                    // Custom ItemInterface implementation — go through the public interface.
-                    $item->setParent($this);
-                }
-            }
+            $this->subMenu->setOwnerItem($this);
         }
     }
 
@@ -305,7 +285,13 @@ class Item implements ItemInterface, StateResetInterface
         }
 
         $item->setParent($this);
-        $subMenu->add($item);
+        try {
+            $subMenu->add($item);
+        } catch (Throwable $exception) {
+            $item->setParent(null);
+
+            throw $exception;
+        }
 
         return $this;
     }
@@ -313,6 +299,15 @@ class Item implements ItemInterface, StateResetInterface
     public function setSubMenu(MenuInterface $menu): static
     {
         $this->assertMutable();
+        if (
+            $menu->getOwnerItem() !== null
+            && $menu->getOwnerItem() !== $this
+            && $menu->getItems() !== []
+        ) {
+            throw new LogicException(
+                'Cannot reassign a populated submenu that already belongs to another item. Detach or clone its items first.',
+            );
+        }
         $menu->setOwnerItem($this);
         $this->subMenu = $menu;
 
@@ -376,6 +371,7 @@ class Item implements ItemInterface, StateResetInterface
 
     public function detach(): static
     {
+        $this->assertMutable();
         $ownerMenu = $this->ownerMenu;
         if ($ownerMenu !== null) {
             $ownerMenu->remove($this->id);
@@ -384,7 +380,12 @@ class Item implements ItemInterface, StateResetInterface
         }
 
         if ($this->parent !== null) {
-            $this->parent->getSubMenu()->remove($this->id);
+            $subMenu = $this->parent->getSubMenu();
+            if ($subMenu->get($this->id) !== null) {
+                $subMenu->remove($this->id);
+            } else {
+                $this->setParent(null);
+            }
         }
 
         return $this;

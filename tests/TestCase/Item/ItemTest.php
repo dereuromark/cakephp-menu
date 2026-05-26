@@ -5,9 +5,12 @@ declare(strict_types=1);
 namespace Menu\Test\TestCase\Item;
 
 use Cake\TestSuite\TestCase;
+use LogicException;
 use Menu\Item\Item;
 use Menu\Link\Link;
+use Menu\MenuInterface;
 use Menu\Menu;
+use RuntimeException;
 
 class ItemTest extends TestCase
 {
@@ -87,6 +90,64 @@ class ItemTest extends TestCase
         $this->assertSame($item, $item->detach());
         $this->assertNull($item->getParent());
         $this->assertNull($item->getOwnerMenu());
+    }
+
+    public function testDetachClearsStaleParentWithoutThrowing(): void
+    {
+        $parent = new Item('Parent', '/parent');
+        $parent->getSubMenu();
+        $item = new Item('Child', '/child');
+        $item->setParent($parent);
+
+        $this->assertSame($item, $item->detach());
+        $this->assertNull($item->getParent());
+        $this->assertNull($item->getOwnerMenu());
+    }
+
+    public function testDetachFrozenItemThrowsCleanly(): void
+    {
+        $menu = Menu::create();
+        $item = $menu->addItem('Child', '/child', ['id' => 'child'])->freeze();
+
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('Cannot mutate a frozen menu item.');
+        $item->detach();
+    }
+
+    public function testAddRestoresParentWhenCustomSubMenuRejectsItem(): void
+    {
+        $parent = new Item('Parent', '/parent');
+        $child = new Item('Child', '/child');
+        $subMenu = $this->createMock(MenuInterface::class);
+        $subMenu->method('setOwnerItem')->willReturnSelf();
+        $subMenu->expects($this->once())
+            ->method('add')
+            ->with($child)
+            ->willThrowException(new RuntimeException('Nope.'));
+        $parent->setSubMenu($subMenu);
+
+        try {
+            $parent->add($child);
+            $this->fail('Expected RuntimeException was not thrown.');
+        } catch (RuntimeException $exception) {
+            $this->assertSame('Nope.', $exception->getMessage());
+        }
+
+        $this->assertNull($child->getParent());
+    }
+
+    public function testSetSubMenuThrowsClearErrorForPopulatedForeignSubMenu(): void
+    {
+        $firstParent = new Item('First', '/first');
+        $secondParent = new Item('Second', '/second');
+        $foreignMenu = $firstParent->getSubMenu();
+        $foreignMenu->addItem('Child', '/child', ['id' => 'child']);
+
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage(
+            'Cannot reassign a populated submenu that already belongs to another item. Detach or clone its items first.',
+        );
+        $secondParent->setSubMenu($foreignMenu);
     }
 
     public function testLinkShortcutAndDecorators(): void

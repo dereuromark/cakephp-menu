@@ -309,6 +309,19 @@ class MenuTest extends TestCase
         $this->assertSame($secondMenu, $child->getOwnerMenu());
     }
 
+    public function testAddRejectsCycleAfterDetach(): void
+    {
+        $menu = Menu::create();
+        $parent = $menu->addItem('Parent', '#', ['id' => 'parent']);
+        $child = $parent->getSubMenu()->addItem('Child', '/child', ['id' => 'child']);
+
+        $menu->remove('parent');
+
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('Cannot attach an item beneath one of its own descendants.');
+        $child->add($parent);
+    }
+
     public function testRemoveDetachesRemovedItem(): void
     {
         $menu = Menu::create();
@@ -322,6 +335,22 @@ class MenuTest extends TestCase
         $this->assertNull($menu->get('child'));
     }
 
+    public function testRemoveDetachesRemovedSubtree(): void
+    {
+        $menu = Menu::create();
+        $parent = $menu->addItem('Parent', '#', ['id' => 'parent']);
+        $child = $parent->getSubMenu()->addItem('Child', '/child', ['id' => 'child']);
+
+        $menu->remove('parent');
+
+        $this->assertNull($parent->getParent());
+        $this->assertNull($parent->getOwnerMenu());
+        $this->assertNull($child->getParent());
+        $this->assertNull($child->getOwnerMenu());
+        $this->assertNull($menu->get('parent'));
+        $this->assertNull($menu->get('child'));
+    }
+
     public function testFilterDetachesRemovedRootItem(): void
     {
         $menu = Menu::create();
@@ -331,6 +360,22 @@ class MenuTest extends TestCase
 
         $this->assertNull($child->getParent());
         $this->assertNull($child->getOwnerMenu());
+        $this->assertNull($menu->get('child'));
+    }
+
+    public function testFilterDetachesRemovedSubtree(): void
+    {
+        $menu = Menu::create();
+        $parent = $menu->addItem('Parent', '#', ['id' => 'parent']);
+        $child = $parent->getSubMenu()->addItem('Child', '/child', ['id' => 'child']);
+
+        $menu->filter(static fn ($item): bool => $item->getId() !== 'parent');
+
+        $this->assertNull($parent->getParent());
+        $this->assertNull($parent->getOwnerMenu());
+        $this->assertNull($child->getParent());
+        $this->assertNull($child->getOwnerMenu());
+        $this->assertNull($menu->get('parent'));
         $this->assertNull($menu->get('child'));
     }
 

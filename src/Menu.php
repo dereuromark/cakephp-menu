@@ -177,17 +177,22 @@ class Menu implements MenuInterface
 
     /**
      * Whether attaching $item under $parent would create a cycle — i.e. $parent is $item itself or
-     * already a descendant of $item (from a self-reference or a loop in the source data). Such an
-     * edge is dropped (the item becomes a root) so the tree stays acyclic and finite.
+     * already appears somewhere in $item's subtree. Such an edge is dropped (fromFlat()) or
+     * rejected (mutating attach operations) so the tree stays acyclic and finite.
      */
     protected static function wouldCycle(ItemInterface $item, ItemInterface $parent): bool
     {
-        $ancestor = $parent;
-        while ($ancestor !== null) {
-            if ($ancestor === $item) {
+        if ($item === $parent) {
+            return true;
+        }
+        if (!$item->hasSubMenu()) {
+            return false;
+        }
+
+        foreach ($item->getSubMenu()->getItems() as $child) {
+            if (static::wouldCycle($child, $parent)) {
                 return true;
             }
-            $ancestor = $ancestor->getParent();
         }
 
         return false;
@@ -967,6 +972,9 @@ class Menu implements MenuInterface
                 'Cannot attach an item that already belongs to a menu tree. Remove it first or clone it.',
             );
         }
+        if ($desiredParent !== null && static::wouldCycle($item, $desiredParent)) {
+            throw new LogicException('Cannot attach an item beneath one of its own descendants.');
+        }
     }
 
     protected function clearItemParent(ItemInterface $item): void
@@ -976,19 +984,13 @@ class Menu implements MenuInterface
 
     protected function clearItemOwnership(ItemInterface $item): void
     {
+        if ($item->hasSubMenu()) {
+            foreach ($item->getSubMenu()->getItems() as $child) {
+                $this->clearItemOwnership($child);
+            }
+        }
         $this->clearItemParent($item);
         $item->setOwnerMenu(null);
-    }
-
-    protected function setOwnerItemDuringClone(ItemInterface $ownerItem): static
-    {
-        $this->ownerItem = $ownerItem;
-        foreach ($this->items as $item) {
-            $item->setOwnerMenu($this);
-            $item->setParent($ownerItem);
-        }
-
-        return $this;
     }
 
     /**
