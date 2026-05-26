@@ -38,6 +38,10 @@ interface MenuInterface
      */
     public static function fromFlat(iterable $rows, Closure $mapper): static;
 
+    public function setOwnerItem(ItemInterface $ownerItem): static;
+
+    public function getOwnerItem(): ?ItemInterface;
+
     public function add(ItemInterface $item): static;
 
     /**
@@ -96,12 +100,23 @@ interface MenuInterface
 
     public function has(string $id): bool;
 
+    /**
+     * @throws \InvalidArgumentException When no id matches.
+     */
     public function remove(string $id): static;
 
+    /**
+     * Returns the first item (depth-first) whose explicit key matches.
+     */
     public function getByKey(string $key): ?ItemInterface;
 
     public function hasKey(string $key): bool;
 
+    /**
+     * Removes the first item (depth-first) whose explicit key matches.
+     *
+     * @throws \InvalidArgumentException When no explicit key matches.
+     */
     public function removeByKey(string $key): static;
 
     public function insertBefore(ItemInterface $item, string $idOrKey): static;

@@ -181,11 +181,11 @@ Look items up by id or by key (explicit, or the slug of the label):
 ```php
 $menu->get('account');           // by id
 $menu->has('account');
-$menu->remove('account');
+$menu->remove('account');        // throws if the id does not exist
 
-$menu->getByKey('profile');      // by key (explicit or label slug)
+$menu->getByKey('profile');      // by explicit key only
 $menu->hasKey('profile');
-$menu->removeByKey('profile');   // removes the first match
+$menu->removeByKey('profile');   // removes the first explicit-key match; throws if missing
 
 $menu->sortBy('weight');
 $menu->filter(fn ($item) => $item->isVisible());
@@ -195,8 +195,8 @@ $menu->getActiveItem();
 ```
 
 ::: tip
-Key lookups match the explicit key or, if none was set, the label slug. When labels may collide,
-assign explicit keys (`['key' => 'profile']`) so operations target a specific item.
+Key lookups match explicit keys only. If you need to target an item by key, assign one explicitly
+with `['key' => 'profile']`.
 :::
 
 ## Tree Manipulation
@@ -237,7 +237,17 @@ foreach ($items as $item) {
 }
 
 $items->findById('menu-item-...');
-$items->findByKey('profile');
+$items->findByKey('profile'); // explicit key only
 $items->findByParent($accountItem); // direct children of $accountItem
 count($items);
+```
+
+### Detaching Items
+
+If you hold a reference to an attached item and need to move or reuse it elsewhere, detach it from
+its current tree first:
+
+```php
+$item->detach();
+$otherMenu->add($item);
 ```

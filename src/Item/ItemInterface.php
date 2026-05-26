@@ -62,13 +62,21 @@ interface ItemInterface
 
     public function hasSubMenu(): bool;
 
-    public function setParent(ItemInterface $item): static;
+    public function setParent(?ItemInterface $item): static;
 
     public function getParent(): ?ItemInterface;
 
     public function hasParent(): bool;
 
     public function getParentId(): ?string;
+
+    public function setOwnerMenu(?MenuInterface $menu): static;
+
+    public function getOwnerMenu(): ?MenuInterface;
+
+    public function hasOwnerMenu(): bool;
+
+    public function detach(): static;
 
     public function setBefore(string $before): static;
 

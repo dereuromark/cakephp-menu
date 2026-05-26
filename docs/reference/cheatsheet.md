@@ -28,8 +28,8 @@ Menu::fromFlat(iterable $rows, Closure $mapper): static  // build a tree from fl
 | `newItem(?string $label = null, $link = null, array $options = [])` | Build an item without adding it. |
 | `getItems()` / `setItems(array)` | Root items as an array. |
 | `collect()` | All items (root + descendants) as an `ItemCollection`. |
-| `get(string $id)` / `has(string $id)` / `remove(string $id)` | Find/check/remove by id (recursive). |
-| `getByKey(string $key)` / `hasKey(string $key)` / `removeByKey(string $key)` | Find/check/remove by key — explicit or label slug; targets the first match (recursive). |
+| `get(string $id)` / `has(string $id)` / `remove(string $id)` | Find/check/remove by id (recursive); `remove()` throws if missing. |
+| `getByKey(string $key)` / `hasKey(string $key)` / `removeByKey(string $key)` | Find/check/remove by explicit key only; removal targets the first match and throws if none exists. |
 | `insertBefore(ItemInterface $item, string $idOrKey)` / `insertAfter(...)` | Insert relative to a sibling (by id/key). |
 | `moveToPosition(string $idOrKey, int $pos)` / `moveToFirstPosition(...)` / `moveToLastPosition(...)` | Reposition a child. |
 | `reorder(list<string> $order)` | Reorder children by id/key; unlisted keep order, appended. |
@@ -94,6 +94,6 @@ A flat collection returned by `Menu::collect()`. Iterable and countable.
 | `add()` / `addMany()` | Add item(s). |
 | `all()` | Items as an array. |
 | `findById(string $id)` | Find by id. |
-| `findByKey(string $key)` | Find by key. |
+| `findByKey(string $key)` | Find by explicit key only. |
 | `findByParent(string\|ItemInterface $parent)` | Direct children of a parent. |
 | `count()` | Number of items. |

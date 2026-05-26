@@ -7,6 +7,7 @@ namespace Menu\Test\TestCase\Item;
 use Cake\TestSuite\TestCase;
 use Menu\Item\Item;
 use Menu\Link\Link;
+use Menu\Menu;
 
 class ItemTest extends TestCase
 {
@@ -31,7 +32,61 @@ class ItemTest extends TestCase
         $this->assertTrue($parent->hasSubMenu());
         $this->assertSame($parent, $child->getParent());
         $this->assertSame($parent->getId(), $child->getParentId());
+        $this->assertSame($parent->getSubMenu(), $child->getOwnerMenu());
         $this->assertCount(1, $parent->getSubMenu()->getItems());
+    }
+
+    public function testParentAndOwnerMenuCanBeDetached(): void
+    {
+        $item = new Item('Child', '/child');
+        $parent = new Item('Parent', '/parent');
+        $ownerMenu = Menu::create();
+
+        $item->setParent($parent);
+        $item->setOwnerMenu($ownerMenu);
+
+        $item->setParent(null);
+        $item->setOwnerMenu(null);
+
+        $this->assertNull($item->getParent());
+        $this->assertFalse($item->hasParent());
+        $this->assertNull($item->getOwnerMenu());
+        $this->assertFalse($item->hasOwnerMenu());
+    }
+
+    public function testDetachRemovesRootItemFromOwnerMenu(): void
+    {
+        $menu = Menu::create();
+        $item = $menu->addItem('Child', '/child', ['id' => 'child']);
+
+        $item->detach();
+
+        $this->assertNull($menu->get('child'));
+        $this->assertNull($item->getParent());
+        $this->assertNull($item->getOwnerMenu());
+    }
+
+    public function testDetachRemovesChildFromParentSubMenu(): void
+    {
+        $menu = Menu::create();
+        $parent = $menu->addItem('Parent', '/parent', ['id' => 'parent']);
+        $child = $parent->getSubMenu()->addItem('Child', '/child', ['id' => 'child']);
+
+        $child->detach();
+
+        $this->assertNull($parent->getSubMenu()->get('child'));
+        $this->assertNull($menu->get('child'));
+        $this->assertNull($child->getParent());
+        $this->assertNull($child->getOwnerMenu());
+    }
+
+    public function testDetachIsNoOpForAlreadyDetachedItem(): void
+    {
+        $item = new Item('Child', '/child');
+
+        $this->assertSame($item, $item->detach());
+        $this->assertNull($item->getParent());
+        $this->assertNull($item->getOwnerMenu());
     }
 
     public function testLinkShortcutAndDecorators(): void

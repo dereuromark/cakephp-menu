@@ -9,6 +9,7 @@ use Cake\TestSuite\TestCase;
 use InvalidArgumentException;
 use LogicException;
 use Menu\Item\Item;
+use Menu\Item\ItemInterface;
 use Menu\ItemCollection;
 use Menu\Menu;
 use Menu\Resolver\CallbackResolver;
@@ -42,6 +43,16 @@ class MenuTest extends TestCase
         $this->assertNull($menu->get('settings'));
         $this->assertCount(1, $menu->getItems());
         $this->assertSame([$dashboard], $menu->getItems());
+    }
+
+    public function testRemoveThrowsWhenMissing(): void
+    {
+        $menu = Menu::create();
+        $menu->addItem('Dashboard', '/dashboard', ['id' => 'dashboard']);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Unknown menu item `missing`.');
+        $menu->remove('missing');
     }
 
     public function testFilterAndSort(): void
@@ -195,7 +206,7 @@ class MenuTest extends TestCase
         $menu->addItem('Pages', '/pages', ['key' => 'content']);
     }
 
-    public function testSetItemsReparentsMovedSubmenuItems(): void
+    public function testSetItemsRejectsMovedSubmenuItems(): void
     {
         $menu = Menu::create();
         $firstParent = $menu->addItem('First', '/first', ['id' => 'first']);
@@ -205,14 +216,12 @@ class MenuTest extends TestCase
         $firstParent->getSubMenu()->setItems([$child]);
         $this->assertSame($firstParent, $child->getParent());
 
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('already belongs to a menu tree');
         $secondParent->getSubMenu()->setItems([$child]);
-
-        $this->assertSame($secondParent, $child->getParent());
-        $this->assertSame($child, $secondParent->getSubMenu()->get('child'));
-        $this->assertNull($firstParent->getSubMenu()->get('child'));
     }
 
-    public function testSetItemsDetachesItemsMovedToRootMenu(): void
+    public function testSetItemsRejectsItemsMovedToRootMenu(): void
     {
         $menu = Menu::create();
         $parent = $menu->addItem('Parent', '#', ['id' => 'parent']);
@@ -221,14 +230,12 @@ class MenuTest extends TestCase
         $parent->getSubMenu()->setItems([$child]);
         $this->assertSame($parent, $child->getParent());
 
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('already belongs to a menu tree');
         $menu->setItems([$child]);
-
-        $this->assertNull($child->getParent());
-        $this->assertSame($child, $menu->get('child'));
-        $this->assertNull($parent->getSubMenu()->get('child'));
     }
 
-    public function testAddReparentsItemMovedBetweenSubmenus(): void
+    public function testAddRejectsItemMovedBetweenSubmenus(): void
     {
         $menu = Menu::create();
         $firstParent = $menu->addItem('First', '#', ['id' => 'first']);
@@ -238,38 +245,68 @@ class MenuTest extends TestCase
         $firstParent->getSubMenu()->add($child);
         $this->assertSame($firstParent, $child->getParent());
 
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('already belongs to a menu tree');
         $secondParent->getSubMenu()->add($child);
-
-        $this->assertSame($secondParent, $child->getParent());
-        $this->assertNull($firstParent->getSubMenu()->get('child'));
-        $this->assertSame($child, $secondParent->getSubMenu()->get('child'));
     }
 
-    public function testAddDetachesRootItemMovedToAnotherRootMenu(): void
+    public function testAddRejectsRootItemMovedToAnotherRootMenu(): void
     {
         $firstMenu = Menu::create();
         $child = $firstMenu->addItem('Child', '/child', ['id' => 'child']);
 
         $secondMenu = Menu::create();
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('already belongs to a menu tree');
         $secondMenu->add($child);
-
-        $this->assertNull($firstMenu->get('child'));
-        $this->assertSame($child, $secondMenu->get('child'));
-        $this->assertNull($child->getParent());
     }
 
-    public function testAddDetachesRootItemMovedIntoSubmenu(): void
+    public function testAddRejectsRootItemMovedIntoSubmenu(): void
     {
         $menu = Menu::create();
         $rootItem = $menu->addItem('Root', '/root', ['id' => 'root']);
         $parent = $menu->addItem('Parent', '#', ['id' => 'parent']);
 
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('already belongs to a menu tree');
         $parent->add($rootItem);
+    }
 
-        $this->assertCount(1, $menu->getItems());
-        $this->assertSame($parent, $menu->getItems()[0]);
-        $this->assertSame($rootItem, $parent->getSubMenu()->get('root'));
-        $this->assertSame($parent, $rootItem->getParent());
+    public function testItemCanBeReattachedAfterExplicitRemoval(): void
+    {
+        $firstMenu = Menu::create();
+        $child = $firstMenu->addItem('Child', '/child', ['id' => 'child']);
+
+        $firstMenu->remove('child');
+
+        $secondMenu = Menu::create();
+        $secondMenu->add($child);
+
+        $this->assertSame($child, $secondMenu->get('child'));
+        $this->assertNull($child->getParent());
+        $this->assertSame($secondMenu, $child->getOwnerMenu());
+    }
+
+    public function testItemCanBeReattachedAfterDetach(): void
+    {
+        $firstMenu = Menu::create();
+        $child = $firstMenu->addItem('Child', '/child', ['id' => 'child']);
+
+        $secondMenu = Menu::create();
+        try {
+            $secondMenu->add($child);
+            $this->fail('Expected LogicException was not thrown.');
+        } catch (LogicException $exception) {
+            $this->assertStringContainsString('already belongs to a menu tree', $exception->getMessage());
+        }
+
+        $child->detach();
+        $secondMenu->add($child);
+
+        $this->assertNull($firstMenu->get('child'));
+        $this->assertSame($child, $secondMenu->get('child'));
+        $this->assertNull($child->getParent());
+        $this->assertSame($secondMenu, $child->getOwnerMenu());
     }
 
     public function testRemoveDetachesRemovedItem(): void
@@ -281,6 +318,7 @@ class MenuTest extends TestCase
         $parent->getSubMenu()->remove('child');
 
         $this->assertNull($child->getParent());
+        $this->assertNull($child->getOwnerMenu());
         $this->assertNull($menu->get('child'));
     }
 
@@ -292,7 +330,30 @@ class MenuTest extends TestCase
         $menu->filter(static fn (): bool => false);
 
         $this->assertNull($child->getParent());
+        $this->assertNull($child->getOwnerMenu());
         $this->assertNull($menu->get('child'));
+    }
+
+    public function testAddItemsRejectsAttachedBatchWithoutMutatingMenu(): void
+    {
+        $targetMenu = Menu::create();
+        $targetMenu->addItem('Existing', '/existing', ['id' => 'existing']);
+
+        $sourceMenu = Menu::create();
+        $attached = $sourceMenu->addItem('Attached', '/attached', ['id' => 'attached']);
+
+        try {
+            $targetMenu->addItems([
+                $targetMenu->newItem('New', '/new', ['id' => 'new']),
+                $attached,
+            ]);
+            $this->fail('Expected LogicException was not thrown.');
+        } catch (LogicException $exception) {
+            $this->assertStringContainsString('already belongs to a menu tree', $exception->getMessage());
+        }
+
+        $this->assertSame(['existing'], array_map(static fn (ItemInterface $item): string => $item->getId(), $targetMenu->getItems()));
+        $this->assertSame($sourceMenu, $attached->getOwnerMenu());
     }
 
     public function testCollectFlattensTheTree(): void

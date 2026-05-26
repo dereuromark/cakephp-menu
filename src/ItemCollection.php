@@ -74,7 +74,7 @@ class ItemCollection implements Countable, IteratorAggregate
     public function findByKey(string $key): ?ItemInterface
     {
         foreach ($this->items as $item) {
-            if ($item->getKey() === $key) {
+            if ($item->hasExplicitKey() && $item->getKey() === $key) {
                 return $item;
             }
         }

@@ -133,6 +133,7 @@ class Item implements ItemInterface, StateResetInterface
                 $rebindOwner($this->subMenu, $this);
             } else {
                 foreach ($this->subMenu->getItems() as $item) {
+                    $item->setOwnerMenu($this->subMenu);
                     if ($item instanceof self) {
                         $item->parent = $this;
 
@@ -312,9 +313,7 @@ class Item implements ItemInterface, StateResetInterface
     public function setSubMenu(MenuInterface $menu): static
     {
         $this->assertMutable();
-        if ($menu instanceof Menu) {
-            $menu->setOwnerItem($this);
-        }
+        $menu->setOwnerItem($this);
         $this->subMenu = $menu;
 
         return $this;
@@ -334,7 +333,7 @@ class Item implements ItemInterface, StateResetInterface
         return $this->subMenu !== null && $this->subMenu->getItems() !== [];
     }
 
-    public function setParent(ItemInterface $item): static
+    public function setParent(?ItemInterface $item): static
     {
         $this->assertMutable();
         $this->parent = $item;
@@ -355,6 +354,40 @@ class Item implements ItemInterface, StateResetInterface
     public function getParentId(): ?string
     {
         return $this->parent?->getId();
+    }
+
+    public function setOwnerMenu(?MenuInterface $menu): static
+    {
+        $this->assertMutable();
+        $this->ownerMenu = $menu;
+
+        return $this;
+    }
+
+    public function getOwnerMenu(): ?MenuInterface
+    {
+        return $this->ownerMenu;
+    }
+
+    public function hasOwnerMenu(): bool
+    {
+        return $this->ownerMenu !== null;
+    }
+
+    public function detach(): static
+    {
+        $ownerMenu = $this->ownerMenu;
+        if ($ownerMenu !== null) {
+            $ownerMenu->remove($this->id);
+
+            return $this;
+        }
+
+        if ($this->parent !== null) {
+            $this->parent->getSubMenu()->remove($this->id);
+        }
+
+        return $this;
     }
 
     public function setBefore(string $before): static

@@ -21,14 +21,14 @@ class MenuManipulationTest extends TestCase
         return array_map(static fn ($item): string => $item->getKey(), $menu->getItems());
     }
 
-    public function testGetByKeyExplicitAndSlug(): void
+    public function testGetByKeyOnlyMatchesExplicitKeys(): void
     {
         $menu = Menu::create();
-        $dashboard = $menu->addItem('Dashboard', '/d');
+        $menu->addItem('Dashboard', '/d');
         $profile = $menu->addItem('Profile', '/p', ['key' => 'profile']);
 
         $this->assertSame($profile, $menu->getByKey('profile'));
-        $this->assertSame($dashboard, $menu->getByKey('dashboard'));
+        $this->assertNull($menu->getByKey('dashboard'));
         $this->assertNull($menu->getByKey('missing'));
     }
 
@@ -55,17 +55,26 @@ class MenuManipulationTest extends TestCase
         $this->assertSame(['keep'], $this->keys($menu));
     }
 
-    public function testRemoveByKeyRemovesOnlyFirstMatch(): void
+    public function testRemoveByKeyThrowsWhenOnlyImplicitSlugKeysMatch(): void
     {
         $menu = Menu::create();
         $menu->addItem('Settings', '/a'); // implicit slug key "settings"
         $menu->addItem('Settings', '/b'); // same slug key
         $menu->addItem('Other', '/c');
 
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Unknown menu item key `settings`.');
         $menu->removeByKey('settings');
+    }
 
-        $this->assertSame(['settings', 'other'], $this->keys($menu));
-        $this->assertSame('/b', $menu->getItems()[0]->getLink()?->getRawUrl());
+    public function testRemoveByKeyThrowsWhenMissing(): void
+    {
+        $menu = Menu::create();
+        $menu->addItem('Keep', '/k', ['key' => 'keep']);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Unknown menu item key `missing`.');
+        $menu->removeByKey('missing');
     }
 
     public function testRemoveByKeyRecursesIntoSubmenu(): void
@@ -84,14 +93,13 @@ class MenuManipulationTest extends TestCase
     public function testIndexResolutionPrefersIdOverCollidingKey(): void
     {
         $menu = Menu::create();
-        // Item labeled "Settings" gets the implicit slug key "settings".
-        $menu->addItem('Settings', '/settings');
+        $menu->addItem('Settings', '/settings', ['key' => 'nav-settings']);
         // A later item explicitly uses the id "settings".
         $menu->addItem('Other', '/other', ['id' => 'settings']);
 
         $menu->moveToFirstPosition('settings');
 
-        // The explicit id wins, so "Other" moves first rather than the slug-keyed item.
+        // Direct id targeting still wins even when another item has a distinct explicit key.
         $this->assertSame('Other', $menu->getItems()[0]->getLabel());
     }
 
