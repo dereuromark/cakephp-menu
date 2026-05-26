@@ -54,6 +54,8 @@ class Bootstrap5Renderer extends StringTemplateRenderer
             if ($item->isActive() && $this->getBooleanOption($options, 'addAriaCurrent', true)) {
                 $attributes['aria-current'] = 'page';
             }
+            $attributes = $this->mergeLabelAttributes($attributes, $item);
+            $attributes = $this->applyMenuItemRole($attributes, $item, $options);
 
             return $this->templater()->format('label', [
                 'attributes' => $this->renderAttributes($attributes),
@@ -81,6 +83,8 @@ class Bootstrap5Renderer extends StringTemplateRenderer
         if ($item->isActive() && $this->getBooleanOption($options, 'addAriaCurrent', true)) {
             $attributes['aria-current'] = 'page';
         }
+        $attributes = $this->mergeLabelAttributes($attributes, $item);
+        $attributes = $this->applyMenuItemRole($attributes, $item, $options);
 
         return $this->templater()->format('link', [
             'attributes' => $this->renderAttributes($attributes),

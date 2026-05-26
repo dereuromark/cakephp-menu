@@ -188,11 +188,15 @@ class Bootstrap5SidebarRenderer extends StringTemplateRenderer
 
         if ($asLabel) {
             unset($attributes['href']);
+            $attributes = $this->mergeLabelAttributes($attributes, $item);
+            $attributes = $this->applyMenuItemRole($attributes, $item, $options);
 
             return sprintf('<span%s>%s</span>', $this->renderAttributes($attributes), $label);
         }
 
         $attributes['href'] = $link->getUrl() ?? '#';
+        $attributes = $this->mergeLabelAttributes($attributes, $item);
+        $attributes = $this->applyMenuItemRole($attributes, $item, $options);
 
         return sprintf('<a%s>%s</a>', $this->renderAttributes($attributes), $label);
     }
@@ -210,7 +214,7 @@ class Bootstrap5SidebarRenderer extends StringTemplateRenderer
 
         $head = $hasRealUrl
             ? $this->renderNavigableBranch($item, $options, $label, $id, $url, $expanded)
-            : $this->renderToggle($options, $label, $id, $expanded);
+            : $this->renderToggle($item, $options, $label, $id, $expanded);
 
         $collapse = sprintf(
             '<div%s>%s</div>',
@@ -232,7 +236,7 @@ class Bootstrap5SidebarRenderer extends StringTemplateRenderer
      *
      * @phpstan-param array<string, mixed> $options
      */
-    protected function renderToggle(array $options, string $label, string $id, bool $expanded): string
+    protected function renderToggle(ItemInterface $item, array $options, string $label, string $id, bool $expanded): string
     {
         $classes = [$this->getStringOption($options, 'toggleClass')];
         if ($expanded) {
@@ -250,6 +254,8 @@ class Bootstrap5SidebarRenderer extends StringTemplateRenderer
             'aria-controls' => $id,
             'aria-expanded' => $expanded ? 'true' : 'false',
         ];
+        $attributes = $this->mergeLabelAttributes($attributes, $item);
+        $attributes = $this->applyMenuItemRole($attributes, $item, $options);
 
         return sprintf(
             '<a%s>%s%s</a>',
@@ -284,6 +290,10 @@ class Bootstrap5SidebarRenderer extends StringTemplateRenderer
         if ($item->isActive() && $this->getBooleanOption($options, 'addAriaCurrent', true)) {
             $linkAttributes['aria-current'] = 'page';
         }
+        // labelAttributes describe the rendered link/label; merge onto the navigable anchor only,
+        // not the separate toggle button (which is renderer chrome, not the item's link).
+        $linkAttributes = $this->mergeLabelAttributes($linkAttributes, $item);
+        $linkAttributes = $this->applyMenuItemRole($linkAttributes, $item, $options);
 
         $anchor = sprintf('<a%s>%s</a>', $this->renderAttributes($linkAttributes), $label);
 
