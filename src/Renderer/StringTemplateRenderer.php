@@ -11,7 +11,6 @@ use Menu\Item\SelfRendererInterface;
 use Menu\MenuInterface;
 use function array_filter;
 use function array_map;
-use function array_merge;
 use function array_unique;
 use function Cake\I18n\__;
 use function count;
@@ -84,11 +83,22 @@ class StringTemplateRenderer implements RendererInterface
      */
     public function render(MenuInterface $menu, array $options = []): string
     {
-        if (isset($options['templates']) && is_array($options['templates'])) {
-            $this->setConfig('templates', array_merge($this->getConfig('templates'), $options['templates']));
+        // Per-call template overrides must not bleed into the renderer instance for subsequent
+        // renders. Push the snapshot first so the finally{pop()} is always balanced, then apply
+        // overrides + render inside try so a failing add() (invalid override) still restores state.
+        $hasOverrides = isset($options['templates']) && is_array($options['templates']) && $options['templates'] !== [];
+        if (!$hasOverrides) {
+            return $this->renderMenu($menu, $options, 1);
         }
 
-        return $this->renderMenu($menu, $options, 1);
+        $this->templater()->push();
+        try {
+            $this->templater()->add($options['templates']);
+
+            return $this->renderMenu($menu, $options, 1);
+        } finally {
+            $this->templater()->pop();
+        }
     }
 
     /**

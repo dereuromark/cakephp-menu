@@ -33,44 +33,56 @@ class BreadcrumbRenderer extends StringTemplateRenderer
      */
     public function render(MenuInterface $menu, array $options = []): string
     {
-        if (isset($options['templates']) && is_array($options['templates'])) {
-            $this->setConfig('templates', $options['templates'] + $this->getConfig('templates'));
+        // Per-call template overrides must not bleed into the renderer instance for subsequent
+        // renders. Push the snapshot first so the finally{pop()} is always balanced, then apply
+        // overrides + render inside try so a failing add() still restores state.
+        $hasOverrides = isset($options['templates']) && is_array($options['templates']) && $options['templates'] !== [];
+        if ($hasOverrides) {
+            $this->templater()->push();
         }
+        try {
+            if ($hasOverrides) {
+                $this->templater()->add($options['templates']);
+            }
+            $path = $options['path'] ?? null;
+            if (!is_array($path)) {
+                $activeItem = $menu->getActiveItem();
+                if ($activeItem === null) {
+                    return '';
+                }
 
-        $path = $options['path'] ?? null;
-        if (!is_array($path)) {
-            $activeItem = $menu->getActiveItem();
-            if ($activeItem === null) {
-                return '';
+                $path = [];
+                while ($activeItem !== null) {
+                    $path[] = $activeItem;
+                    $activeItem = $activeItem->getParent();
+                }
+                $path = array_reverse($path);
             }
 
-            $path = [];
-            while ($activeItem !== null) {
-                $path[] = $activeItem;
-                $activeItem = $activeItem->getParent();
-            }
-            $path = array_reverse($path);
-        }
+            $items = [];
+            $count = count($path);
+            foreach ($path as $index => $item) {
+                if (!$item instanceof ItemInterface) {
+                    continue;
+                }
 
-        $items = [];
-        $count = count($path);
-        foreach ($path as $index => $item) {
-            if (!$item instanceof ItemInterface) {
-                continue;
+                $items[] = $this->renderBreadcrumbItem($item, $options, $index === $count - 1);
             }
 
-            $items[] = $this->renderBreadcrumbItem($item, $options, $index === $count - 1);
+            $attributes = $this->appendClass([], (string)($options['menuClass'] ?? $this->getConfig('menuClass')));
+
+            $ariaLabel = (string)($options['ariaLabel'] ?? $this->getConfig('ariaLabel'));
+
+            return $this->templater()->format('menuWrapper', [
+                'ariaLabel' => htmlspecialchars($ariaLabel, ENT_QUOTES, 'UTF-8'),
+                'attributes' => $this->renderAttributes($attributes),
+                'items' => implode('', $items),
+            ]);
+        } finally {
+            if ($hasOverrides) {
+                $this->templater()->pop();
+            }
         }
-
-        $attributes = $this->appendClass([], (string)($options['menuClass'] ?? $this->getConfig('menuClass')));
-
-        $ariaLabel = (string)($options['ariaLabel'] ?? $this->getConfig('ariaLabel'));
-
-        return $this->templater()->format('menuWrapper', [
-            'ariaLabel' => htmlspecialchars($ariaLabel, ENT_QUOTES, 'UTF-8'),
-            'attributes' => $this->renderAttributes($attributes),
-            'items' => implode('', $items),
-        ]);
     }
 
     /**

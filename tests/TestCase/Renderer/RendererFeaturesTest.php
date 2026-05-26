@@ -8,8 +8,10 @@ use Cake\TestSuite\TestCase;
 use Menu\Menu;
 use Menu\Renderer\Bootstrap5Renderer;
 use Menu\Renderer\Bootstrap5SidebarRenderer;
+use Menu\Renderer\BreadcrumbRenderer;
 use Menu\Renderer\NavbarRenderer;
 use Menu\Renderer\StringTemplateRenderer;
+use Throwable;
 
 class RendererFeaturesTest extends TestCase
 {
@@ -274,5 +276,65 @@ class RendererFeaturesTest extends TestCase
 
         $this->assertMatchesRegularExpression('/<li class="top"><a[^>]*href="\/home"/', $tunedResult);
         $this->assertMatchesRegularExpression('/<li class="sub"><a[^>]*href="\/profile"/', $tunedResult);
+    }
+
+    // ---------------------------------------------------------------------
+    // Per-call `templates` option must not leak into the renderer instance.
+    // Previously render() called setConfig('templates', merged), which
+    // permanently mutated the renderer; a subsequent render without the
+    // option reused the mutated state.
+    // ---------------------------------------------------------------------
+
+    public function testPerCallTemplatesDoNotLeakInStringTemplateRenderer(): void
+    {
+        $menu = Menu::create();
+        $menu->addItem('Home', '/home');
+
+        $renderer = new StringTemplateRenderer();
+        $withOverride = $renderer->render($menu, [
+            'templates' => ['menuWrapper' => '<nav><ul{{attributes}}>{{items}}</ul></nav>'],
+        ]);
+        $withoutOverride = $renderer->render($menu);
+
+        $this->assertStringContainsString('<nav><ul>', $withOverride);
+        // Subsequent render without the override must produce the original markup.
+        $this->assertSame('<ul><li><a href="/home">Home</a></li></ul>', $withoutOverride);
+    }
+
+    public function testPerCallTemplatesDoNotLeakInBreadcrumbRenderer(): void
+    {
+        $menu = Menu::create();
+        $menu->addItem('Home', '/home', ['active' => true]);
+
+        $renderer = new BreadcrumbRenderer();
+        $withOverride = $renderer->render($menu, [
+            'templates' => ['menuWrapper' => '<ol>{{items}}</ol>'],
+        ]);
+        $withoutOverride = $renderer->render($menu);
+
+        $this->assertStringContainsString('<ol>', $withOverride);
+        // Default template restored after the overridden render.
+        $this->assertStringContainsString('<nav aria-label="breadcrumb"><ol', $withoutOverride);
+        $this->assertStringNotContainsString('<ol><li', $withoutOverride);
+    }
+
+    public function testTemplatesRestoredWhenRenderThrows(): void
+    {
+        // push/pop must restore templates even if rendering fails. Use an invalid template token
+        // so format() throws, then confirm a subsequent render reverts to the default.
+        $renderer = new StringTemplateRenderer();
+        $menu = Menu::create();
+        $menu->addItem('Home', '/home');
+
+        try {
+            $renderer->render($menu, [
+                'templates' => ['menuWrapper' => '<broken {{ no_close'],
+            ]);
+        } catch (Throwable) {
+            // Expected: malformed template.
+        }
+
+        $clean = $renderer->render($menu);
+        $this->assertSame('<ul><li><a href="/home">Home</a></li></ul>', $clean);
     }
 }
