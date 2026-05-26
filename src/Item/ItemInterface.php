@@ -78,6 +78,16 @@ interface ItemInterface
 
     public function getAfter(): string;
 
+    public function setIcon(?string $icon): static;
+
+    public function getIcon(): ?string;
+
+    public function setBadge(string|int|null $badge, ?string $type = null): static;
+
+    public function getBadge(): ?string;
+
+    public function getBadgeType(): ?string;
+
     public function setAttribute(string $name, mixed $value): static;
 
     /**

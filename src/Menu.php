@@ -76,6 +76,9 @@ class Menu implements MenuInterface
                     'escape' => $itemConfig['escape'] ?? true,
                     'before' => $itemConfig['before'] ?? null,
                     'after' => $itemConfig['after'] ?? null,
+                    'icon' => $itemConfig['icon'] ?? null,
+                    'badge' => $itemConfig['badge'] ?? null,
+                    'badgeType' => $itemConfig['badgeType'] ?? null,
                     'attributes' => $itemConfig['attributes'] ?? [],
                     'data' => $itemConfig['data'] ?? [],
                     'visible' => $itemConfig['visible'] ?? true,
@@ -205,6 +208,12 @@ class Menu implements MenuInterface
         }
         if (isset($options['after'])) {
             $item->setAfter((string)$options['after']);
+        }
+        if (isset($options['icon'])) {
+            $item->setIcon((string)$options['icon']);
+        }
+        if (isset($options['badge'])) {
+            $item->setBadge((string)$options['badge'], isset($options['badgeType']) ? (string)$options['badgeType'] : null);
         }
         if (isset($options['attributes']) && is_array($options['attributes'])) {
             $item->setAttributes($options['attributes']);

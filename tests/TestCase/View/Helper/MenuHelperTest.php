@@ -349,4 +349,62 @@ class MenuHelperTest extends TestCase
         $this->expectExceptionMessage('additionalResolvers');
         $menuHelper->render($menu, ['additionalResolvers' => ['not-a-resolver']]);
     }
+
+    public function testReturnsFirstMatchWithoutSingleActive(): void
+    {
+        $menuHelper = $this->createHelper(new ServerRequest(['url' => '/articles']));
+        $menu = Menu::create();
+        $parent = $menu->addItem('Section', '/articles');
+        $parent->getSubMenu()->addItem('Articles', '/articles');
+
+        // Both items match; the default returns the first (shallowest) match.
+        $this->assertSame('Section', $menuHelper->getCurrentItem($menu)?->getLabel());
+    }
+
+    public function testSingleActivePrefersDeepestMatch(): void
+    {
+        $menuHelper = $this->createHelper(new ServerRequest(['url' => '/articles']));
+        $menu = Menu::create();
+        $parent = $menu->addItem('Section', '/articles');
+        $parent->getSubMenu()->addItem('Articles', '/articles');
+
+        $this->assertSame('Articles', $menuHelper->getCurrentItem($menu, ['singleActive' => true])?->getLabel());
+    }
+
+    public function testSingleActiveSkipsHiddenMatches(): void
+    {
+        $menuHelper = $this->createHelper(new ServerRequest(['url' => '/articles']));
+        $menu = Menu::create();
+        $parent = $menu->addItem('Section', '/articles');
+        $parent->getSubMenu()->addItem('Hidden', '/articles', ['visible' => false]);
+
+        // The deeper match is hidden, so the visible parent stays the active item.
+        $this->assertSame('Section', $menuHelper->getCurrentItem($menu, ['singleActive' => true])?->getLabel());
+    }
+
+    public function testSingleActiveClearsEarlierHiddenMatch(): void
+    {
+        $menuHelper = $this->createHelper(new ServerRequest(['url' => '/articles']));
+        $menu = Menu::create();
+        // A hidden active item appears before the visible match in document order.
+        $menu->addItem('HiddenFirst', '/articles', ['visible' => false]);
+        $menu->addItem('Visible', '/articles');
+
+        $this->assertSame('Visible', $menuHelper->getCurrentItem($menu, ['singleActive' => true])?->getLabel());
+    }
+
+    public function testSingleActiveAffectsBreadcrumbs(): void
+    {
+        $menuHelper = $this->createHelper(new ServerRequest(['url' => '/articles']));
+        $menu = Menu::create();
+        $parent = $menu->addItem('Section', '/articles');
+        $parent->getSubMenu()->addItem('Articles', '/articles');
+
+        $crumbs = $menuHelper->getBreadcrumbs($menu, ['singleActive' => true]);
+
+        // Breadcrumbs follow the deepest match's trail, not just the first match.
+        $this->assertCount(2, $crumbs);
+        $this->assertSame('Section', $crumbs[0]['title']);
+        $this->assertSame('Articles', $crumbs[1]['title']);
+    }
 }

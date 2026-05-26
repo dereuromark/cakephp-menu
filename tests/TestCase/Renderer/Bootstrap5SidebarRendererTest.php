@@ -182,4 +182,15 @@ class Bootstrap5SidebarRendererTest extends TestCase
         $this->assertStringContainsString('<li class="nav-header">Account</li>', $result);
         $this->assertStringContainsString('href="/profile"', $result);
     }
+
+    public function testRendersIconAndBadge(): void
+    {
+        $menu = Menu::create();
+        $menu->addItem('Inbox', '/inbox', ['icon' => 'fa fa-inbox', 'badge' => 3, 'badgeType' => 'bg-danger']);
+
+        $result = (new Bootstrap5SidebarRenderer())->render($menu);
+
+        $this->assertStringContainsString('<i class="fa fa-inbox" aria-hidden="true"></i> ', $result);
+        $this->assertStringContainsString('<span class="badge bg-danger">3</span>', $result);
+    }
 }

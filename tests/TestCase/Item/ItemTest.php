@@ -90,4 +90,23 @@ class ItemTest extends TestCase
         $item->setHeader(false);
         $this->assertFalse($item->isHeader());
     }
+
+    public function testIconAndBadge(): void
+    {
+        $item = (new Item('Inbox', '/inbox'))
+            ->setIcon('fa fa-inbox')
+            ->setBadge(5, 'bg-danger');
+
+        $this->assertSame('fa fa-inbox', $item->getIcon());
+        $this->assertSame('5', $item->getBadge());
+        $this->assertSame('bg-danger', $item->getBadgeType());
+
+        $array = $item->toArray();
+        $this->assertSame('fa fa-inbox', $array['icon']);
+        $this->assertSame('5', $array['badge']);
+        $this->assertSame('bg-danger', $array['badgeType']);
+
+        $item->setBadge(null);
+        $this->assertNull($item->getBadge());
+    }
 }

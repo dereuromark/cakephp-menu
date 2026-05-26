@@ -144,7 +144,9 @@ class Bootstrap5SidebarRenderer extends StringTemplateRenderer
             return $this->li($item, $options, (string)$item->getRaw());
         }
 
-        $label = $item->getBefore() . $this->escapeLabel($item) . $item->getAfter();
+        $label = $item->getBefore()
+            . $this->decorateTitle($item, $this->escapeLabel($item), $options)
+            . $item->getAfter();
 
         $content = $hasSubMenu
             ? $this->renderBranch($item, $options, $label, $level)

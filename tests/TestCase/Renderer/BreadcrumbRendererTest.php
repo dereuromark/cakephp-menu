@@ -36,4 +36,14 @@ class BreadcrumbRendererTest extends TestCase
         $this->assertStringNotContainsString('onload="alert(1)"', $result);
         $this->assertStringContainsString('aria-label="x&quot; onload=&quot;alert(1)"', $result);
     }
+
+    public function testRendersItemIcon(): void
+    {
+        $menu = Menu::create();
+        $menu->addItem('Home', '/', ['active' => true, 'icon' => 'fa fa-home']);
+
+        $result = (new BreadcrumbRenderer())->render($menu);
+
+        $this->assertStringContainsString('<i class="fa fa-home" aria-hidden="true"></i> ', $result);
+    }
 }
