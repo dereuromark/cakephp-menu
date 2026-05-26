@@ -77,10 +77,6 @@ Full documentation lives at **<https://dereuromark.github.io/cakephp-menu/>**.
 - [Recipes](https://dereuromark.github.io/cakephp-menu/guide/recipes)
 - [Extending](https://dereuromark.github.io/cakephp-menu/guide/extending)
 
-## Development
+## Demo
 
-```bash
-composer test
-composer stan
-composer cs-check
-```
+https://sandbox.dereuromark.de/menu-sandbox
