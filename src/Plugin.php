@@ -6,12 +6,12 @@ namespace Menu;
 
 use Cake\Console\CommandCollection;
 use Cake\Core\BasePlugin;
-use Menu\Command\MakeMenuCommand;
+use Menu\Command\MenuGenerateCommand;
 
 class Plugin extends BasePlugin
 {
     public function console(CommandCollection $commands): CommandCollection
     {
-        return $commands->add('make_menu', MakeMenuCommand::class);
+        return $commands->add('menu generate', MenuGenerateCommand::class);
     }
 }

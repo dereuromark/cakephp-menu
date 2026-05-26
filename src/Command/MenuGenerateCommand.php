@@ -10,8 +10,13 @@ use Cake\Console\ConsoleIo;
 use Cake\Console\ConsoleOptionParser;
 use Cake\Utility\Inflector;
 
-class MakeMenuCommand extends Command
+class MenuGenerateCommand extends Command
 {
+    public static function defaultName(): string
+    {
+        return 'menu generate';
+    }
+
     public function buildOptionParser(ConsoleOptionParser $parser): ConsoleOptionParser
     {
         return $parser

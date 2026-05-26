@@ -8,9 +8,9 @@ use Cake\Console\CommandCollection;
 use Cake\Console\TestSuite\ConsoleIntegrationTestTrait;
 use Cake\Core\ConsoleApplicationInterface;
 use Cake\TestSuite\TestCase;
-use Menu\Command\MakeMenuCommand;
+use Menu\Command\MenuGenerateCommand;
 
-class MakeMenuCommandTest extends TestCase
+class MenuGenerateCommandTest extends TestCase
 {
     use ConsoleIntegrationTestTrait;
 
@@ -55,7 +55,7 @@ class MakeMenuCommandTest extends TestCase
 
             public function console(CommandCollection $commands): CommandCollection
             {
-                $command = new class ($this->configDir) extends MakeMenuCommand {
+                $command = new class ($this->configDir) extends MenuGenerateCommand {
                     public function __construct(protected string $configDir)
                     {
                         parent::__construct();
@@ -67,14 +67,14 @@ class MakeMenuCommandTest extends TestCase
                     }
                 };
 
-                return $commands->add('make_menu', $command);
+                return $commands->add('menu generate', $command);
             }
         };
     }
 
     public function testCreatesFileWithExpectedContent(): void
     {
-        $this->exec('make_menu Main');
+        $this->exec('menu generate Main');
 
         $path = $this->configDir . DIRECTORY_SEPARATOR . 'menu_main.php';
         $this->assertExitSuccess();
@@ -88,7 +88,7 @@ class MakeMenuCommandTest extends TestCase
         mkdir($this->configDir, 0775, true);
         file_put_contents($this->configDir . DIRECTORY_SEPARATOR . 'menu_main.php', 'old');
 
-        $this->exec('make_menu Main');
+        $this->exec('menu generate Main');
 
         $this->assertExitError();
         $this->assertErrorContains('already exists');
@@ -97,7 +97,7 @@ class MakeMenuCommandTest extends TestCase
 
     public function testRejectsInvalidName(): void
     {
-        $this->exec('make_menu Admin/Menu');
+        $this->exec('menu generate Admin/Menu');
 
         $this->assertExitError();
         $this->assertErrorContains('UpperCamelCase');
@@ -109,7 +109,7 @@ class MakeMenuCommandTest extends TestCase
         mkdir($this->configDir, 0775, true);
         file_put_contents($this->configDir . DIRECTORY_SEPARATOR . 'menu_main.php', 'old');
 
-        $this->exec('make_menu Main --force');
+        $this->exec('menu generate Main --force');
 
         $path = $this->configDir . DIRECTORY_SEPARATOR . 'menu_main.php';
         $this->assertExitSuccess();

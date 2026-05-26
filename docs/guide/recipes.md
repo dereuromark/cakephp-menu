@@ -185,7 +185,7 @@ and `raw` are still emitted as trusted markup — cast or escape dynamic values 
 Generate a starter config file from the CLI:
 
 ```bash
-bin/cake make_menu Main
+bin/cake menu generate Main
 ```
 
 That creates `config/menu_main.php`. Load it during bootstrap and render the configured menu:
