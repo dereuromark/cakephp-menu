@@ -6,6 +6,9 @@ namespace Menu\Test\TestCase\Renderer;
 
 use Cake\TestSuite\TestCase;
 use Menu\Menu;
+use Menu\Renderer\Bootstrap5Renderer;
+use Menu\Renderer\Bootstrap5SidebarRenderer;
+use Menu\Renderer\NavbarRenderer;
 use Menu\Renderer\StringTemplateRenderer;
 
 class RendererFeaturesTest extends TestCase
@@ -105,5 +108,101 @@ class RendererFeaturesTest extends TestCase
 
         $this->assertStringContainsString('<li class="menu-header" role="presentation">Section</li>', $result);
         $this->assertStringContainsString('<li class="divider" role="separator"></li>', $result);
+    }
+
+    // ---------------------------------------------------------------------
+    // labelAttributes / roles parity across renderers. Previously these were
+    // honored only by StringTemplateRenderer; the Bootstrap5-family renderers
+    // override the link/label rendering path and silently dropped them.
+    // ---------------------------------------------------------------------
+
+    public function testLabelAttributesOnBootstrap5Link(): void
+    {
+        $menu = Menu::create();
+        $menu->addItem('Home', '/home')->setLabelAttributes(['title' => 'Go home', 'class' => 'text-primary']);
+
+        $result = (new Bootstrap5Renderer())->render($menu);
+
+        $this->assertStringContainsString('href="/home"', $result);
+        $this->assertStringContainsString('title="Go home"', $result);
+        // The renderer's nav-link class merges with the labelAttributes class.
+        $this->assertMatchesRegularExpression('/class="[^"]*\bnav-link\b[^"]*\btext-primary\b[^"]*"/', $result);
+    }
+
+    public function testLabelAttributesOnBootstrap5ActiveLabel(): void
+    {
+        $menu = Menu::create();
+        $menu->addItem('Home', '/home', ['active' => true])->setLabelAttributes(['title' => 'Here']);
+
+        $result = (new Bootstrap5Renderer(['currentAsLink' => false]))->render($menu);
+
+        $this->assertStringContainsString('aria-current="page"', $result);
+        // The active item renders as <span>, and labelAttributes land on it.
+        $this->assertMatchesRegularExpression('/<span[^>]*title="Here"[^>]*>Home<\/span>/', $result);
+    }
+
+    public function testRolesAppliedByBootstrap5Renderer(): void
+    {
+        $menu = Menu::create();
+        $menu->addItem('Home', '/home');
+
+        $result = (new Bootstrap5Renderer())->render($menu, ['roles' => true]);
+
+        $this->assertStringContainsString('role="menubar"', $result);
+        $this->assertStringContainsString('role="menuitem"', $result);
+    }
+
+    public function testLabelAttributesOnBootstrap5SidebarLeaf(): void
+    {
+        $menu = Menu::create();
+        $menu->addItem('Home', '/home')->setLabelAttributes(['title' => 'Go home', 'class' => 'text-primary']);
+
+        $result = (new Bootstrap5SidebarRenderer())->render($menu);
+
+        $this->assertStringContainsString('title="Go home"', $result);
+        $this->assertMatchesRegularExpression('/class="[^"]*\bnav-link\b[^"]*\btext-primary\b/', $result);
+    }
+
+    public function testLabelAttributesOnBootstrap5SidebarPlaceholderToggle(): void
+    {
+        $menu = Menu::create();
+        $branch = $menu->addItem('Features', '#', ['id' => 'features']);
+        $branch->setLabelAttributes(['title' => 'Open features', 'class' => 'fw-bold']);
+        $branch->getSubMenu()->addItem('Resolvers', '/resolvers');
+
+        $result = (new Bootstrap5SidebarRenderer())->render($menu);
+
+        // labelAttributes land on the toggle <a>, not on the <li> or the collapse <div>. The test
+        // menu has only one toggle anchor, so finding both attributes on an <a> is sufficient
+        // (the renderer emits data-bs-toggle before title in attribute order).
+        $this->assertMatchesRegularExpression('/<a\b[^>]*\bdata-bs-toggle="collapse"[^>]*>/', $result);
+        $this->assertMatchesRegularExpression('/<a\b[^>]*\btitle="Open features"[^>]*>/', $result);
+        $this->assertStringContainsString('fw-bold', $result);
+    }
+
+    public function testLabelAttributesOnBootstrap5SidebarNavigableBranch(): void
+    {
+        $menu = Menu::create();
+        $branch = $menu->addItem('Products', '/products', ['id' => 'products']);
+        $branch->setLabelAttributes(['title' => 'Browse products']);
+        $branch->getSubMenu()->addItem('Books', '/books');
+
+        $result = (new Bootstrap5SidebarRenderer())->render($menu);
+
+        // labelAttributes apply to the navigable anchor, not the separate collapse toggle button.
+        $this->assertMatchesRegularExpression('/<a[^>]*href="\/products"[^>]*title="Browse products"/', $result);
+        $this->assertDoesNotMatchRegularExpression('/<button[^>]*title="Browse products"/', $result);
+    }
+
+    public function testLabelAttributesOnNavbarRenderer(): void
+    {
+        $menu = Menu::create();
+        $menu->addItem('Home', '/home')->setLabelAttributes(['title' => 'Go home', 'class' => 'text-primary']);
+
+        $result = (new NavbarRenderer())->render($menu);
+
+        // NavbarRenderer extends Bootstrap5Renderer, so the fix flows through inheritance.
+        $this->assertStringContainsString('title="Go home"', $result);
+        $this->assertMatchesRegularExpression('/class="[^"]*\bnav-link\b[^"]*\btext-primary\b/', $result);
     }
 }
