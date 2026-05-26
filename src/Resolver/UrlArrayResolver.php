@@ -88,10 +88,9 @@ class UrlArrayResolver implements ContextAwareResolverInterface
             }
         }
 
-        $fuzzy = $item instanceof Item
-            ? $item->isFuzzyMatch()
-            : false;
-        if (!$fuzzy) {
+        if ($item instanceof Item && $item->getFuzzyMatchSetting() !== null) {
+            $fuzzy = $item->isFuzzyMatch();
+        } else {
             $fuzzy = (bool)$this->getConfig('fuzzy');
         }
 

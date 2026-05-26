@@ -142,6 +142,25 @@ class UrlArrayResolverTest extends TestCase
         $this->assertFalse($item->isActive());
     }
 
+    public function testExplicitPerItemExactMatchOverridesGlobalFuzzySetting(): void
+    {
+        $item = (new Item('Articles', [
+            'controller' => 'Articles',
+        ]))->setFuzzyMatch(false);
+
+        $request = (new ServerRequest())->withAttribute('params', [
+            'controller' => 'Articles',
+            'action' => 'view',
+            'plugin' => null,
+            'pass' => [],
+        ]);
+
+        $resolver = new UrlArrayResolver($request, ['fuzzy' => true]);
+        $resolver->resolve($item);
+
+        $this->assertFalse($item->isActive());
+    }
+
     public function testMatchesPluginFalseAgainstNullRequestPlugin(): void
     {
         $item = new Item('Home', [

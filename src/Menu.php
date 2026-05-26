@@ -16,6 +16,7 @@ use Menu\Resolver\ContextAwareResolverInterface;
 use Menu\Resolver\ResolverCollectionInterface;
 use Menu\Resolver\ResolverContext;
 use Menu\Resolver\ResolverInterface;
+use ReflectionObject;
 
 class Menu implements MenuInterface
 {
@@ -90,7 +91,7 @@ class Menu implements MenuInterface
                     'submenuAttributes' => $itemConfig['submenu']['attributes'] ?? [],
                     'matchRoutes' => $itemConfig['matchRoutes'] ?? [],
                     'ignoreQueryString' => $itemConfig['ignoreQueryString'] ?? null,
-                    'fuzzy' => $itemConfig['fuzzy'] ?? false,
+                    'fuzzy' => $itemConfig['fuzzy'] ?? null,
                     'displayChildren' => $itemConfig['displayChildren'] ?? true,
                     'labelAttributes' => $itemConfig['labelAttributes'] ?? [],
                 ],
@@ -196,9 +197,7 @@ class Menu implements MenuInterface
     public function add(ItemInterface $item): static
     {
         $this->assertMutable();
-        if ($this->ownerItem !== null && !$item->hasParent()) {
-            $item->setParent($this->ownerItem);
-        }
+        $this->synchronizeItemParent($item);
 
         $this->assertUniqueItemTree($item);
         $this->items[] = $item;
@@ -234,7 +233,7 @@ class Menu implements MenuInterface
         // item would fail that reparenting mid-batch, so reject up-front.
         if ($this->ownerItem !== null) {
             foreach ($items as $item) {
-                if (!$item->hasParent() && $item->isFrozen()) {
+                if ($item->getParent() !== $this->ownerItem && $item->isFrozen()) {
                     throw new LogicException(
                         'Cannot add a frozen item to a submenu: reparenting it would require mutation.',
                     );
@@ -367,8 +366,8 @@ class Menu implements MenuInterface
             $ignoreQueryString = $options['ignoreQueryString'];
             $item->setIgnoreQueryString(is_bool($ignoreQueryString) ? $ignoreQueryString : null);
         }
-        if (!empty($options['fuzzy'])) {
-            $item->setFuzzyMatch();
+        if (array_key_exists('fuzzy', $options) && $options['fuzzy'] !== null) {
+            $item->setFuzzyMatch((bool)$options['fuzzy']);
         }
         if (array_key_exists('displayChildren', $options)) {
             $item->setDisplayChildren((bool)$options['displayChildren']);
@@ -439,10 +438,8 @@ class Menu implements MenuInterface
 
         $this->assertUniqueItems($validatedItems);
         $this->items = $validatedItems;
-        if ($this->ownerItem !== null) {
-            foreach ($this->items as $item) {
-                $item->setParent($this->ownerItem);
-            }
+        foreach ($this->items as $item) {
+            $this->synchronizeItemParent($item);
         }
 
         return $this;
@@ -476,6 +473,8 @@ class Menu implements MenuInterface
         $items = [];
         foreach ($this->items as $item) {
             if ($item->getId() === $id) {
+                $this->clearItemParent($item);
+
                 continue;
             }
             if ($item->hasSubMenu()) {
@@ -536,6 +535,7 @@ class Menu implements MenuInterface
     {
         foreach ($this->items as $index => $item) {
             if ($item->getKey() === $key) {
+                $this->clearItemParent($item);
                 array_splice($this->items, $index, 1);
 
                 return true;
@@ -723,9 +723,7 @@ class Menu implements MenuInterface
 
     protected function insertItemAt(ItemInterface $item, int $position): void
     {
-        if ($this->ownerItem !== null && !$item->hasParent()) {
-            $item->setParent($this->ownerItem);
-        }
+        $this->synchronizeItemParent($item);
         $this->assertUniqueItemTree($item);
         $position = max(0, min($position, count($this->items)));
         array_splice($this->items, $position, 0, [$item]);
@@ -921,12 +919,60 @@ class Menu implements MenuInterface
         $this->assertMutable();
         $this->ownerItem = $ownerItem;
         foreach ($this->items as $item) {
-            if (!$item->hasParent()) {
-                $item->setParent($ownerItem);
-            }
+            $this->synchronizeItemParent($item);
         }
 
         return $this;
+    }
+
+    protected function synchronizeItemParent(ItemInterface $item): void
+    {
+        $desiredParent = $this->ownerItem;
+        if ($item->getParent() === $desiredParent) {
+            return;
+        }
+        if ($item->isFrozen()) {
+            throw new LogicException('Cannot move a frozen item to a different parent.');
+        }
+        if ($desiredParent !== null) {
+            $item->setParent($desiredParent);
+
+            return;
+        }
+
+        $this->clearItemParent($item);
+    }
+
+    protected function clearItemParent(ItemInterface $item): void
+    {
+        if ($item instanceof Item) {
+            $detach = Closure::bind(
+                static function (Item $boundItem): void {
+                    $boundItem->parent = null;
+                },
+                null,
+                Item::class,
+            );
+            $detach($item);
+
+            return;
+        }
+
+        $reflection = new ReflectionObject($item);
+        while ($reflection !== false) {
+            if ($reflection->hasProperty('parent')) {
+                $property = $reflection->getProperty('parent');
+                $property->setAccessible(true);
+                $property->setValue($item, null);
+
+                return;
+            }
+            $reflection = $reflection->getParentClass();
+        }
+
+        throw new LogicException(
+            'Cannot detach a custom item from its parent when moving it to a root menu.',
+        );
     }
 
     protected function setOwnerItemDuringClone(ItemInterface $ownerItem): static

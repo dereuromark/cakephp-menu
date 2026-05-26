@@ -72,4 +72,19 @@ class ItemFeaturesTest extends TestCase
         $this->assertFalse($item->displaysChildren());
         $this->assertSame(['title' => 'tip'], $item->getLabelAttributes());
     }
+
+    public function testFromArrayRoundTripPreservesExplicitNonFuzzySetting(): void
+    {
+        $menu = Menu::create();
+        $menu->addItem('Parent', '/parent', [
+            'key' => 'parent',
+            'fuzzy' => false,
+        ]);
+
+        $rebuilt = Menu::fromArray($menu->toArray());
+        $item = $rebuilt->getByKey('parent');
+
+        $this->assertNotNull($item);
+        $this->assertFalse($item->isFuzzyMatch());
+    }
 }
