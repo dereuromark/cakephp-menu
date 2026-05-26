@@ -166,6 +166,28 @@ class StringTemplateRendererTest extends TestCase
         $this->assertStringContainsString('Admin', $result);
     }
 
+    public function testRendersIconAndBadge(): void
+    {
+        $menu = Menu::create();
+        $menu->addItem('Inbox', '/inbox', ['icon' => 'fa fa-inbox', 'badge' => 5, 'badgeType' => 'bg-danger']);
+
+        $result = (new StringTemplateRenderer())->render($menu);
+
+        $this->assertStringContainsString('<i class="fa fa-inbox" aria-hidden="true"></i> ', $result);
+        $this->assertStringContainsString('<span class="badge bg-danger">5</span>', $result);
+    }
+
+    public function testEscapesIconAndBadge(): void
+    {
+        $menu = Menu::create();
+        $menu->addItem('X', '/x', ['icon' => '"><script>', 'badge' => '<b>']);
+
+        $result = (new StringTemplateRenderer())->render($menu);
+
+        $this->assertStringNotContainsString('<script>', $result);
+        $this->assertStringNotContainsString('<b>', $result);
+    }
+
     public function testRootClassAppliesToTheRootListOnly(): void
     {
         $menu = Menu::create();
