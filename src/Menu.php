@@ -91,6 +91,8 @@ class Menu implements MenuInterface
                     'matchRoutes' => $itemConfig['matchRoutes'] ?? [],
                     'ignoreQueryString' => $itemConfig['ignoreQueryString'] ?? null,
                     'fuzzy' => $itemConfig['fuzzy'] ?? false,
+                    'displayChildren' => $itemConfig['displayChildren'] ?? true,
+                    'labelAttributes' => $itemConfig['labelAttributes'] ?? [],
                 ],
             );
 
@@ -326,6 +328,12 @@ class Menu implements MenuInterface
         if (!empty($options['fuzzy'])) {
             $item->setFuzzyMatch();
         }
+        if (array_key_exists('displayChildren', $options)) {
+            $item->setDisplayChildren((bool)$options['displayChildren']);
+        }
+        if (isset($options['labelAttributes']) && is_array($options['labelAttributes'])) {
+            $item->setLabelAttributes($options['labelAttributes']);
+        }
 
         return $item;
     }
@@ -423,6 +431,272 @@ class Menu implements MenuInterface
         $this->items = $items;
 
         return $this;
+    }
+
+    /**
+     * Returns the first item (depth-first) whose key matches. Keys are explicit when set, otherwise
+     * a slug of the label, so labels that collide share a key — assign explicit keys when you need
+     * to target a specific item unambiguously.
+     */
+    public function getByKey(string $key): ?ItemInterface
+    {
+        foreach ($this->items as $item) {
+            if ($item->getKey() === $key) {
+                return $item;
+            }
+            if ($item->hasSubMenu()) {
+                $found = $item->getSubMenu()->getByKey($key);
+                if ($found !== null) {
+                    return $found;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    public function hasKey(string $key): bool
+    {
+        return $this->getByKey($key) !== null;
+    }
+
+    /**
+     * Removes the first item (depth-first) whose key matches. As with getByKey(), matching uses the
+     * explicit key or the label slug, so prefer explicit keys when labels may collide.
+     */
+    public function removeByKey(string $key): static
+    {
+        $this->assertMutable();
+        $this->removeFirstByKey($key);
+
+        return $this;
+    }
+
+    /**
+     * Removes the first item matching the key, searching this level before descending. Returns
+     * whether an item was removed.
+     */
+    protected function removeFirstByKey(string $key): bool
+    {
+        foreach ($this->items as $index => $item) {
+            if ($item->getKey() === $key) {
+                array_splice($this->items, $index, 1);
+
+                return true;
+            }
+        }
+        foreach ($this->items as $item) {
+            if ($item->hasSubMenu() && $item->getSubMenu()->getByKey($key) !== null) {
+                $item->getSubMenu()->removeByKey($key);
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public function insertBefore(ItemInterface $item, string $idOrKey): static
+    {
+        $this->assertMutable();
+        $index = $this->indexOf($idOrKey);
+        if ($index === null) {
+            throw new InvalidArgumentException(sprintf('Unknown menu item `%s` to insert before.', $idOrKey));
+        }
+
+        $this->insertItemAt($item, $index);
+
+        return $this;
+    }
+
+    public function insertAfter(ItemInterface $item, string $idOrKey): static
+    {
+        $this->assertMutable();
+        $index = $this->indexOf($idOrKey);
+        if ($index === null) {
+            throw new InvalidArgumentException(sprintf('Unknown menu item `%s` to insert after.', $idOrKey));
+        }
+
+        $this->insertItemAt($item, $index + 1);
+
+        return $this;
+    }
+
+    public function moveToPosition(string $idOrKey, int $position): static
+    {
+        $this->assertMutable();
+        $index = $this->indexOf($idOrKey);
+        if ($index === null) {
+            throw new InvalidArgumentException(sprintf('Unknown menu item `%s` to move.', $idOrKey));
+        }
+
+        $item = $this->items[$index];
+        array_splice($this->items, $index, 1);
+        $position = max(0, min($position, count($this->items)));
+        array_splice($this->items, $position, 0, [$item]);
+
+        return $this;
+    }
+
+    public function moveToFirstPosition(string $idOrKey): static
+    {
+        return $this->moveToPosition($idOrKey, 0);
+    }
+
+    public function moveToLastPosition(string $idOrKey): static
+    {
+        return $this->moveToPosition($idOrKey, count($this->items));
+    }
+
+    public function reorder(array $order): static
+    {
+        $this->assertMutable();
+        $ordered = [];
+        $used = [];
+        foreach ($order as $idOrKey) {
+            $index = $this->indexOf((string)$idOrKey);
+            if ($index === null || isset($used[$index])) {
+                continue;
+            }
+            $used[$index] = true;
+            $ordered[] = $this->items[$index];
+        }
+        foreach ($this->items as $index => $item) {
+            if (!isset($used[$index])) {
+                $ordered[] = $item;
+            }
+        }
+
+        $this->items = $ordered;
+
+        return $this;
+    }
+
+    public function merge(MenuInterface $menu, bool $mergeAttributes = false): static
+    {
+        $this->assertMutable();
+        foreach ($this->cloneItems($menu->getItems()) as $item) {
+            $this->add($item);
+        }
+
+        if ($mergeAttributes) {
+            $this->attributes += $menu->getAttributes();
+            foreach ((array)$menu->getData() as $name => $value) {
+                if (!array_key_exists((string)$name, $this->data)) {
+                    $this->data[(string)$name] = $value;
+                }
+            }
+        }
+
+        return $this;
+    }
+
+    public function slice(int|string $offset, int|string|null $length = null): static
+    {
+        $start = $this->resolveBoundary($offset);
+        if ($length === null) {
+            $end = count($this->items);
+        } elseif (is_int($length)) {
+            $end = $start + $length;
+        } else {
+            $end = $this->resolveBoundary($length);
+        }
+
+        $slice = array_slice($this->items, $start, max(0, $end - $start));
+
+        $new = static::create($this->attributes);
+        foreach ($this->data as $name => $value) {
+            $new->setData((string)$name, $value);
+        }
+        $new->setItems($this->cloneItems($slice));
+
+        return $new;
+    }
+
+    /**
+     * @phpstan-return array{primary: static, secondary: static}
+     */
+    public function split(int|string $length): array
+    {
+        $boundary = $this->resolveBoundary($length);
+
+        return [
+            'primary' => $this->slice(0, $boundary),
+            'secondary' => $this->slice($boundary),
+        ];
+    }
+
+    /**
+     * Finds the index of a direct child by its id or key, or null when absent. Ids take precedence
+     * so an explicit id can always be targeted, even when another item's slug key collides with it.
+     */
+    protected function indexOf(string $idOrKey): ?int
+    {
+        foreach ($this->items as $index => $item) {
+            if ($item->getId() === $idOrKey) {
+                return $index;
+            }
+        }
+        foreach ($this->items as $index => $item) {
+            if ($item->getKey() === $idOrKey) {
+                return $index;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Resolves a position argument (an integer index, or an id/key of a direct child) to an index.
+     *
+     * @throws \InvalidArgumentException When a string id/key is not found.
+     */
+    protected function resolveBoundary(int|string $value): int
+    {
+        if (is_int($value)) {
+            return max(0, min($value, count($this->items)));
+        }
+
+        $index = $this->indexOf($value);
+        if ($index === null) {
+            throw new InvalidArgumentException(sprintf('Unknown menu item `%s`.', $value));
+        }
+
+        return $index;
+    }
+
+    protected function insertItemAt(ItemInterface $item, int $position): void
+    {
+        if ($this->ownerItem !== null && !$item->hasParent()) {
+            $item->setParent($this->ownerItem);
+        }
+        $this->assertUniqueItemTree($item);
+        $position = max(0, min($position, count($this->items)));
+        array_splice($this->items, $position, 0, [$item]);
+    }
+
+    /**
+     * Deep-clones a set of items (via array round-trip) so derived menus from slice()/split()/merge()
+     * own independent item objects and leave the source tree untouched.
+     *
+     * Note: cloning goes through toArray()/fromArray(), so items are rebuilt as the base item class;
+     * custom ItemInterface implementations (e.g. SelfRendererInterface) are not preserved in the
+     * derived menu.
+     *
+     * @param list<\Menu\Item\ItemInterface> $items
+     *
+     * @return list<\Menu\Item\ItemInterface>
+     */
+    protected function cloneItems(array $items): array
+    {
+        $config = [
+            'items' => array_map(
+                static fn (ItemInterface $item): array => $item->toArray(),
+                $items,
+            ),
+        ];
+
+        return static::fromArray($config)->getItems();
     }
 
     public function clearActive(): static

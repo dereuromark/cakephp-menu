@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Menu\View\Helper;
 
+use Cake\Cache\Cache;
+use Cake\Core\Configure;
 use Cake\View\Helper;
 use Closure;
 use InvalidArgumentException;
@@ -42,6 +44,22 @@ class MenuHelper extends Helper
      */
     protected array $menuConfigs = [];
 
+    /**
+     * Specs from `Configure::read('Menu.menus')`, materialized lazily on first access so an explicit
+     * create()/register() of the same name takes precedence.
+     *
+     * @var array<string, array<string, mixed>>
+     */
+    protected array $configuredMenus = [];
+
+    /**
+     * Names currently materialized from `configuredMenus` (not explicitly created/registered), so an
+     * explicit create()/register() of the same name can still override them after first access.
+     *
+     * @var array<string, true>
+     */
+    protected array $configOrigin = [];
+
     protected ?string $lastMenuName = null;
 
     protected array $_defaultConfig = [
@@ -52,6 +70,36 @@ class MenuHelper extends Helper
         'currentAsLink' => true,
         'resolveDepth' => null,
     ];
+
+    /**
+     * @phpstan-param array<string, mixed> $config
+     */
+    public function initialize(array $config): void
+    {
+        parent::initialize($config);
+        $this->loadConfiguredMenus();
+    }
+
+    /**
+     * Stores menu specs declared in `Configure::read('Menu.menus')` (each value a `Menu::fromArray()`
+     * spec keyed by menu name) so config-defined menus are renderable without wiring. They are
+     * materialized lazily by get(); an explicit create()/register() of the same name overrides the
+     * configured menu entirely.
+     */
+    protected function loadConfiguredMenus(): void
+    {
+        $menus = Configure::read('Menu.menus');
+        if (!is_array($menus)) {
+            return;
+        }
+
+        foreach ($menus as $name => $spec) {
+            if (!is_string($name) || $name === '' || !is_array($spec)) {
+                continue;
+            }
+            $this->configuredMenus[$name] = $spec;
+        }
+    }
 
     /**
      * @phpstan-param array<string, mixed> $options
@@ -78,13 +126,16 @@ class MenuHelper extends Helper
         $this->menus[$name] = $menu;
         $this->menuConfigs[$name] = $options;
         $this->lastMenuName = $name;
+        // Now explicitly defined in code; drop any config-origin marker so it is no longer
+        // re-materialized from configuration.
+        unset($this->configOrigin[$name]);
 
         return $menu;
     }
 
     public function has(string $name): bool
     {
-        return isset($this->menus[$name]);
+        return isset($this->menus[$name]) || isset($this->configuredMenus[$name]);
     }
 
     /**
@@ -106,28 +157,98 @@ class MenuHelper extends Helper
      */
     public function register(string $name, callable $callback, array $options = []): MenuInterface
     {
-        if ($this->has($name) && empty($options['rebuild'])) {
+        if (isset($options['cache']) && $options['cache'] !== false) {
+            return $this->registerWithCache($name, $callback, $options);
+        }
+
+        if (isset($this->menus[$name]) && !isset($this->configOrigin[$name]) && empty($options['rebuild'])) {
             return $this->get($name);
         }
 
-        if (!empty($options['rebuild'])) {
-            $options['overwrite'] = true;
-            $menu = $this->create($name, $options);
-
-            $this->invokeRegisterCallback($callback, $menu);
-
-            return $menu;
-        }
-
-        $menu = $this->getOrCreate($name, $options);
+        // An explicit registration defines the menu in code, overriding any configured menu of the
+        // same name. Configured menus are only used when a name is not registered/created in code.
+        $options['overwrite'] = true;
+        $menu = $this->create($name, $options);
         $this->invokeRegisterCallback($callback, $menu);
 
         return $menu;
     }
 
+    /**
+     * Builds a menu through the callback once and caches its structure (not its active state), so
+     * later requests skip the (potentially expensive) build and load the tree from cache instead.
+     * Active state is always resolved fresh per request at render time. Pass `rebuild => true` to
+     * force a rebuild and refresh the cache. The cached structure is the serialized array form, so
+     * custom item classes are restored as the base item class — cache data-driven menus, not menus
+     * relying on custom ItemInterface implementations.
+     *
+     * @param string $name
+     * @param callable(\Menu\MenuInterface): void|callable(\Menu\MenuInterface, self): void $callback
+     * @param array<string, mixed> $options
+     */
+    protected function registerWithCache(string $name, callable $callback, array $options): MenuInterface
+    {
+        if (isset($this->menus[$name]) && !isset($this->configOrigin[$name]) && empty($options['rebuild'])) {
+            return $this->get($name);
+        }
+
+        [$cacheKey, $cacheConfig] = $this->resolveCacheTarget($options['cache'], $name);
+
+        if (empty($options['rebuild'])) {
+            $cached = Cache::read($cacheKey, $cacheConfig);
+            if (is_array($cached)) {
+                $menu = Menu::fromArray($cached);
+                $this->menus[$name] = $menu;
+                $this->menuConfigs[$name] = $options;
+                $this->lastMenuName = $name;
+                // Now defined in code (from cache); drop any config-origin marker.
+                unset($this->configOrigin[$name]);
+
+                return $menu;
+            }
+        }
+
+        $options['overwrite'] = true;
+        $menu = $this->create($name, $options);
+        $this->invokeRegisterCallback($callback, $menu);
+        Cache::write($cacheKey, $menu->toArray(), $cacheConfig);
+
+        return $menu;
+    }
+
+    /**
+     * Normalizes the `cache` option into a [key, config] pair. Accepts `true` (cache under the menu
+     * name in the `default` config), a string key (in the `default` config), or
+     * `['key' => ..., 'config' => ...]`. When no key is given, the menu name is used so distinct
+     * menus never share a cache entry.
+     *
+     * @return array{0: string, 1: string}
+     */
+    protected function resolveCacheTarget(mixed $cache, string $name): array
+    {
+        if (is_array($cache)) {
+            return [
+                (string)($cache['key'] ?? $name),
+                (string)($cache['config'] ?? 'default'),
+            ];
+        }
+
+        if (is_string($cache) && $cache !== '') {
+            return [$cache, 'default'];
+        }
+
+        // e.g. `cache => true`: cache under the menu name so menus never collide.
+        return [$name, 'default'];
+    }
+
     public function remove(string $name): static
     {
-        unset($this->menus[$name], $this->menuConfigs[$name]);
+        unset(
+            $this->menus[$name],
+            $this->menuConfigs[$name],
+            $this->configuredMenus[$name],
+            $this->configOrigin[$name],
+        );
         if ($this->lastMenuName === $name) {
             $this->lastMenuName = null;
         }
@@ -139,7 +260,11 @@ class MenuHelper extends Helper
     {
         $this->menus = [];
         $this->menuConfigs = [];
+        $this->configuredMenus = [];
+        $this->configOrigin = [];
         $this->lastMenuName = null;
+        // Restore configured menus to their pristine state so they remain available after a reset.
+        $this->loadConfiguredMenus();
 
         return $this;
     }
@@ -149,11 +274,21 @@ class MenuHelper extends Helper
      */
     public function get(string $name): MenuInterface
     {
-        if (!isset($this->menus[$name])) {
-            throw new InvalidArgumentException(sprintf('Unknown menu `%s`.', $name));
+        if (isset($this->menus[$name])) {
+            return $this->menus[$name];
         }
 
-        return $this->menus[$name];
+        if (isset($this->configuredMenus[$name])) {
+            $menu = Menu::fromArray($this->configuredMenus[$name]);
+            $this->menus[$name] = $menu;
+            $this->menuConfigs[$name] = [];
+            $this->configOrigin[$name] = true;
+            $this->lastMenuName ??= $name;
+
+            return $menu;
+        }
+
+        throw new InvalidArgumentException(sprintf('Unknown menu `%s`.', $name));
     }
 
     /**

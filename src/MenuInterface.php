@@ -93,6 +93,36 @@ interface MenuInterface
 
     public function remove(string $id): static;
 
+    public function getByKey(string $key): ?ItemInterface;
+
+    public function hasKey(string $key): bool;
+
+    public function removeByKey(string $key): static;
+
+    public function insertBefore(ItemInterface $item, string $idOrKey): static;
+
+    public function insertAfter(ItemInterface $item, string $idOrKey): static;
+
+    public function moveToPosition(string $idOrKey, int $position): static;
+
+    public function moveToFirstPosition(string $idOrKey): static;
+
+    public function moveToLastPosition(string $idOrKey): static;
+
+    /**
+     * @phpstan-param list<string> $order
+     */
+    public function reorder(array $order): static;
+
+    public function merge(MenuInterface $menu, bool $mergeAttributes = false): static;
+
+    public function slice(int|string $offset, int|string|null $length = null): static;
+
+    /**
+     * @phpstan-return array{primary: static, secondary: static}
+     */
+    public function split(int|string $length): array;
+
     public function clearActive(): static;
 
     public function getActiveItem(): ?ItemInterface;

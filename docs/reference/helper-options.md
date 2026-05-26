@@ -62,9 +62,53 @@ them and add your own, use `additionalResolvers`. See [Resolvers](/guide/resolve
 | `attributes` / `menuAttributes` | HTML attributes for the root `<ul>`. |
 | `overwrite` | Allow `create()` to replace an existing menu of the same name. |
 | `rebuild` | Make `register()` rebuild even if the menu already exists. |
+| `cache` | Cache the built structure (see below). `true`, a string key, or `['key' => ..., 'config' => ...]`. |
 
 Any other keys (e.g. `renderer`, `singleActive`) set here become defaults for later `render()` calls
 on that menu.
+
+### Caching a built menu
+
+`register()` with a `cache` option builds the menu through the callback once and caches its
+**structure** (not its active state); later requests skip the build and load the tree from cache,
+while active state is always resolved fresh per request. Pass `rebuild => true` to refresh.
+
+```php
+$this->Menu->register('main', function ($menu): void {
+    // ...expensive build, e.g. a DB/ACL query...
+}, ['cache' => 'menu_main']); // or ['cache' => true] (keyed by menu name), or ['key' => ..., 'config' => ...]
+```
+
+::: warning
+The cached form is the serialized array, so custom item classes are restored as the base item class.
+Cache data-driven menus, not menus that rely on custom `ItemInterface` implementations.
+:::
+
+## Config-defined menus
+
+The helper auto-registers menus declared in `Configure::read('Menu.menus')` (each value a
+`Menu::fromArray()` spec keyed by name), so they render without any wiring:
+
+```php
+// config/app.php (or a dedicated config/menu.php loaded via Configure::load)
+'Menu' => [
+    'menus' => [
+        'main' => [
+            'attributes' => ['class' => 'nav'],
+            'items' => [
+                ['label' => 'Home', 'link' => '/'],
+                ['label' => 'Articles', 'link' => ['controller' => 'Articles', 'action' => 'index']],
+            ],
+        ],
+    ],
+],
+```
+
+```php
+echo $this->Menu->render('main'); // no create()/register() needed
+```
+
+An explicit `create()`/`register()` of the same name overrides the configured menu entirely.
 
 ## Breadcrumb options
 

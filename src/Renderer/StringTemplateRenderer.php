@@ -51,6 +51,8 @@ class StringTemplateRenderer implements RendererInterface
         'ariaLabel' => null,
         'addAriaCurrent' => true,
         'addAriaExpanded' => true,
+        // Opt-in WAI-ARIA menu roles (menubar/menu/menuitem/none/separator/presentation).
+        'roles' => false,
         'templates' => [
             'menuWrapper' => '<ul{{attributes}}>{{items}}</ul>',
             'item' => '<li{{attributes}}>{{content}}</li>',
@@ -135,6 +137,10 @@ class StringTemplateRenderer implements RendererInterface
             $attributes = $this->appendClass($attributes, $menuLevelClass . $level);
         }
 
+        if ($this->getBooleanOption($options, 'roles', false) && !isset($attributes['role'])) {
+            $attributes['role'] = $level === 1 ? 'menubar' : 'menu';
+        }
+
         return $this->templater()->format('menuWrapper', [
             'attributes' => $this->renderAttributes($attributes),
             'items' => implode('', $items),
@@ -159,9 +165,14 @@ class StringTemplateRenderer implements RendererInterface
             return $item->render();
         }
 
+        $roles = $this->getBooleanOption($options, 'roles', false);
+
         if ($item->isDivider()) {
             $attributes = $this->applyPositionClasses($item->getAttributes(), $options, $index, $count);
             $attributes = $this->appendConfiguredClass($attributes, $options, 'dividerClass');
+            if ($roles && !isset($attributes['role'])) {
+                $attributes['role'] = 'separator';
+            }
 
             return $this->templater()->format('divider', [
                 'attributes' => $this->renderAttributes($attributes),
@@ -171,6 +182,9 @@ class StringTemplateRenderer implements RendererInterface
         if ($item->isHeader()) {
             $attributes = $this->applyPositionClasses($item->getAttributes(), $options, $index, $count);
             $attributes = $this->appendConfiguredClass($attributes, $options, 'headerClass');
+            if ($roles && !isset($attributes['role'])) {
+                $attributes['role'] = 'presentation';
+            }
 
             return $this->templater()->format('header', [
                 'attributes' => $this->renderAttributes($attributes),
@@ -179,9 +193,9 @@ class StringTemplateRenderer implements RendererInterface
         }
 
         $attributes = $item->getAttributes();
-        $hasSubMenu = $item->hasSubMenu();
+        $renderChildren = $item->hasSubMenu() && $item->displaysChildren();
         if (
-            $hasSubMenu
+            $renderChildren
             && $this->getBooleanOption($options, 'hideEmptyBranches', false)
             && !$this->hasRenderableChild($item, $options)
         ) {
@@ -192,7 +206,7 @@ class StringTemplateRenderer implements RendererInterface
         } elseif ($this->hasActiveDescendant($item)) {
             $attributes = $this->appendConfiguredClass($attributes, $options, 'ancestorClass');
         }
-        if ($hasSubMenu) {
+        if ($renderChildren) {
             $attributes = $this->appendConfiguredClass($attributes, $options, 'branchClass');
             $attributes = $this->appendConfiguredClass($attributes, $options, 'submenuClass');
             if ($this->getBooleanOption($options, 'addAriaExpanded', true)) {
@@ -204,9 +218,12 @@ class StringTemplateRenderer implements RendererInterface
             $attributes = $this->appendConfiguredClass($attributes, $options, 'leafClass');
         }
         $attributes = $this->applyPositionClasses($attributes, $options, $index, $count);
+        if ($roles && !isset($attributes['role'])) {
+            $attributes['role'] = 'none';
+        }
 
         $content = $item->getBefore() . $this->renderContent($item, $options) . $item->getAfter();
-        if ($hasSubMenu) {
+        if ($renderChildren) {
             $content .= $this->renderMenu($item->getSubMenu(), $options, $level + 1);
         }
 
@@ -233,6 +250,8 @@ class StringTemplateRenderer implements RendererInterface
             if ($item->isActive() && $this->getBooleanOption($options, 'addAriaCurrent', true)) {
                 $attributes['aria-current'] = 'page';
             }
+            $attributes = $this->mergeLabelAttributes($attributes, $item);
+            $attributes = $this->applyMenuItemRole($attributes, $item, $options);
 
             return $this->templater()->format('label', [
                 'attributes' => $this->renderAttributes($attributes),
@@ -245,11 +264,61 @@ class StringTemplateRenderer implements RendererInterface
         if ($item->isActive() && $this->getBooleanOption($options, 'addAriaCurrent', true)) {
             $attributes['aria-current'] = 'page';
         }
+        $attributes = $this->mergeLabelAttributes($attributes, $item);
+        $attributes = $this->applyMenuItemRole($attributes, $item, $options);
 
         return $this->templater()->format('link', [
             'attributes' => $this->renderAttributes($attributes),
             'title' => $title,
         ]);
+    }
+
+    /**
+     * Adds the WAI-ARIA `menuitem` role (and `aria-haspopup` for branches) to a link/label when the
+     * `roles` option is enabled.
+     *
+     * @phpstan-param array<string, mixed> $attributes
+     * @phpstan-param array<string, mixed> $options
+     *
+     * @phpstan-return array<string, mixed>
+     */
+    protected function applyMenuItemRole(array $attributes, ItemInterface $item, array $options): array
+    {
+        if (!$this->getBooleanOption($options, 'roles', false)) {
+            return $attributes;
+        }
+        if (!isset($attributes['role'])) {
+            $attributes['role'] = 'menuitem';
+        }
+        if ($item->hasSubMenu() && $item->displaysChildren() && !isset($attributes['aria-haspopup'])) {
+            $attributes['aria-haspopup'] = 'true';
+        }
+
+        return $attributes;
+    }
+
+    /**
+     * Merges an item's label attributes onto the rendered link/label element, combining classes.
+     *
+     * @phpstan-param array<string, mixed> $attributes
+     *
+     * @phpstan-return array<string, mixed>
+     */
+    protected function mergeLabelAttributes(array $attributes, ItemInterface $item): array
+    {
+        foreach ($item->getLabelAttributes() as $name => $value) {
+            if ($name === 'class') {
+                $class = is_array($value)
+                    ? implode(' ', array_map('strval', $value))
+                    : (string)$value;
+                $attributes = $this->appendClass($attributes, $class);
+
+                continue;
+            }
+            $attributes[$name] = $value;
+        }
+
+        return $attributes;
     }
 
     protected function escapeLabel(ItemInterface $item): string
