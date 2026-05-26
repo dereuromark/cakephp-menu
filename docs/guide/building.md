@@ -16,6 +16,11 @@ $menu->addItem('Home', '/');
 $menu->addItem('Docs', 'https://book.cakephp.org', [
     'attributes' => ['target' => '_blank', 'rel' => 'noopener'],
 ]);
+
+$menu->addItems([
+    $menu->newItem('About', '/about'),
+    $menu->newItem('Contact', '/contact'),
+]);
 ```
 
 A link can be a **string URL** or a **CakePHP route array** — use whichever fits:
@@ -184,6 +189,7 @@ $menu->removeByKey('profile');   // removes the first match
 
 $menu->sortBy('weight');
 $menu->filter(fn ($item) => $item->isVisible());
+$menu->find(fn ($item) => $item->getLabel() !== null && str_contains($item->getLabel(), 'Admin'));
 $menu->clearActive();
 $menu->getActiveItem();
 ```
@@ -218,11 +224,6 @@ $firstTwo = $menu->slice(0, 2);
 ['primary' => $left, 'secondary' => $right] = $menu->split(2);
 ```
 
-::: info
-`slice()`, `split()`, and `merge()` copy items via the array round-trip, so the derived menu contains
-base `Item` objects (custom item classes are not preserved).
-:::
-
 ### Flattened Collection
 
 `Menu::collect()` returns an `ItemCollection` containing every item in the tree (depth-first), so
@@ -240,4 +241,3 @@ $items->findByKey('profile');
 $items->findByParent($accountItem); // direct children of $accountItem
 count($items);
 ```
-

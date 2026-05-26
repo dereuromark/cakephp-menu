@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Menu\Item;
 
 use Cake\Utility\Text;
+use Closure;
 use LogicException;
 use Menu\Link\Link;
 use Menu\Link\LinkInterface;
@@ -98,6 +99,46 @@ class Item implements ItemInterface, StateResetInterface
         }
         if ($link !== null) {
             $this->setLink($link);
+        }
+    }
+
+    /**
+     * Deep-clone linked value objects and nested menus. The clone is detached from its source
+     * parent — the caller (or `Menu::__clone`/`setOwnerItemDuringClone`) reparents it as needed.
+     */
+    public function __clone(): void
+    {
+        // Detach from any source-tree parent; nested submenus reparent their children to this clone
+        // below. Callers that re-attach the clone (add(), setOwnerItem) will set parent again.
+        $this->parent = null;
+        // A clone is a mutable working copy — the source's `frozen` flag tracks that source object,
+        // not this independent one. Callers can re-freeze the clone after any edits.
+        $this->frozen = false;
+        if ($this->link !== null) {
+            $this->link = clone $this->link;
+        }
+        if ($this->subMenu !== null) {
+            $this->subMenu = clone $this->subMenu;
+            if ($this->subMenu instanceof Menu) {
+                $rebindOwner = Closure::bind(
+                    static function (Menu $menu, ItemInterface $owner): void {
+                        $menu->setOwnerItemDuringClone($owner);
+                    },
+                    null,
+                    Menu::class,
+                );
+                $rebindOwner($this->subMenu, $this);
+            } else {
+                foreach ($this->subMenu->getItems() as $item) {
+                    if ($item instanceof self) {
+                        $item->parent = $this;
+
+                        continue;
+                    }
+                    // Custom ItemInterface implementation — go through the public interface.
+                    $item->setParent($this);
+                }
+            }
         }
     }
 

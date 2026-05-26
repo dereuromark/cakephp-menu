@@ -41,6 +41,11 @@ interface MenuInterface
     public function add(ItemInterface $item): static;
 
     /**
+     * @phpstan-param array<mixed> $items
+     */
+    public function addItems(array $items): static;
+
+    /**
      * @phpstan-param \Menu\Link\LinkInterface|array<string|int, mixed>|string|null $link
      * @phpstan-param array<string, mixed> $options
      */
@@ -144,6 +149,8 @@ interface MenuInterface
     public function setAttributes(array $attributes, bool $merge = false): static;
 
     public function filter(callable $callback): static;
+
+    public function find(callable $callback): ItemCollection;
 
     public function sortBy(callable|string $by, string $direction = self::SORT_ASC): static;
 

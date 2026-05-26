@@ -22,6 +22,13 @@ class Link implements LinkInterface
     protected bool $external = false;
 
     /**
+     * Clone hook for symmetry with Item and Menu.
+     */
+    public function __clone(): void
+    {
+    }
+
+    /**
      * @phpstan-param array<string|int, mixed>|string|null $url
      * @phpstan-param array<string, mixed> $attributes
      */

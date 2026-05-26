@@ -13,6 +13,7 @@ use function array_filter;
 use function array_map;
 use function array_merge;
 use function array_unique;
+use function Cake\I18n\__;
 use function count;
 use function htmlspecialchars;
 use function implode;
@@ -53,6 +54,8 @@ class StringTemplateRenderer implements RendererInterface
         'addAriaExpanded' => true,
         // Opt-in WAI-ARIA menu roles (menubar/menu/menuitem/none/separator/presentation).
         'roles' => false,
+        // Translate item labels through Cake's i18n layer before escaping.
+        'translate' => false,
         'templates' => [
             'menuWrapper' => '<ul{{attributes}}>{{items}}</ul>',
             'item' => '<li{{attributes}}>{{content}}</li>',
@@ -188,7 +191,7 @@ class StringTemplateRenderer implements RendererInterface
 
             return $this->templater()->format('header', [
                 'attributes' => $this->renderAttributes($attributes),
-                'title' => $item->getBefore() . $this->escapeLabel($item) . $item->getAfter(),
+                'title' => $item->getBefore() . $this->escapeLabel($item, $options) . $item->getAfter(),
             ]);
         }
 
@@ -242,7 +245,7 @@ class StringTemplateRenderer implements RendererInterface
             return (string)$item->getRaw();
         }
 
-        $title = $this->decorateTitle($item, $this->escapeLabel($item), $options);
+        $title = $this->decorateTitle($item, $this->escapeLabel($item, $options), $options);
         $link = $item->getLink();
         if ($link === null || ($item->isActive() && !$this->getBooleanOption($options, 'currentAsLink', true))) {
             $attributes = $link?->getAttributes() ?? [];
@@ -321,9 +324,15 @@ class StringTemplateRenderer implements RendererInterface
         return $attributes;
     }
 
-    protected function escapeLabel(ItemInterface $item): string
+    /**
+     * @phpstan-param array<string, mixed> $options
+     */
+    protected function escapeLabel(ItemInterface $item, array $options = []): string
     {
         $label = $item->getLabel() ?? '';
+        if ($this->getBooleanOption($options, 'translate', false)) {
+            $label = (string)__($label);
+        }
 
         if (!$item->shouldEscapeLabel()) {
             return $label;
