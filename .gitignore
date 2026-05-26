@@ -7,3 +7,6 @@
 .phpunit.result.cache
 /tmp/
 /logs/
+/docs/node_modules/
+/docs/.vitepress/dist/
+/docs/.vitepress/cache/

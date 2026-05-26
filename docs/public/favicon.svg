@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="cakephp-menu">
+  <rect x="4" y="4" width="40" height="40" rx="9" fill="#D33C44"/>
+  <g fill="#fff">
+    <circle cx="15" cy="15" r="3"/>
+    <rect x="22" y="13" width="16" height="4" rx="2"/>
+    <circle cx="15" cy="24" r="3"/>
+    <rect x="22" y="22" width="16" height="4" rx="2"/>
+    <circle cx="15" cy="33" r="3"/>
+    <rect x="22" y="31" width="16" height="4" rx="2"/>
+  </g>
+</svg>
