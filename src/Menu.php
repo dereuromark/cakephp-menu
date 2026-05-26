@@ -927,12 +927,16 @@ class Menu implements MenuInterface
 
     protected function synchronizeItemParent(ItemInterface $item): void
     {
+        $currentParent = $item->getParent();
         $desiredParent = $this->ownerItem;
-        if ($item->getParent() === $desiredParent) {
+        if ($currentParent === $desiredParent) {
             return;
         }
         if ($item->isFrozen()) {
             throw new LogicException('Cannot move a frozen item to a different parent.');
+        }
+        if ($currentParent !== null) {
+            $currentParent->getSubMenu()->remove($item->getId());
         }
         if ($desiredParent !== null) {
             $item->setParent($desiredParent);
