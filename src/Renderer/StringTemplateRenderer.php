@@ -19,6 +19,7 @@ use function implode;
 use function in_array;
 use function is_array;
 use function sprintf;
+use function str_replace;
 use function trim;
 
 class StringTemplateRenderer implements RendererInterface
@@ -33,6 +34,7 @@ class StringTemplateRenderer implements RendererInterface
         'activeClass' => 'active',
         'ancestorClass' => 'active-ancestor',
         'dividerClass' => 'divider',
+        'headerClass' => 'menu-header',
         'branchClass' => 'has-children',
         'leafClass' => null,
         // Extra class for branch <li>s, in addition to `branchClass`; off by default.
@@ -55,6 +57,7 @@ class StringTemplateRenderer implements RendererInterface
             'link' => '<a{{attributes}}>{{title}}</a>',
             'label' => '<span{{attributes}}>{{title}}</span>',
             'divider' => '<li{{attributes}}></li>',
+            'header' => '<li{{attributes}}>{{title}}</li>',
         ],
     ];
 
@@ -165,6 +168,16 @@ class StringTemplateRenderer implements RendererInterface
             ]);
         }
 
+        if ($item->isHeader()) {
+            $attributes = $this->applyPositionClasses($item->getAttributes(), $options, $index, $count);
+            $attributes = $this->appendConfiguredClass($attributes, $options, 'headerClass');
+
+            return $this->templater()->format('header', [
+                'attributes' => $this->renderAttributes($attributes),
+                'title' => $item->getBefore() . $this->escapeLabel($item) . $item->getAfter(),
+            ]);
+        }
+
         $attributes = $item->getAttributes();
         $hasSubMenu = $item->hasSubMenu();
         if (
@@ -212,7 +225,7 @@ class StringTemplateRenderer implements RendererInterface
             return (string)$item->getRaw();
         }
 
-        $label = $this->escapeLabel($item);
+        $title = $this->decorateTitle($item, $this->escapeLabel($item), $options);
         $link = $item->getLink();
         if ($link === null || ($item->isActive() && !$this->getBooleanOption($options, 'currentAsLink', true))) {
             $attributes = $link?->getAttributes() ?? [];
@@ -223,7 +236,7 @@ class StringTemplateRenderer implements RendererInterface
 
             return $this->templater()->format('label', [
                 'attributes' => $this->renderAttributes($attributes),
-                'title' => $label,
+                'title' => $title,
             ]);
         }
 
@@ -235,7 +248,7 @@ class StringTemplateRenderer implements RendererInterface
 
         return $this->templater()->format('link', [
             'attributes' => $this->renderAttributes($attributes),
-            'title' => $label,
+            'title' => $title,
         ]);
     }
 
@@ -248,6 +261,52 @@ class StringTemplateRenderer implements RendererInterface
         }
 
         return htmlspecialchars($label, ENT_QUOTES, 'UTF-8');
+    }
+
+    /**
+     * Wraps the rendered label (escaped, unless the item opts out of escaping) with the item's
+     * icon and badge, if any.
+     *
+     * @phpstan-param array<string, mixed> $options
+     */
+    protected function decorateTitle(ItemInterface $item, string $label, array $options): string
+    {
+        return $this->renderIcon($item, $options) . $label . $this->renderBadge($item, $options);
+    }
+
+    /**
+     * @phpstan-param array<string, mixed> $options
+     */
+    protected function renderIcon(ItemInterface $item, array $options): string
+    {
+        $icon = (string)$item->getIcon();
+        if ($icon === '') {
+            return '';
+        }
+
+        $template = $this->getStringOption($options, 'iconTemplate') ?: '<i class="{{icon}}" aria-hidden="true"></i> ';
+
+        return str_replace('{{icon}}', htmlspecialchars($icon, ENT_QUOTES, 'UTF-8'), $template);
+    }
+
+    /**
+     * @phpstan-param array<string, mixed> $options
+     */
+    protected function renderBadge(ItemInterface $item, array $options): string
+    {
+        $badge = (string)$item->getBadge();
+        if ($badge === '') {
+            return '';
+        }
+
+        $class = trim('badge ' . (string)$item->getBadgeType());
+        $template = $this->getStringOption($options, 'badgeTemplate') ?: ' <span class="{{class}}">{{text}}</span>';
+
+        return str_replace(
+            ['{{class}}', '{{text}}'],
+            [htmlspecialchars($class, ENT_QUOTES, 'UTF-8'), htmlspecialchars($badge, ENT_QUOTES, 'UTF-8')],
+            $template,
+        );
     }
 
     /**

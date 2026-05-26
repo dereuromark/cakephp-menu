@@ -46,7 +46,7 @@ class Bootstrap5Renderer extends StringTemplateRenderer
             return (string)$item->getRaw();
         }
 
-        $label = $this->escapeLabel($item);
+        $title = $this->decorateTitle($item, $this->escapeLabel($item), $options);
         $link = $item->getLink();
         if ($link === null || ($item->isActive() && !$this->getBooleanOption($options, 'currentAsLink', true))) {
             $attributes = $link?->getAttributes() ?? [];
@@ -57,7 +57,7 @@ class Bootstrap5Renderer extends StringTemplateRenderer
 
             return $this->templater()->format('label', [
                 'attributes' => $this->renderAttributes($attributes),
-                'title' => $label,
+                'title' => $title,
             ]);
         }
 
@@ -84,7 +84,7 @@ class Bootstrap5Renderer extends StringTemplateRenderer
 
         return $this->templater()->format('link', [
             'attributes' => $this->renderAttributes($attributes),
-            'title' => $label,
+            'title' => $title,
         ]);
     }
 }

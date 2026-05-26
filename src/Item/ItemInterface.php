@@ -42,6 +42,10 @@ interface ItemInterface
 
     public function isDivider(): bool;
 
+    public function setHeader(bool $header = true): static;
+
+    public function isHeader(): bool;
+
     public function setVisibility(bool $isVisible): static;
 
     public function isVisible(): bool;
@@ -73,6 +77,16 @@ interface ItemInterface
     public function setAfter(string $after): static;
 
     public function getAfter(): string;
+
+    public function setIcon(?string $icon): static;
+
+    public function getIcon(): ?string;
+
+    public function setBadge(string|int|null $badge, ?string $type = null): static;
+
+    public function getBadge(): ?string;
+
+    public function getBadgeType(): ?string;
 
     public function setAttribute(string $name, mixed $value): static;
 

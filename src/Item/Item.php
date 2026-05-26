@@ -29,6 +29,8 @@ class Item implements ItemInterface, StateResetInterface
 
     protected bool $divider = false;
 
+    protected bool $header = false;
+
     protected bool $visible = true;
 
     protected bool $defaultVisible = true;
@@ -40,6 +42,12 @@ class Item implements ItemInterface, StateResetInterface
     protected string $before = '';
 
     protected string $after = '';
+
+    protected ?string $icon = null;
+
+    protected ?string $badge = null;
+
+    protected ?string $badgeType = null;
 
     /**
      * @var array<string, mixed>
@@ -195,6 +203,19 @@ class Item implements ItemInterface, StateResetInterface
         return $this->divider;
     }
 
+    public function setHeader(bool $header = true): static
+    {
+        $this->assertMutable();
+        $this->header = $header;
+
+        return $this;
+    }
+
+    public function isHeader(): bool
+    {
+        return $this->header;
+    }
+
     public function setVisibility(bool $isVisible): static
     {
         $this->visible = $isVisible;
@@ -302,6 +323,38 @@ class Item implements ItemInterface, StateResetInterface
     public function getAfter(): string
     {
         return $this->after;
+    }
+
+    public function setIcon(?string $icon): static
+    {
+        $this->assertMutable();
+        $this->icon = $icon;
+
+        return $this;
+    }
+
+    public function getIcon(): ?string
+    {
+        return $this->icon;
+    }
+
+    public function setBadge(string|int|null $badge, ?string $type = null): static
+    {
+        $this->assertMutable();
+        $this->badge = $badge === null ? null : (string)$badge;
+        $this->badgeType = $type;
+
+        return $this;
+    }
+
+    public function getBadge(): ?string
+    {
+        return $this->badge;
+    }
+
+    public function getBadgeType(): ?string
+    {
+        return $this->badgeType;
     }
 
     public function setAttribute(string $name, mixed $value): static
@@ -447,11 +500,15 @@ class Item implements ItemInterface, StateResetInterface
             'external' => $this->link?->isExternal() ?? false,
             'raw' => $this->raw,
             'divider' => $this->divider,
+            'header' => $this->header,
             'visible' => $this->visible,
             'active' => $this->active,
             'expanded' => $this->expanded,
             'before' => $this->before,
             'after' => $this->after,
+            'icon' => $this->icon,
+            'badge' => $this->badge,
+            'badgeType' => $this->badgeType,
             'attributes' => $this->attributes,
             'data' => $this->data,
             'matchRoutes' => $this->matchRoutes,

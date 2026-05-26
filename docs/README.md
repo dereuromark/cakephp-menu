@@ -25,6 +25,22 @@ $products->add($menu->newItem('Books', ['controller' => 'Products', 'action' => 
 $products->add($menu->newItem('Games', ['controller' => 'Products', 'action' => 'games']));
 ```
 
+### Section Headers and Dividers
+
+Group items under a non-link header, and separate groups with a divider:
+
+```php
+$menu->addHeader('Account');
+$menu->addItem('Profile', '/profile');
+$menu->addItem('Logout', '/logout');
+$menu->addDivider();
+$menu->addHeader('Admin');
+$menu->addItem('Users', ['prefix' => 'Admin', 'controller' => 'Users', 'action' => 'index']);
+```
+
+A header renders as a plain `<li>` with the `headerClass` (`menu-header`, or `nav-header` in the
+sidebar renderer), not a link.
+
 ### Named Menus via Helper
 
 ```php
@@ -69,6 +85,9 @@ $this->Menu->register('main', static function ($menu): void {
 - `submenuAttributes`: nested `<ul>` attributes
 - `before`: raw markup before the label/link
 - `after`: raw markup after the label/link
+- `icon`: icon class rendered before the label (e.g. `fa fa-inbox`)
+- `badge`: badge text/count rendered after the label
+- `badgeType`: extra CSS class for the badge (e.g. `bg-danger`)
 - `data`: arbitrary metadata consumed by your app or resolvers
 - `visible`: initial visibility
 - `active`: initial active state
@@ -78,6 +97,7 @@ $this->Menu->register('main', static function ($menu): void {
 - `fuzzy`: enables subset matching for Cake array routes
 - `raw`: render raw HTML inside the item
 - `divider`: render a divider item
+- `header`: render a non-link section header (or use `Menu::addHeader()`)
 - `expanded`: runtime state for open branches
 
 ## Import / Export
@@ -318,6 +338,20 @@ echo $this->Menu->render('main', [
 This looks at child *visibility*, not the `depth` cutoff: a branch with visible children is still a
 valid top-level entry when its submenu is truncated by `depth`, so it is kept.
 
+### Single Active Item
+
+When several items match the current URL (e.g. a parent and a child both pointing at the same
+route), `getActiveItem()` and breadcrumbs follow the first match in document order. Enable
+`singleActive` to keep only the **best** match active — the deepest *visible* item that actually
+renders (items hidden, or under hidden ancestors, are skipped), breaking ties by document order — so
+the active trail is unambiguous:
+
+```php
+echo $this->Menu->render('main', [
+    'singleActive' => true,
+]);
+```
+
 ### Breadcrumb Integration
 
 ```php
@@ -446,6 +480,7 @@ BS4/other setups work without subclassing: `linkClass` (`nav-link`, top-level li
 | `submenuClass` | `null` | Extra class for branch items, in addition to `branchClass`. |
 | `leafClass` | `null` | Class for items without a submenu. |
 | `dividerClass` | `divider` | Class for divider items. |
+| `headerClass` | `menu-header` | Class for non-link section headers (`nav-header` in the sidebar renderer). |
 | `nestedMenuClass` | `submenu` | Class added to nested `<ul>` elements. |
 | `rootClass` | `null` | Class appended to the root (level 1) `<ul>` only. |
 | `menuLevelClass` | `null` | Prefix for a per-level class (e.g. `level-` produces `level-1`, `level-2`). |
@@ -613,21 +648,22 @@ echo $this->Menu->render('admin');
 
 ### Icons and Badges
 
-`before`, `after`, and `raw` are emitted as trusted markup, so they are handy for icon fonts and
-counters:
+Icons and badges are first-class: `setIcon()` / `setBadge()` (on `ItemInterface`) or the
+`icon`/`badge`/`badgeType` options are escaped for you and rendered around the label.
 
 ```php
-$menu->addItem('Dashboard', ['controller' => 'Dashboard', 'action' => 'index'], [
-    'before' => '<i class="fa fa-gauge"></i> ',
-]);
+$menu->addItem('Inbox', ['controller' => 'Messages', 'action' => 'index'])
+    ->setIcon('fa fa-inbox')
+    ->setBadge($unread, 'bg-danger');
 
-$menu->addItem('Inbox', ['controller' => 'Messages', 'action' => 'index'], [
-    'after' => ' <span class="badge">' . (int)$unread . '</span>',
-]);
+// Same via options:
+$menu->addItem('Profile', '/profile', ['icon' => 'fa fa-user', 'badge' => 'new']);
 ```
 
-Because `before`/`after`/`raw` are emitted verbatim, cast or escape any dynamic value you put in
-them (here `(int)$unread`).
+The markup is overridable per render with the `iconTemplate` / `badgeTemplate` options
+(`{{icon}}`, and `{{class}}`/`{{text}}` placeholders). For anything more custom, `before`, `after`,
+and `raw` are still emitted as trusted markup — cast or escape dynamic values you put there yourself
+(e.g. `(int)$count`).
 
 ### Defining a Menu in Config
 

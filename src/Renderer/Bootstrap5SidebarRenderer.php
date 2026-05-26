@@ -125,6 +125,12 @@ class Bootstrap5SidebarRenderer extends StringTemplateRenderer
         if ($item->isDivider()) {
             return $this->li($item, $options, '<hr class="dropdown-divider">');
         }
+        if ($item->isHeader()) {
+            $attributes = $this->appendClass($item->getAttributes(), $this->getStringOption($options, 'headerClass') ?: 'nav-header');
+            $title = $item->getBefore() . $this->escapeLabel($item) . $item->getAfter();
+
+            return sprintf('<li%s>%s</li>', $this->renderAttributes($attributes), $title);
+        }
 
         $hasSubMenu = $item->hasSubMenu();
         if (
@@ -138,7 +144,9 @@ class Bootstrap5SidebarRenderer extends StringTemplateRenderer
             return $this->li($item, $options, (string)$item->getRaw());
         }
 
-        $label = $item->getBefore() . $this->escapeLabel($item) . $item->getAfter();
+        $label = $item->getBefore()
+            . $this->decorateTitle($item, $this->escapeLabel($item), $options)
+            . $item->getAfter();
 
         $content = $hasSubMenu
             ? $this->renderBranch($item, $options, $label, $level)

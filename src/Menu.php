@@ -77,12 +77,16 @@ class Menu implements MenuInterface
                     'escape' => $itemConfig['escape'] ?? true,
                     'before' => $itemConfig['before'] ?? null,
                     'after' => $itemConfig['after'] ?? null,
+                    'icon' => $itemConfig['icon'] ?? null,
+                    'badge' => $itemConfig['badge'] ?? null,
+                    'badgeType' => $itemConfig['badgeType'] ?? null,
                     'attributes' => $itemConfig['attributes'] ?? [],
                     'data' => $itemConfig['data'] ?? [],
                     'visible' => $itemConfig['visible'] ?? true,
                     'active' => $itemConfig['active'] ?? false,
                     'raw' => $itemConfig['raw'] ?? null,
                     'divider' => $itemConfig['divider'] ?? false,
+                    'header' => $itemConfig['header'] ?? false,
                     'submenuAttributes' => $itemConfig['submenu']['attributes'] ?? [],
                     'matchRoutes' => $itemConfig['matchRoutes'] ?? [],
                     'ignoreQueryString' => $itemConfig['ignoreQueryString'] ?? null,
@@ -240,6 +244,20 @@ class Menu implements MenuInterface
     }
 
     /**
+     * Adds a non-link section header (a group label).
+     *
+     * @phpstan-param array<string, mixed> $options
+     */
+    public function addHeader(string $label, array $options = []): ItemInterface
+    {
+        $item = $this->newItem($label, null, $options);
+        $item->setHeader();
+        $this->add($item);
+
+        return $item;
+    }
+
+    /**
      * @phpstan-param \Menu\Link\LinkInterface|array<string|int, mixed>|string|null $link
      * @phpstan-param array<string, mixed> $options
      */
@@ -266,6 +284,12 @@ class Menu implements MenuInterface
         if (isset($options['after'])) {
             $item->setAfter((string)$options['after']);
         }
+        if (isset($options['icon'])) {
+            $item->setIcon((string)$options['icon']);
+        }
+        if (isset($options['badge'])) {
+            $item->setBadge((string)$options['badge'], isset($options['badgeType']) ? (string)$options['badgeType'] : null);
+        }
         if (isset($options['attributes']) && is_array($options['attributes'])) {
             $item->setAttributes($options['attributes']);
         }
@@ -285,6 +309,9 @@ class Menu implements MenuInterface
         }
         if (!empty($options['divider'])) {
             $item->setDivider();
+        }
+        if (!empty($options['header'])) {
+            $item->setHeader();
         }
         if (isset($options['submenuAttributes']) && is_array($options['submenuAttributes'])) {
             $item->getSubMenu()->setAttributes($options['submenuAttributes']);

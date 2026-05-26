@@ -285,4 +285,13 @@ class MenuTest extends TestCase
         // The cycle is broken, so tree traversal terminates and keeps both items.
         $this->assertCount(2, $menu->collect());
     }
+
+    public function testAddHeader(): void
+    {
+        $menu = Menu::create();
+        $menu->addHeader('Section');
+
+        $this->assertTrue($menu->getItems()[0]->toArray()['header']);
+        $this->assertSame('Section', $menu->getItems()[0]->getLabel());
+    }
 }
