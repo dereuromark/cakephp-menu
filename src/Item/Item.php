@@ -29,6 +29,8 @@ class Item implements ItemInterface, StateResetInterface
 
     protected bool $divider = false;
 
+    protected bool $header = false;
+
     protected bool $visible = true;
 
     protected bool $defaultVisible = true;
@@ -199,6 +201,19 @@ class Item implements ItemInterface, StateResetInterface
     public function isDivider(): bool
     {
         return $this->divider;
+    }
+
+    public function setHeader(bool $header = true): static
+    {
+        $this->assertMutable();
+        $this->header = $header;
+
+        return $this;
+    }
+
+    public function isHeader(): bool
+    {
+        return $this->header;
     }
 
     public function setVisibility(bool $isVisible): static
@@ -485,6 +500,7 @@ class Item implements ItemInterface, StateResetInterface
             'external' => $this->link?->isExternal() ?? false,
             'raw' => $this->raw,
             'divider' => $this->divider,
+            'header' => $this->header,
             'visible' => $this->visible,
             'active' => $this->active,
             'expanded' => $this->expanded,

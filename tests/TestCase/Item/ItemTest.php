@@ -80,6 +80,17 @@ class ItemTest extends TestCase
         $this->assertNull($item->toArray()['key']);
     }
 
+    public function testHeaderFlag(): void
+    {
+        $item = (new Item('Account'))->setHeader();
+
+        $this->assertTrue($item->isHeader());
+        $this->assertTrue($item->toArray()['header']);
+
+        $item->setHeader(false);
+        $this->assertFalse($item->isHeader());
+    }
+
     public function testIconAndBadge(): void
     {
         $item = (new Item('Inbox', '/inbox'))

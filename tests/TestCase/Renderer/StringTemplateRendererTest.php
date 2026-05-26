@@ -166,6 +166,18 @@ class StringTemplateRendererTest extends TestCase
         $this->assertStringContainsString('Admin', $result);
     }
 
+    public function testRendersSectionHeader(): void
+    {
+        $menu = Menu::create();
+        $menu->addHeader('Account');
+        $menu->addItem('Profile', '/profile');
+
+        $result = (new StringTemplateRenderer())->render($menu);
+
+        $this->assertStringContainsString('<li class="menu-header">Account</li>', $result);
+        $this->assertStringContainsString('<a href="/profile">Profile</a>', $result);
+    }
+
     public function testRendersIconAndBadge(): void
     {
         $menu = Menu::create();

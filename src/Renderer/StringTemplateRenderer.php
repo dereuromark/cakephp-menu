@@ -34,6 +34,7 @@ class StringTemplateRenderer implements RendererInterface
         'activeClass' => 'active',
         'ancestorClass' => 'active-ancestor',
         'dividerClass' => 'divider',
+        'headerClass' => 'menu-header',
         'branchClass' => 'has-children',
         'leafClass' => null,
         // Extra class for branch <li>s, in addition to `branchClass`; off by default.
@@ -56,6 +57,7 @@ class StringTemplateRenderer implements RendererInterface
             'link' => '<a{{attributes}}>{{title}}</a>',
             'label' => '<span{{attributes}}>{{title}}</span>',
             'divider' => '<li{{attributes}}></li>',
+            'header' => '<li{{attributes}}>{{title}}</li>',
         ],
     ];
 
@@ -163,6 +165,16 @@ class StringTemplateRenderer implements RendererInterface
 
             return $this->templater()->format('divider', [
                 'attributes' => $this->renderAttributes($attributes),
+            ]);
+        }
+
+        if ($item->isHeader()) {
+            $attributes = $this->applyPositionClasses($item->getAttributes(), $options, $index, $count);
+            $attributes = $this->appendConfiguredClass($attributes, $options, 'headerClass');
+
+            return $this->templater()->format('header', [
+                'attributes' => $this->renderAttributes($attributes),
+                'title' => $item->getBefore() . $this->escapeLabel($item) . $item->getAfter(),
             ]);
         }
 

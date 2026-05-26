@@ -54,6 +54,11 @@ interface MenuInterface
     public function addDivider(array $options = []): ItemInterface;
 
     /**
+     * @phpstan-param array<string, mixed> $options
+     */
+    public function addHeader(string $label, array $options = []): ItemInterface;
+
+    /**
      * @phpstan-param \Menu\Link\LinkInterface|array<string|int, mixed>|string|null $link
      * @phpstan-param array<string, mixed> $options
      */

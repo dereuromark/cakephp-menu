@@ -171,6 +171,18 @@ class Bootstrap5SidebarRendererTest extends TestCase
         $this->assertStringNotContainsString('id="menu-collapse-empty"', $result);
     }
 
+    public function testRendersSectionHeader(): void
+    {
+        $menu = Menu::create();
+        $menu->addHeader('Account');
+        $menu->addItem('Profile', '/profile');
+
+        $result = (new Bootstrap5SidebarRenderer())->render($menu);
+
+        $this->assertStringContainsString('<li class="nav-header">Account</li>', $result);
+        $this->assertStringContainsString('href="/profile"', $result);
+    }
+
     public function testRendersIconAndBadge(): void
     {
         $menu = Menu::create();

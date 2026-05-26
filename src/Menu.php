@@ -85,6 +85,7 @@ class Menu implements MenuInterface
                     'active' => $itemConfig['active'] ?? false,
                     'raw' => $itemConfig['raw'] ?? null,
                     'divider' => $itemConfig['divider'] ?? false,
+                    'header' => $itemConfig['header'] ?? false,
                     'submenuAttributes' => $itemConfig['submenu']['attributes'] ?? [],
                     'matchRoutes' => $itemConfig['matchRoutes'] ?? [],
                     'ignoreQueryString' => $itemConfig['ignoreQueryString'] ?? null,
@@ -168,6 +169,20 @@ class Menu implements MenuInterface
     }
 
     /**
+     * Adds a non-link section header (a group label).
+     *
+     * @phpstan-param array<string, mixed> $options
+     */
+    public function addHeader(string $label, array $options = []): ItemInterface
+    {
+        $item = $this->newItem($label, null, $options);
+        $item->setHeader();
+        $this->add($item);
+
+        return $item;
+    }
+
+    /**
      * @phpstan-param \Menu\Link\LinkInterface|array<string|int, mixed>|string|null $link
      * @phpstan-param array<string, mixed> $options
      */
@@ -219,6 +234,9 @@ class Menu implements MenuInterface
         }
         if (!empty($options['divider'])) {
             $item->setDivider();
+        }
+        if (!empty($options['header'])) {
+            $item->setHeader();
         }
         if (isset($options['submenuAttributes']) && is_array($options['submenuAttributes'])) {
             $item->getSubMenu()->setAttributes($options['submenuAttributes']);
