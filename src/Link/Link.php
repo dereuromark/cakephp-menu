@@ -33,7 +33,7 @@ class Link implements LinkInterface
      * @phpstan-param array<string, mixed> $attributes
      */
     public static function create(
-        string|array|null $url = null,
+        array|string|null $url = null,
         array $attributes = [],
         bool $external = false,
     ): static {
@@ -51,7 +51,7 @@ class Link implements LinkInterface
      *
      * @throws \LogicException
      */
-    public function setUrl(string|array|null $url, bool $external = false): static
+    public function setUrl(array|string|null $url, bool $external = false): static
     {
         if ($external && is_array($url)) {
             throw new LogicException('External links must use a string URL.');
@@ -91,7 +91,7 @@ class Link implements LinkInterface
     /**
      * @phpstan-return array<string|int, mixed>|string|null
      */
-    public function getRawUrl(): string|array|null
+    public function getRawUrl(): array|string|null
     {
         return $this->url;
     }
