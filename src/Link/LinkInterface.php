@@ -11,7 +11,7 @@ interface LinkInterface
      * @phpstan-param array<string, mixed> $attributes
      */
     public static function create(
-        string|array|null $url = null,
+        array|string|null $url = null,
         array $attributes = [],
         bool $external = false,
     ): static;
@@ -19,7 +19,7 @@ interface LinkInterface
     /**
      * @phpstan-param array<string|int, mixed>|string|null $url
      */
-    public function setUrl(string|array|null $url, bool $external = false): static;
+    public function setUrl(array|string|null $url, bool $external = false): static;
 
     public function setAttribute(string $name, mixed $value): static;
 
@@ -36,7 +36,7 @@ interface LinkInterface
     /**
      * @phpstan-return array<string|int, mixed>|string|null
      */
-    public function getRawUrl(): string|array|null;
+    public function getRawUrl(): array|string|null;
 
     public function getUrl(): ?string;
 

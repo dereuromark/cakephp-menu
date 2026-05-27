@@ -28,7 +28,7 @@ interface ItemInterface
     /**
      * @phpstan-param \Menu\Link\LinkInterface|array<string|int, mixed>|string|null $link
      */
-    public function setLink(LinkInterface|string|array|null $link): static;
+    public function setLink(LinkInterface|array|string|null $link): static;
 
     public function getLink(): ?LinkInterface;
 
@@ -120,7 +120,7 @@ interface ItemInterface
     /**
      * @phpstan-param array<string|int, mixed>|string $route
      */
-    public function addMatchRoute(string|array $route): static;
+    public function addMatchRoute(array|string $route): static;
 
     /**
      * @phpstan-return list<array<string|int, mixed>|string>

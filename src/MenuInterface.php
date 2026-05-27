@@ -55,7 +55,7 @@ interface MenuInterface
      */
     public function addItem(
         string $label,
-        LinkInterface|string|array|null $link = null,
+        LinkInterface|array|string|null $link = null,
         array $options = [],
     ): ItemInterface;
 
@@ -80,7 +80,7 @@ interface MenuInterface
      */
     public function newItem(
         ?string $label = null,
-        LinkInterface|string|array|null $link = null,
+        LinkInterface|array|string|null $link = null,
         array $options = [],
     ): ItemInterface;
 
@@ -136,12 +136,12 @@ interface MenuInterface
 
     public function merge(MenuInterface $menu, bool $mergeAttributes = false): static;
 
-    public function slice(int|string $offset, int|string|null $length = null): static;
+    public function slice(string|int $offset, string|int|null $length = null): static;
 
     /**
      * @phpstan-return array{primary: static, secondary: static}
      */
-    public function split(int|string $length): array;
+    public function split(string|int $length): array;
 
     public function clearActive(): static;
 
