@@ -17,6 +17,22 @@ use Menu\Resolver\UrlArrayResolver;
 
 class MenuTest extends TestCase
 {
+    public function testFromArrayExternalLinkWithoutAttributes(): void
+    {
+        $menu = Menu::fromArray([
+
+            'items' => [
+                ['label' => 'External', 'link' => 'https://example.com', 'external' => true],
+            ],
+        ]);
+        $link = $menu->getItems()[0]->getLink();
+
+        $this->assertNotNull($link);
+        $this->assertTrue($link->isExternal());
+        $this->assertSame('https://example.com', $link->getRawUrl());
+        $this->assertSame([], $link->getAttributes());
+    }
+
     public function testAttributeMerging(): void
     {
         $menu = Menu::create()

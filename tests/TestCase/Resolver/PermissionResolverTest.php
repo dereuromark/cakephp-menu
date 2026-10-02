@@ -10,6 +10,30 @@ use Menu\Resolver\PermissionResolver;
 
 class PermissionResolverTest extends TestCase
 {
+    public function testVariadicAuthorizerReceivesOnlyFixedArguments(): void
+    {
+        $item = (new Item('Admin', '/admin'))->setData('permission', 'admin.access');
+        $authorizer = new class {
+            /**
+             * @var array<mixed>
+             */
+            public array $arguments = [];
+
+            public function can(mixed $user, string $action, mixed $resource, mixed ...$optionalArgs): bool
+            {
+                $this->arguments = func_get_args();
+
+                return false;
+            }
+        };
+        $resolver = new PermissionResolver($authorizer);
+        $resolver->resolve($item);
+        $resolver->resolve($item);
+
+        $this->assertSame([null, 'admin.access', $item], $authorizer->arguments);
+        $this->assertFalse($item->isVisible());
+    }
+
     public function testUsesAuthorizerCanMethod(): void
     {
         $item = (new Item('Admin', '/admin'))->setData('permission', 'admin.access');

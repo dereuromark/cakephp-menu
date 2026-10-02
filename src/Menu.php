@@ -102,7 +102,7 @@ class Menu implements MenuInterface
             if (!empty($itemConfig['external']) && $item->getLink() !== null) {
                 $item->setLink(Link::create(
                     $item->getLink()->getRawUrl(),
-                    (array)$itemConfig['linkAttributes'],
+                    (array)($itemConfig['linkAttributes'] ?? []),
                     true,
                 ));
             }

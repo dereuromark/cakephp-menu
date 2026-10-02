@@ -45,7 +45,8 @@ class PermissionResolver implements ContextAwareResolverInterface
     {
         if ($this->parameterCount === null) {
             $reflectionMethod = new ReflectionMethod($this->authorizer, $this->method);
-            $this->parameterCount = $reflectionMethod->getNumberOfParameters();
+            $this->parameterCount = $reflectionMethod->getNumberOfParameters()
+                - (int)$reflectionMethod->isVariadic();
         }
 
         return match (true) {

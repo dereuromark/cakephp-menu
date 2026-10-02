@@ -216,18 +216,18 @@ class StringTemplateRenderer implements RendererInterface
                 $attributes['role'] = 'presentation';
             }
 
-            return $this->templater()->format('header', [
+            return $this->templater()->format($this->getHeaderTemplate($level), [
                 'attributes' => $this->renderAttributes($attributes),
                 'title' => $item->getBefore() . $this->escapeLabel($item, $options) . $item->getAfter(),
             ]);
         }
 
         $attributes = $item->getAttributes();
-        $renderChildren = $item->hasSubMenu() && $item->displaysChildren();
+        $renderChildren = $this->rendersSubMenu($item, $options, $level);
         if (
             $renderChildren
             && $this->getBooleanOption($options, 'hideEmptyBranches', false)
-            && !$this->hasRenderableChild($item, $options)
+            && !$this->hasRenderableChild($item, $options, $level)
         ) {
             return '';
         }
@@ -310,6 +310,21 @@ class StringTemplateRenderer implements RendererInterface
             'attributes' => $this->renderAttributes($attributes),
             'title' => $title,
         ]);
+    }
+
+    /**
+     * @phpstan-param array<string, mixed> $options
+     */
+    protected function rendersSubMenu(ItemInterface $item, array $options, int $level): bool
+    {
+        $depth = $this->getIntegerOption($options, 'depth');
+
+        return $item->hasSubMenu() && $item->displaysChildren() && ($depth === null || $level < $depth);
+    }
+
+    protected function getHeaderTemplate(int $level): string
+    {
+        return 'header';
     }
 
     /**
@@ -430,7 +445,7 @@ class StringTemplateRenderer implements RendererInterface
      *
      * @phpstan-param array<string, mixed> $options
      */
-    protected function hasRenderableChild(ItemInterface $item, array $options): bool
+    protected function hasRenderableChild(ItemInterface $item, array $options, ?int $level = null): bool
     {
         $hideEmptyBranches = $this->getBooleanOption($options, 'hideEmptyBranches', false);
         foreach ($item->getSubMenu()->getItems() as $child) {
@@ -441,10 +456,12 @@ class StringTemplateRenderer implements RendererInterface
                 // A self-rendering item always emits markup, regardless of its submenu.
                 return true;
             }
-            if (!$child->hasSubMenu()) {
+            $childLevel = $level === null ? null : $level + 1;
+            $childIsBranch = $childLevel === null ? $child->hasSubMenu() : $this->rendersSubMenu($child, $options, $childLevel);
+            if (!$childIsBranch) {
                 return true;
             }
-            if (!$hideEmptyBranches || $this->hasRenderableChild($child, $options)) {
+            if (!$hideEmptyBranches || $this->hasRenderableChild($child, $options, $childLevel)) {
                 return true;
             }
         }
