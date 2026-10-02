@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Menu\Test\TestCase\Menu;
+namespace CakeMenu\Test\TestCase\Menu;
 
 use Cake\TestSuite\TestCase;
-use Menu\Menu;
-use Menu\Renderer\StringTemplateRenderer;
+use CakeMenu\Menu;
+use CakeMenu\Renderer\StringTemplateRenderer;
 
 class NestedUlListIntegrationTest extends TestCase
 {

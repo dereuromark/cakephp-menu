@@ -22,7 +22,7 @@ require ROOT . '/vendor/autoload.php';
 require ROOT . '/vendor/cakephp/cakephp/config/bootstrap.php';
 
 Configure::write('App', [
-    'namespace' => 'Menu\TestApp',
+    'namespace' => 'CakeMenu\TestApp',
     'encoding' => 'UTF-8',
 ]);
 Configure::write('debug', true);

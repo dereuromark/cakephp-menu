@@ -1,5 +1,5 @@
 ---
-description: Build composable menu trees in cakephp-menu — nested items, string and array URLs, dividers, section headers, icons, badges, raw HTML, and import/export.
+description: Build composable menu trees in cakephp-menu; nested items, string and array URLs, dividers, section headers, icons, badges, raw HTML, and import/export.
 ---
 
 # Building Menus
@@ -9,7 +9,7 @@ description: Build composable menu trees in cakephp-menu — nested items, strin
 Use `Menu::create()` for the root menu and `addItem()` for the common case:
 
 ```php
-use Menu\Menu;
+use CakeMenu\Menu;
 
 $menu = Menu::create(['class' => 'nav nav-pills']);
 $menu->addItem('Home', '/');
@@ -23,7 +23,7 @@ $menu->addItems([
 ]);
 ```
 
-A link can be a **string URL** or a **CakePHP route array** — use whichever fits:
+A link can be a **string URL** or a **CakePHP route array**; use whichever fits:
 
 ::: code-group
 
@@ -80,7 +80,7 @@ sidebar renderer), not a link.
 
 ```php
 $menu = $this->Menu->create('main', [
-    'menuAttributes' => ['class' => 'nav nav-pills'],
+    'attributes' => ['class' => 'nav nav-pills'],
 ]);
 $menu->addItem('Home', '/');
 
@@ -112,7 +112,7 @@ $this->Menu->register('main', static function ($menu): void {
 
 ## Item Options
 
-`Menu::addItem()` and `Menu::newItem()` take an options array — `id`, `key`, `icon`, `badge`,
+`Menu::addItem()` and `Menu::newItem()` take an options array; `id`, `key`, `icon`, `badge`,
 `data`, `matchRoutes`, `fuzzy`, `divider`, `header`, and more. Each option also has a fluent setter
 on `ItemInterface`. See the full list with defaults and equivalents in
 **[Item Options](/reference/item-options)**.
@@ -124,7 +124,7 @@ $menu->addItem('Inbox', ['controller' => 'Messages', 'action' => 'index'])
 ```
 
 ::: warning Trusted markup
-`icon`, `badge`, `before`, `after`, and `raw` are emitted without escaping — escape or cast dynamic
+`icon`, `badge`, `before`, `after`, and `raw` are emitted without escaping; escape or cast dynamic
 values yourself. The `label` is escaped unless you pass `escape => false`.
 :::
 
@@ -219,7 +219,7 @@ $menu->reorder(['home', 'articles', 'account']);
 // Merge another menu's items in (a deep copy; the source menu is left intact):
 $menu->merge($otherMenu);
 
-// Derive new menus (e.g. for columns) — items are copied, the original is untouched:
+// Derive new menus (e.g. for columns); items are copied, the original is untouched:
 $firstTwo = $menu->slice(0, 2);
 ['primary' => $left, 'secondary' => $right] = $menu->split(2);
 ```
@@ -251,3 +251,32 @@ its current tree first:
 $item->detach();
 $otherMenu->add($item);
 ```
+
+`toArray()` exports authoring defaults for `visible`, `active`, and `expanded`.
+Runtime resolver state is excluded; resolve a rebuilt menu for the current request.
+
+## Callback types and sort direction
+
+`filter()`, `find()`, and the callback form of `sortBy()` accept `Closure`.
+Use first-class callable syntax for a named function or method:
+
+```php
+use CakeMenu\SortDirection;
+
+$menu->filter($service->isVisible(...));
+$menu->sortBy('weight', SortDirection::Desc);
+```
+
+## Custom item classes
+
+Set the item class before adding items. It must implement `ItemInterface`.
+New submenus inherit their owning menu's item class, including nested submenus:
+
+```php
+$menu->setItemClass(CustomItem::class);
+$parent = $menu->addItem('Parent');
+$child = $parent->getSubMenu()->addItem('Child');
+```
+
+`getItemClass()` returns the configured class. `MenuInterface` also exposes `collect()`,
+which returns all items in an `ItemCollection`.

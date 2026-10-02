@@ -36,8 +36,8 @@ valid top-level entry when its submenu is truncated by `depth`, so it is kept.
 
 When several items match the current URL (e.g. a parent and a child both pointing at the same
 route), `getActiveItem()` and breadcrumbs follow the first match in document order. Enable
-`singleActive` to keep only the **best** match active — the deepest *visible* item that actually
-renders (items hidden, or under hidden ancestors, are skipped), breaking ties by document order — so
+`singleActive` to keep only the **best** match active; the deepest *visible* item that actually
+renders (items hidden, or under hidden ancestors, are skipped), breaking ties by document order; so
 the active trail is unambiguous:
 
 ```php
@@ -58,10 +58,12 @@ echo $this->Breadcrumbs->render();
 Or use the built-in breadcrumb renderer:
 
 ```php
-echo $this->Menu->renderBreadcrumbs('main', [
-    'renderer' => \Menu\Renderer\BreadcrumbRenderer::class,
-]);
+echo $this->Menu->renderBreadcrumbs('main');
 ```
+
+`renderBreadcrumbs()` always uses `BreadcrumbRenderer`. Pass a subclass name or instance
+as `renderer` to customize it. Cake's attributes and separator belong in your separate
+`$this->Breadcrumbs->render(...)` call after `populateBreadcrumbs()`.
 
 ### Alternate Renderers
 
@@ -69,7 +71,7 @@ JSON export:
 
 ```php
 echo $this->Menu->render($menu, [
-    'renderer' => \Menu\Renderer\JsonRenderer::class,
+    'renderer' => \CakeMenu\Renderer\JsonRenderer::class,
     'pretty' => true,
 ]);
 ```
@@ -78,15 +80,15 @@ Bootstrap-flavored markup:
 
 ```php
 echo $this->Menu->render($menu, [
-    'renderer' => \Menu\Renderer\Bootstrap5Renderer::class,
+    'renderer' => \CakeMenu\Renderer\Bootstrap5Renderer::class,
 ]);
 ```
 
-Collapsible Bootstrap 5 sidebar — a vertical `nav` whose branches are Bootstrap `collapse` regions:
+Collapsible Bootstrap 5 sidebar; a vertical `nav` whose branches are Bootstrap `collapse` regions:
 
 ```php
 echo $this->Menu->render('sidebar', [
-    'renderer' => \Menu\Renderer\Bootstrap5SidebarRenderer::class,
+    'renderer' => \CakeMenu\Renderer\Bootstrap5SidebarRenderer::class,
 ]);
 ```
 
@@ -96,12 +98,12 @@ Each branch is wired to its `collapse` element through a unique id, so it works 
 Bootstrap bundle and needs no custom JavaScript. Item and submenu attributes from the menu
 definition are preserved on the `<li>` and nested `<ul>`.
 
-Full Bootstrap 5 navbar — the complete `<nav>` chrome (brand, responsive toggler, and the
+Full Bootstrap 5 navbar; the complete `<nav>` chrome (brand, responsive toggler, and the
 collapsible `navbar-nav` with dropdowns), rather than just the inner `<ul>`:
 
 ```php
 echo $this->Menu->render('main', [
-    'renderer' => \Menu\Renderer\NavbarRenderer::class,
+    'renderer' => \CakeMenu\Renderer\NavbarRenderer::class,
     'brand' => 'MyApp',
     'brandUrl' => '/',
     'expand' => 'lg',                 // navbar-expand-lg (collapse breakpoint)
@@ -122,7 +124,7 @@ button (`data-bs-target`), so the destination is reachable and its link attribut
 Besides the shared `activeClass`, `currentAsLink`, `addAriaCurrent` and `hideEmptyBranches` options,
 the sidebar exposes framework-specific keys (`idPrefix`, `navClass`, `toggleClass`, `collapseClass`,
 `expandedClass`, `toggleAttribute`, `caret`, …). They all default to Bootstrap 5 and can be
-overridden to target Bootstrap 4 or another setup without subclassing — for example
+overridden to target Bootstrap 4 or another setup without subclassing; for example
 `toggleAttribute => 'data-toggle'`, `expandedClass => 'is-open'`.
 
 ::: tip
@@ -142,7 +144,7 @@ echo $this->Menu->render($menu, [
 
 ## Renderer Options
 
-Every renderer option — class names, ARIA flags, depth limits, and the Bootstrap-specific keys — is
+Every renderer option; class names, ARIA flags, depth limits, and the Bootstrap-specific keys; is
 documented with its default value in the **[Renderer Options reference](/reference/renderer-options)**.
 Pass options per render call, as constructor config, or via `setConfig()`.
 
@@ -182,14 +184,14 @@ This applies to normal items and headers. It does not translate trusted markup f
 
 ::: warning Escaping
 Item labels are escaped by default. `before`, `after`, `raw`, and the icon/badge markup are treated
-as **trusted** — escape or cast dynamic values yourself.
+as **trusted**; escape or cast dynamic values yourself.
 :::
 
 ::: info State is restored automatically
 Each helper render (or request-state lookup) applies resolvers temporarily and restores the original
-`active`, `visible`, and `expanded` item state afterward — so a registered menu renders safely many
-times per request. Custom item classes should extend `Menu\Item\Item` or implement
-`Menu\Item\StateResetInterface` for `Menu::resetState()` to restore their runtime defaults.
+`active`, `visible`, and `expanded` item state afterward, so a registered menu renders safely many
+times per request. Custom item classes implement the runtime setters and `resetState()` on
+`CakeMenu\Item\ItemInterface` to restore their authoring defaults.
 :::
 
 - String URLs and array URLs are both supported; active matching is automatic and uses both array and

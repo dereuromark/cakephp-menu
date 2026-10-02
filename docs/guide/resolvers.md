@@ -1,5 +1,5 @@
 ---
-description: Apply active state and visibility in cakephp-menu with URL, section, login, permission, authorization, and callback resolvers — composed or layered on the defaults.
+description: Apply active state and visibility in cakephp-menu with URL, section, login, permission, authorization, and callback resolvers; composed or layered on the defaults.
 ---
 
 # Resolvers & Active State
@@ -19,8 +19,8 @@ flowchart LR
 ## URL Resolvers
 
 ```php
-use Menu\Resolver\Psr7UrlResolver;
-use Menu\Resolver\UrlArrayResolver;
+use CakeMenu\Resolver\Psr7UrlResolver;
+use CakeMenu\Resolver\UrlArrayResolver;
 
 $menu->resolve(new Psr7UrlResolver($request));
 $menu->resolve(new UrlArrayResolver($request));
@@ -54,7 +54,7 @@ $menu->addItem('Admin Articles', ['prefix' => 'Admin', 'controller' => 'Articles
 `SectionResolver` activates items from request parameter subsets:
 
 ```php
-use Menu\Resolver\SectionResolver;
+use CakeMenu\Resolver\SectionResolver;
 
 $menu->addItem('Admin Articles', '/admin/articles', [
     'data' => [
@@ -71,46 +71,58 @@ $menu->resolve(new SectionResolver($request));
 ## Regex Resolver
 
 `RegexResolver` activates items whose regular expression (stored in `data['match']`) matches the
-current request path — handy for lighting up a whole URL section that a route-array match can't
+current request path; handy for lighting up a whole URL section that a route-array match can't
 express. A value may be a single pattern or a list; invalid patterns are ignored.
 
 ```php
-use Menu\Resolver\RegexResolver;
+use CakeMenu\Resolver\RegexResolver;
 
 $menu->addItem('Admin', '/admin', [
     'data' => ['match' => '#^/admin/(users|roles)#'],
 ]);
 
-$menu->resolve(new RegexResolver($request->getUri()->getPath()));
+$menu->resolve(new RegexResolver($request));
 ```
 
 Pass a second argument to read patterns from a different data key, e.g.
-`new RegexResolver($path, 'activePattern')`.
+`new RegexResolver($request, ['dataKey' => 'activePattern'])`.
+
+`RegexResolver` accepts a `ServerRequestInterface` and matches only its URI path.
+Set `['maxDepth' => 2]` to limit matching to the first two levels. As with the other
+request resolvers, `null` scans the whole tree.
 
 ## Login Visibility Resolver
 
 Mark items with metadata:
 
 ```php
-$menu->addItem('Login', '/login', ['data' => ['auth' => 'loggedOut']]);
-$menu->addItem('Profile', '/profile', ['data' => ['auth' => 'loggedIn']]);
+use CakeMenu\Resolver\AuthState;
+
+$menu->addItem('Login', '/login', ['data' => ['auth' => AuthState::LoggedOut]]);
+$menu->addItem('Profile', '/profile', ['data' => ['auth' => AuthState::LoggedIn]]);
 ```
 
 Then resolve:
 
 ```php
-use Menu\Resolver\LoggedInResolver;
+use CakeMenu\Resolver\LoggedInResolver;
 
 $menu->resolve(new LoggedInResolver($identity !== null));
 ```
 
+The `auth` data value accepts `AuthState` or its backed string (`'loggedIn'` or
+`'loggedOut'`), including `Menu::fromArray()` configuration. Unknown strings throw
+`InvalidArgumentException`.
+
 ## Authorization and Callback Resolvers
 
+Both resolvers require a `Closure`. Convert method references with `$service->method(...)`.
+
 ```php
-use Menu\Item\ItemInterface;
-use Menu\Resolver\AuthorizationResolver;
-use Menu\Resolver\CallbackResolver;
-use Menu\Resolver\ResolverContext;
+use CakeMenu\Item\ItemInterface;
+use CakeMenu\Resolver\AuthorizationResolver;
+use CakeMenu\Resolver\CallbackResolver;
+use CakeMenu\Resolver\ResolverContext;
 
 $menu->resolve(new AuthorizationResolver(
     static function (ItemInterface $item, ResolverContext $context): ?bool {
@@ -118,14 +130,14 @@ $menu->resolve(new AuthorizationResolver(
             return null;
         }
 
-        return $authorization->can($identity, (string)$item->getData('permission'));
+        return $authorization->can($identity, (string)$item->getData('permission'), $item);
     }
 ));
 
 $menu->resolve(new CallbackResolver(
     static function (ItemInterface $item, ResolverContext $context): void {
         if ($context->getDepth() > 1) {
-            $item->setExpanded();
+            $item->setRuntimeExpanded();
         }
     }
 ));
@@ -136,7 +148,7 @@ $menu->resolve(new CallbackResolver(
 For Authorization-style `can()` services there is also a convenience resolver:
 
 ```php
-use Menu\Resolver\PermissionResolver;
+use CakeMenu\Resolver\PermissionResolver;
 
 $menu->addItem('Admin', '/admin', [
     'data' => ['permission' => 'admin.access'],
@@ -145,10 +157,14 @@ $menu->addItem('Admin', '/admin', [
 $menu->resolve(new PermissionResolver($authorization, $identity));
 ```
 
+The authorizer receives exactly `can($identity, $permission, $item)`, matching Cake's
+`AuthorizationService::can($user, $action, $resource)`. A custom method name uses the same
+three arguments; context is not passed.
+
 ## Multiple Resolvers
 
 ```php
-use Menu\Resolver\ResolverCollection;
+use CakeMenu\Resolver\ResolverCollection;
 
 $menu->resolve(
     (new ResolverCollection())
@@ -162,12 +178,12 @@ $menu->resolve(
 ::: warning A custom `resolver` replaces the defaults
 Passing a `resolver` option **replaces** the built-in URL resolvers, so you lose automatic
 active-state matching. To **keep** the defaults and add your own (for example a visibility resolver),
-use `additionalResolvers` instead — they run after the URL resolvers.
+use `additionalResolvers` instead; they run after the URL resolvers.
 :::
 
 ```php
-use Menu\Item\ItemInterface;
-use Menu\Resolver\AuthorizationResolver;
+use CakeMenu\Item\ItemInterface;
+use CakeMenu\Resolver\AuthorizationResolver;
 
 echo $this->Menu->render('main', [
     'additionalResolvers' => [
@@ -188,3 +204,8 @@ echo $this->Menu->render('main', [
 ]);
 ```
 
+
+All resolvers implement `resolve(ItemInterface $item, ResolverContext $context): void`.
+`Menu::resolve()` supplies the context. When resolving an item directly, pass a
+`new ResolverContext()` as the second argument. Custom resolvers use `setRuntimeVisible()`,
+`setRuntimeActive()`, and `setRuntimeExpanded()` to change request state.

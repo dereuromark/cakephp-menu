@@ -1,10 +1,10 @@
 ---
-description: Every configuration option for the bundled cakephp-menu renderers — String Template, Bootstrap 5, Sidebar, Navbar, Breadcrumb, and JSON — with defaults.
+description: Every configuration option for the bundled cakephp-menu renderers; String Template, Bootstrap 5, Sidebar, Navbar, Breadcrumb, and JSON; with defaults.
 ---
 
 # Renderer Options
 
-Each renderer is configured three ways — pick whichever fits:
+Each renderer is configured three ways; pick whichever fits:
 
 ```php
 // 1. Constructor
@@ -14,7 +14,7 @@ echo (new Bootstrap5Renderer(['activeClass' => 'is-active']))->render($menu);
 $renderer = new Bootstrap5Renderer();
 $renderer->setConfig('activeClass', 'is-active');
 
-// 3. Through the helper — render() options are passed to the renderer
+// 3. Through the helper; render() options are passed to the renderer
 echo $this->Menu->render('main', [
     'renderer' => Bootstrap5Renderer::class,
     'activeClass' => 'is-active',
@@ -153,4 +153,4 @@ Implements `RendererInterface` directly (no `StringTemplateRenderer` options).
 |--------|---------|-------------|
 | `pretty` | `false` | When truthy, encodes with `JSON_PRETTY_PRINT`. |
 
-The JSON mirrors `Menu::toArray()`; see the [Renderer Gallery](/guide/gallery#json) for the shape.
+The JSON mirrors `Menu::toArray()` and includes authoring defaults, excluding runtime state; see the [Renderer Gallery](/guide/gallery#json) for the shape.

@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Menu\Test\TestCase\Menu;
+namespace CakeMenu\Test\TestCase\Menu;
 
 use Cake\TestSuite\TestCase;
-use Menu\Item\Item;
-use Menu\ItemCollection;
+use CakeMenu\Item\Item;
+use CakeMenu\ItemCollection;
 
 class ItemCollectionTest extends TestCase
 {

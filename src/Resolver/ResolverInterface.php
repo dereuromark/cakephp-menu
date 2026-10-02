@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Menu\Resolver;
+namespace CakeMenu\Resolver;
 
-use Menu\Item\ItemInterface;
+use CakeMenu\Item\ItemInterface;
 
 interface ResolverInterface
 {
-    public function resolve(ItemInterface $item): void;
+    public function resolve(ItemInterface $item, ResolverContext $context): void;
 }

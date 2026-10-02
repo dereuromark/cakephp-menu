@@ -1,5 +1,5 @@
 ---
-description: A condensed reference of the cakephp-menu public API — Menu, Item, Link, and ItemCollection methods at a glance.
+description: A condensed reference of the cakephp-menu public API; Menu, Item, Link, and ItemCollection methods at a glance.
 ---
 
 # API Cheat Sheet
@@ -40,10 +40,12 @@ Menu::fromFlat(iterable $rows, Closure $mapper): static  // build a tree from fl
 | `clearActive()` | Deactivate all items. |
 | `getAttributes()` / `setAttribute()` / `setAttributes()` | Root HTML attributes. |
 | `getData()` / `setData()` | Menu-level metadata. |
-| `filter(callable)` | Keep only matching items. |
-| `find(callable)` | Return matching items as an `ItemCollection` without mutating the tree. |
-| `sortBy(callable\|string $by, string $direction = Menu::SORT_ASC)` | Sort items. |
-| `resolve(ResolverInterface\|ResolverCollectionInterface)` | Apply a resolver. |
+| `setItemClass(string $class)` / `getItemClass()` | Set or read the class used for new items and their submenus. |
+| `collect()` | Return all items as an `ItemCollection`. |
+| `filter(Closure)` | Keep only matching items. |
+| `find(Closure)` | Return matching items as an `ItemCollection` without mutating the tree. |
+| `sortBy(Closure\|string $by, SortDirection $direction = SortDirection::Asc)` | Sort items. |
+| `resolve(ResolverInterface)` | Apply a resolver. |
 | `resetState()` | Reset active/visible/expanded to defaults. |
 | `freeze()` / `isFrozen()` | Make immutable / check. |
 | `toArray()` | Serialize (round-trips with `fromArray()`). |
@@ -60,14 +62,14 @@ A single entry. (`ItemInterface`)
 | Content | `setRaw()` / `getRaw()` / `isRaw()`, `setBefore()` / `getBefore()`, `setAfter()` / `getAfter()` |
 | Type | `setDivider()` / `isDivider()`, `setHeader()` / `isHeader()` |
 | Icon/badge | `setIcon()` / `getIcon()`, `setBadge($badge, $type)` / `getBadge()` / `getBadgeType()` |
-| State | `setActive()` / `isActive()`, `setVisibility()` / `isVisible()`, `setExpanded()` / `isExpanded()` |
+| Defaults | `setActive()` / `isActive()`, `setVisible()` / `isVisible()`, `setExpanded()` / `isExpanded()` |
 | Submenu | `add()`, `setSubMenu()` / `getSubMenu()` / `hasSubMenu()`, `setDisplayChildren(bool)` / `displaysChildren()` |
 | Label attrs | `setLabelAttributes(array, bool $merge = false)` / `getLabelAttributes()` |
 | Tree | `setParent()` / `getParent()` / `hasParent()` / `getParentId()` |
-| Matching | `setMatchRoutes()` / `addMatchRoute()` / `getMatchRoutes()`, `setIgnoreQueryString()` / `getIgnoreQueryString()`, `setFuzzyMatch()` / `isFuzzyMatch()` |
+| Matching | `setMatchRoutes()` / `addMatchRoute()` / `getMatchRoutes()`, `setIgnoreQueryString()` / `getIgnoreQueryString()`, `setFuzzy(true)` / `getFuzzy()` |
 | Attributes/data | `setAttribute()` / `setAttributes()` / `getAttributes()`, `setData()` / `getData()` |
 | Lifecycle | `freeze()` / `isFrozen()`, `resetState()`, `toArray()` |
-| Runtime (resolver-safe) | `setRuntimeActive()`, `setRuntimeVisibility()`, `setRuntimeExpanded()` |
+| Runtime (resolver-safe) | `setRuntimeActive()`, `setRuntimeVisible()`, `setRuntimeExpanded()` |
 
 ## Link
 
@@ -97,3 +99,10 @@ A flat collection returned by `Menu::collect()`. Iterable and countable.
 | `findByKey(string $key)` | Find by explicit key only. |
 | `findByParent(string\|ItemInterface $parent)` | Direct children of a parent. |
 | `count()` | Number of items. |
+
+Runtime state uses `setRuntimeVisible()`, `setRuntimeActive()`, and `setRuntimeExpanded()`.
+`resetState()` restores the authoring defaults. `getPath()` returns root-to-self items,
+`getLevel()` is zero for a top-level item, and `getRoot()` returns the top-level ancestor.
+
+`ResolverCollectionInterface` extends `ResolverInterface` and adds `add()`, `addMany()`,
+and `all()`. Resolvers require `resolve(ItemInterface $item, ResolverContext $context): void`.

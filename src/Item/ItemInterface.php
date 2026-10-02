@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Menu\Item;
+namespace CakeMenu\Item;
 
-use Menu\Link\LinkInterface;
-use Menu\MenuInterface;
+use CakeMenu\Link\LinkInterface;
+use CakeMenu\MenuInterface;
 
 interface ItemInterface
 {
@@ -26,7 +26,7 @@ interface ItemInterface
     public function shouldEscapeLabel(): bool;
 
     /**
-     * @phpstan-param \Menu\Link\LinkInterface|array<string|int, mixed>|string|null $link
+     * @phpstan-param \CakeMenu\Link\LinkInterface|array<string|int, mixed>|string|null $link
      */
     public function setLink(LinkInterface|array|string|null $link): static;
 
@@ -46,7 +46,22 @@ interface ItemInterface
 
     public function isHeader(): bool;
 
-    public function setVisibility(bool $isVisible): static;
+    public function resetState(): static;
+
+    /**
+     * Runtime overrides only; `null` means the authoring default applies.
+     *
+     * @return array{visible: bool|null, active: bool|null, expanded: bool|null}
+     */
+    public function getRuntimeState(): array;
+
+    public function setRuntimeVisible(bool $isVisible): static;
+
+    public function setRuntimeActive(bool $isActive): static;
+
+    public function setRuntimeExpanded(bool $expanded = true): static;
+
+    public function setVisible(bool $isVisible): static;
 
     public function isVisible(): bool;
 
@@ -62,7 +77,19 @@ interface ItemInterface
 
     public function hasSubMenu(): bool;
 
+    /**
+     * @internal
+     */
     public function setParent(?ItemInterface $item): static;
+
+    /**
+     * @return list<\CakeMenu\Item\ItemInterface>
+     */
+    public function getPath(): array;
+
+    public function getLevel(): int;
+
+    public function getRoot(): self;
 
     public function getParent(): ?ItemInterface;
 
@@ -70,6 +97,9 @@ interface ItemInterface
 
     public function getParentId(): ?string;
 
+    /**
+     * @internal
+     */
     public function setOwnerMenu(?MenuInterface $menu): static;
 
     public function getOwnerMenu(): ?MenuInterface;
@@ -131,9 +161,9 @@ interface ItemInterface
 
     public function getIgnoreQueryString(): ?bool;
 
-    public function setFuzzyMatch(bool $fuzzyMatch = true): static;
+    public function setFuzzy(?bool $fuzzyMatch): static;
 
-    public function isFuzzyMatch(): bool;
+    public function getFuzzy(): ?bool;
 
     public function setExpanded(bool $expanded = true): static;
 

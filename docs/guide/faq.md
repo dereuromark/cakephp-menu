@@ -1,5 +1,5 @@
 ---
-description: Troubleshooting cakephp-menu — active state not matching, subdirectory base paths, plugin/prefix URLs, label escaping, and multiple active items.
+description: Troubleshooting cakephp-menu; active state not matching, subdirectory base paths, plugin/prefix URLs, label escaping, and multiple active items.
 ---
 
 # FAQ & Troubleshooting
@@ -8,12 +8,12 @@ description: Troubleshooting cakephp-menu — active state not matching, subdire
 
 Active-state matching compares the item's URL to the current request. The usual causes:
 
-- **The item URL doesn't match the route.** An array URL must include everything the request has —
+- **The item URL doesn't match the route.** An array URL must include everything the request has -
   `plugin`, `prefix`, `controller`, `action`. A missing `prefix => 'Admin'` is the most common miss.
 - **Extra passed/query params.** `/articles/view/42` won't match `['controller' => 'Articles',
   'action' => 'view']` unless the item opts into fuzzy matching.
 - **A custom `resolver` replaced the defaults.** Passing `resolver` removes the built-in URL
-  resolvers. Use `additionalResolvers` to keep them — see
+  resolvers. Use `additionalResolvers` to keep them; see
   [Resolvers](/guide/resolvers#adding-resolvers-to-the-defaults).
 
 Enable fuzzy matching so a parent route matches its deeper requests:
@@ -66,7 +66,7 @@ $menu->addItem('Home', '/'); // hard-coded, ignores the base path
 
 ## A FontAwesome icon shows as literal `<i>` text
 
-The `label` is HTML-escaped by default. Don't put markup in the label — use the dedicated, trusted
+The `label` is HTML-escaped by default. Don't put markup in the label; use the dedicated, trusted
 slots instead:
 
 ```php
@@ -99,7 +99,7 @@ $menu->addItem('More', '#', ['id' => 'more']);
 
 ## Does rendering mutate my menu?
 
-No — when you render **through the helper**, it captures and restores each item's active/visible/
+No; when you render **through the helper**, it captures and restores each item's active/visible/
 expanded state around the call, so a `register()`-ed menu can be rendered many times per request. If
 you call a renderer **directly** and re-use the menu, call `$menu->resetState()` yourself between
 resolutions.

@@ -2,17 +2,17 @@
 
 declare(strict_types=1);
 
-namespace Menu\Item;
+namespace CakeMenu\Item;
 
 use Cake\Utility\Text;
+use CakeMenu\Link\Link;
+use CakeMenu\Link\LinkInterface;
+use CakeMenu\Menu;
+use CakeMenu\MenuInterface;
 use LogicException;
-use Menu\Link\Link;
-use Menu\Link\LinkInterface;
-use Menu\Menu;
-use Menu\MenuInterface;
 use Throwable;
 
-class Item implements ItemInterface, StateResetInterface
+class Item implements ItemInterface
 {
     protected string $id;
 
@@ -32,11 +32,11 @@ class Item implements ItemInterface, StateResetInterface
 
     protected bool $header = false;
 
-    protected bool $visible = true;
+    protected ?bool $visible = null;
 
     protected bool $defaultVisible = true;
 
-    protected bool $active = false;
+    protected ?bool $active = null;
 
     protected bool $defaultActive = false;
 
@@ -75,7 +75,7 @@ class Item implements ItemInterface, StateResetInterface
 
     protected ?bool $fuzzyMatch = null;
 
-    protected bool $expanded = false;
+    protected ?bool $expanded = null;
 
     protected bool $defaultExpanded = false;
 
@@ -89,7 +89,7 @@ class Item implements ItemInterface, StateResetInterface
     protected bool $frozen = false;
 
     /**
-     * @phpstan-param \Menu\Link\LinkInterface|array<string|int, mixed>|string|null $link
+     * @phpstan-param \CakeMenu\Link\LinkInterface|array<string|int, mixed>|string|null $link
      */
     public function __construct(
         ?string $label = null,
@@ -185,7 +185,7 @@ class Item implements ItemInterface, StateResetInterface
     }
 
     /**
-     * @phpstan-param \Menu\Link\LinkInterface|array<string|int, mixed>|string|null $link
+     * @phpstan-param \CakeMenu\Link\LinkInterface|array<string|int, mixed>|string|null $link
      */
     public function setLink(LinkInterface|array|string|null $link): static
     {
@@ -248,9 +248,9 @@ class Item implements ItemInterface, StateResetInterface
         return $this->header;
     }
 
-    public function setVisibility(bool $isVisible): static
+    public function setVisible(bool $isVisible): static
     {
-        $this->visible = $isVisible;
+        $this->assertMutable();
         $this->defaultVisible = $isVisible;
 
         return $this;
@@ -258,12 +258,12 @@ class Item implements ItemInterface, StateResetInterface
 
     public function isVisible(): bool
     {
-        return $this->visible;
+        return $this->visible ?? $this->defaultVisible;
     }
 
     public function setActive(bool $isActive): static
     {
-        $this->active = $isActive;
+        $this->assertMutable();
         $this->defaultActive = $isActive;
 
         return $this;
@@ -271,7 +271,7 @@ class Item implements ItemInterface, StateResetInterface
 
     public function isActive(): bool
     {
-        return $this->active;
+        return $this->active ?? $this->defaultActive;
     }
 
     public function add(ItemInterface $item): static
@@ -317,7 +317,7 @@ class Item implements ItemInterface, StateResetInterface
     public function getSubMenu(): MenuInterface
     {
         if ($this->subMenu === null) {
-            $this->subMenu = (new Menu())->setOwnerItem($this);
+            $this->subMenu = (new Menu())->setItemClass($this->ownerMenu?->getItemClass() ?? self::class)->setOwnerItem($this);
         }
 
         return $this->subMenu;
@@ -334,6 +334,31 @@ class Item implements ItemInterface, StateResetInterface
         $this->parent = $item;
 
         return $this;
+    }
+
+    /**
+     * @return list<\CakeMenu\Item\ItemInterface>
+     */
+    public function getPath(): array
+    {
+        $path = [$this];
+        $parent = $this->getParent();
+        while ($parent !== null) {
+            $path[] = $parent;
+            $parent = $parent->getParent();
+        }
+
+        return array_reverse($path);
+    }
+
+    public function getLevel(): int
+    {
+        return count($this->getPath()) - 1;
+    }
+
+    public function getRoot(): ItemInterface
+    {
+        return $this->getPath()[0];
     }
 
     public function getParent(): ?ItemInterface
@@ -539,7 +564,7 @@ class Item implements ItemInterface, StateResetInterface
         return $this->ignoreQueryString;
     }
 
-    public function setFuzzyMatch(bool $fuzzyMatch = true): static
+    public function setFuzzy(?bool $fuzzyMatch): static
     {
         $this->assertMutable();
         $this->fuzzyMatch = $fuzzyMatch;
@@ -547,19 +572,14 @@ class Item implements ItemInterface, StateResetInterface
         return $this;
     }
 
-    public function isFuzzyMatch(): bool
-    {
-        return $this->fuzzyMatch ?? false;
-    }
-
-    public function getFuzzyMatchSetting(): ?bool
+    public function getFuzzy(): ?bool
     {
         return $this->fuzzyMatch;
     }
 
     public function setExpanded(bool $expanded = true): static
     {
-        $this->expanded = $expanded;
+        $this->assertMutable();
         $this->defaultExpanded = $expanded;
 
         return $this;
@@ -567,7 +587,7 @@ class Item implements ItemInterface, StateResetInterface
 
     public function isExpanded(): bool
     {
-        return $this->expanded;
+        return $this->expanded ?? $this->defaultExpanded;
     }
 
     public function setDisplayChildren(bool $displayChildren = true): static
@@ -630,9 +650,9 @@ class Item implements ItemInterface, StateResetInterface
             'raw' => $this->raw,
             'divider' => $this->divider,
             'header' => $this->header,
-            'visible' => $this->visible,
-            'active' => $this->active,
-            'expanded' => $this->expanded,
+            'visible' => $this->defaultVisible,
+            'active' => $this->defaultActive,
+            'expanded' => $this->defaultExpanded,
             'displayChildren' => $this->displayChildren,
             'before' => $this->before,
             'after' => $this->after,
@@ -651,14 +671,22 @@ class Item implements ItemInterface, StateResetInterface
 
     public function resetState(): static
     {
-        $this->visible = $this->defaultVisible;
-        $this->active = $this->defaultActive;
-        $this->expanded = $this->defaultExpanded;
+        $this->visible = null;
+        $this->active = null;
+        $this->expanded = null;
 
         return $this;
     }
 
-    public function setRuntimeVisibility(bool $isVisible): static
+    /**
+     * @return array{visible: bool|null, active: bool|null, expanded: bool|null}
+     */
+    public function getRuntimeState(): array
+    {
+        return ['visible' => $this->visible, 'active' => $this->active, 'expanded' => $this->expanded];
+    }
+
+    public function setRuntimeVisible(bool $isVisible): static
     {
         $this->visible = $isVisible;
 

@@ -2,12 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Menu\Test\TestCase\Resolver;
+namespace CakeMenu\Test\TestCase\Resolver;
 
 use Cake\Http\ServerRequest;
 use Cake\TestSuite\TestCase;
-use Menu\Item\Item;
-use Menu\Resolver\SectionResolver;
+use CakeMenu\Item\Item;
+use CakeMenu\Resolver\ResolverContext;
+use CakeMenu\Resolver\SectionResolver;
 
 class SectionResolverTest extends TestCase
 {
@@ -25,7 +26,7 @@ class SectionResolverTest extends TestCase
                 'action' => 'index',
             ]);
 
-        (new SectionResolver($request))->resolve($item);
+        (new SectionResolver($request))->resolve($item, new ResolverContext());
 
         $this->assertTrue($item->isActive());
         $this->assertTrue($item->isExpanded());

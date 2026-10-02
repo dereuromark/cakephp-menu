@@ -2,11 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Menu\Test\TestCase\Resolver;
+namespace CakeMenu\Test\TestCase\Resolver;
 
 use Cake\TestSuite\TestCase;
-use Menu\Item\Item;
-use Menu\Resolver\PermissionResolver;
+use CakeMenu\Item\Item;
+use CakeMenu\Resolver\PermissionResolver;
+use CakeMenu\Resolver\ResolverContext;
 
 class PermissionResolverTest extends TestCase
 {
@@ -27,8 +28,8 @@ class PermissionResolverTest extends TestCase
             }
         };
         $resolver = new PermissionResolver($authorizer);
-        $resolver->resolve($item);
-        $resolver->resolve($item);
+        $resolver->resolve($item, new ResolverContext());
+        $resolver->resolve($item, new ResolverContext());
 
         $this->assertSame([null, 'admin.access', $item], $authorizer->arguments);
         $this->assertFalse($item->isVisible());
@@ -38,46 +39,45 @@ class PermissionResolverTest extends TestCase
     {
         $item = (new Item('Admin', '/admin'))->setData('permission', 'admin.access');
         $authorizer = new class {
-            public function can(mixed $identity, string $permission): bool
+            public function can(mixed $identity, string $permission, Item $item): bool
             {
                 return $permission !== 'admin.access';
             }
         };
 
-        (new PermissionResolver($authorizer, ['id' => 1]))->resolve($item);
+        (new PermissionResolver($authorizer, ['id' => 1]))->resolve($item, new ResolverContext());
 
         $this->assertFalse($item->isVisible());
     }
 
-    public function testSupportsTwoArgumentCanMethod(): void
+    public function testSupportsCustomMethod(): void
     {
         $item = (new Item('Admin', '/admin'))->setData('permission', 'admin.access');
         $authorizer = new class {
-            public function can(mixed $identity, string $permission): bool
+            public function allows(mixed $identity, string $permission, Item $item): bool
             {
                 return $permission !== 'admin.access';
             }
         };
 
-        (new PermissionResolver($authorizer, ['id' => 1]))->resolve($item);
+        (new PermissionResolver($authorizer, ['id' => 1], method: 'allows'))->resolve($item, new ResolverContext());
 
         $this->assertFalse($item->isVisible());
     }
 
-    public function testSupportsFourArgumentCanMethod(): void
+    public function testReceivesIdentityPermissionAndItem(): void
     {
         $item = (new Item('Admin', '/admin'))->setData('permission', 'admin.access');
         $authorizer = new class {
-            public function can(mixed $identity, string $permission, Item $item, object $context): bool
+            public function can(mixed $identity, string $permission, Item $item): bool
             {
                 return $identity === ['id' => 1]
                     && $permission === 'admin.access'
-                    && $item->getLabel() === 'Admin'
-                    && method_exists($context, 'getDepth');
+                    && $item->getLabel() === 'Admin';
             }
         };
 
-        (new PermissionResolver($authorizer, ['id' => 1]))->resolve($item);
+        (new PermissionResolver($authorizer, ['id' => 1]))->resolve($item, new ResolverContext());
 
         $this->assertTrue($item->isVisible());
     }

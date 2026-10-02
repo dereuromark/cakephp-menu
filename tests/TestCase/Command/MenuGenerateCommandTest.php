@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Menu\Test\TestCase\Command;
+namespace CakeMenu\Test\TestCase\Command;
 
 use Cake\Console\CommandCollection;
 use Cake\Console\TestSuite\ConsoleIntegrationTestTrait;
 use Cake\Core\ConsoleApplicationInterface;
 use Cake\TestSuite\TestCase;
-use Menu\Command\MenuGenerateCommand;
+use CakeMenu\Command\MenuGenerateCommand;
 
 class MenuGenerateCommandTest extends TestCase
 {
@@ -81,6 +81,8 @@ class MenuGenerateCommandTest extends TestCase
         $this->assertFileExists($path);
         $this->assertStringContainsString("'main' => [", (string)file_get_contents($path));
         $this->assertStringContainsString("'class' => 'nav'", (string)file_get_contents($path));
+        $this->assertStringContainsString("'CakeMenu' => [", (string)file_get_contents($path));
+        $this->assertStringNotContainsString("'Menu' => [", (string)file_get_contents($path));
     }
 
     public function testRefusesToOverwriteWithoutForce(): void

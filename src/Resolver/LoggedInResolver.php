@@ -2,30 +2,27 @@
 
 declare(strict_types=1);
 
-namespace Menu\Resolver;
+namespace CakeMenu\Resolver;
 
-use Menu\Item\ItemInterface;
+use CakeMenu\Item\ItemInterface;
+use InvalidArgumentException;
 
-class LoggedInResolver implements ContextAwareResolverInterface
+class LoggedInResolver implements ResolverInterface
 {
-    use RuntimeStateTrait;
-
     public function __construct(protected bool $loggedIn)
     {
     }
 
-    public function resolve(ItemInterface $item): void
-    {
-        $this->resolveWithContext($item, new ResolverContext());
-    }
-
-    public function resolveWithContext(ItemInterface $item, ResolverContext $context): void
+    public function resolve(ItemInterface $item, ResolverContext $context): void
     {
         $auth = $item->getData('auth');
-        if ($auth === 'loggedIn') {
-            $this->applyVisibility($item, $this->loggedIn);
-        } elseif ($auth === 'loggedOut') {
-            $this->applyVisibility($item, !$this->loggedIn);
+        if (is_string($auth)) {
+            $auth = AuthState::tryFrom($auth) ?? throw new InvalidArgumentException('Unknown auth state: ' . $auth);
+        }
+        if ($auth === AuthState::LoggedIn) {
+            $item->setRuntimeVisible($this->loggedIn);
+        } elseif ($auth === AuthState::LoggedOut) {
+            $item->setRuntimeVisible(!$this->loggedIn);
         }
     }
 }

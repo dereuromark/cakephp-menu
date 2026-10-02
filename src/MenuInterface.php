@@ -2,26 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Menu;
+namespace CakeMenu;
 
+use CakeMenu\Item\ItemInterface;
+use CakeMenu\Link\LinkInterface;
+use CakeMenu\Resolver\ResolverInterface;
 use Closure;
-use Menu\Item\ItemInterface;
-use Menu\Link\LinkInterface;
-use Menu\Resolver\ResolverCollectionInterface;
-use Menu\Resolver\ResolverInterface;
 
 interface MenuInterface
 {
-    /**
-     * @var string
-     */
-    public const SORT_ASC = 'asc';
-
-    /**
-     * @var string
-     */
-    public const SORT_DESC = 'desc';
-
     /**
      * @phpstan-param array<string, mixed> $attributes
      */
@@ -38,6 +27,9 @@ interface MenuInterface
      */
     public static function fromFlat(iterable $rows, Closure $mapper): static;
 
+    /**
+     * @internal
+     */
     public function setOwnerItem(ItemInterface $ownerItem): static;
 
     public function getOwnerItem(): ?ItemInterface;
@@ -50,7 +42,7 @@ interface MenuInterface
     public function addItems(array $items): static;
 
     /**
-     * @phpstan-param \Menu\Link\LinkInterface|array<string|int, mixed>|string|null $link
+     * @phpstan-param \CakeMenu\Link\LinkInterface|array<string|int, mixed>|string|null $link
      * @phpstan-param array<string, mixed> $options
      */
     public function addItem(
@@ -75,7 +67,7 @@ interface MenuInterface
     public function addHeader(string $label, array $options = []): ItemInterface;
 
     /**
-     * @phpstan-param \Menu\Link\LinkInterface|array<string|int, mixed>|string|null $link
+     * @phpstan-param \CakeMenu\Link\LinkInterface|array<string|int, mixed>|string|null $link
      * @phpstan-param array<string, mixed> $options
      */
     public function newItem(
@@ -85,7 +77,7 @@ interface MenuInterface
     ): ItemInterface;
 
     /**
-     * @return list<\Menu\Item\ItemInterface>
+     * @return list<\CakeMenu\Item\ItemInterface>
      */
     public function getItems(): array;
 
@@ -163,13 +155,25 @@ interface MenuInterface
      */
     public function setAttributes(array $attributes, bool $merge = false): static;
 
-    public function filter(callable $callback): static;
+    public function collect(): ItemCollection;
 
-    public function find(callable $callback): ItemCollection;
+    /**
+     * @param class-string<\CakeMenu\Item\ItemInterface> $class
+     */
+    public function setItemClass(string $class): static;
 
-    public function sortBy(callable|string $by, string $direction = self::SORT_ASC): static;
+    /**
+     * @return class-string<\CakeMenu\Item\ItemInterface>
+     */
+    public function getItemClass(): string;
 
-    public function resolve(ResolverInterface|ResolverCollectionInterface $resolver): static;
+    public function filter(Closure $callback): static;
+
+    public function find(Closure $callback): ItemCollection;
+
+    public function sortBy(Closure|string $by, SortDirection $direction = SortDirection::Asc): static;
+
+    public function resolve(ResolverInterface $resolver): static;
 
     public function resetState(): static;
 

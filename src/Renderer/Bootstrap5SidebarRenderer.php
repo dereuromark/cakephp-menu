@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Menu\Renderer;
+namespace CakeMenu\Renderer;
 
-use Menu\Item\ItemInterface;
-use Menu\Item\SelfRendererInterface;
-use Menu\MenuInterface;
+use CakeMenu\Item\ItemInterface;
+use CakeMenu\Item\SelfRendererInterface;
+use CakeMenu\MenuInterface;
 use function array_filter;
 use function implode;
 use function preg_replace;
@@ -28,7 +28,7 @@ use function trim;
  * toggle. Item and submenu attributes from the menu definition are preserved.
  *
  * ```php
- * echo $this->Menu->render('sidebar', ['renderer' => \Menu\Renderer\Bootstrap5SidebarRenderer::class]);
+ * echo $this->Menu->render('sidebar', ['renderer' => \CakeMenu\Renderer\Bootstrap5SidebarRenderer::class]);
  * ```
  */
 class Bootstrap5SidebarRenderer extends StringTemplateRenderer
@@ -301,7 +301,7 @@ class Bootstrap5SidebarRenderer extends StringTemplateRenderer
         string $url,
         bool $expanded,
     ): string {
-        /** @var \Menu\Link\LinkInterface $link */
+        /** @var \CakeMenu\Link\LinkInterface $link */
         $link = $item->getLink();
         // Keep the link's own attributes and merge our classes in (do not overwrite).
         $linkAttributes = $this->appendClass($link->getAttributes(), $this->getStringOption($options, 'linkClass'));

@@ -1,5 +1,5 @@
 ---
-description: Practical cakephp-menu recipes — admin sidebars, account dropdowns, breadcrumbs, role-based menus with TinyAuth, caching, and config- or database-backed menus.
+description: Practical cakephp-menu recipes; admin sidebars, account dropdowns, breadcrumbs, role-based menus with TinyAuth, caching, and config- or database-backed menus.
 ---
 
 # Recipes
@@ -17,8 +17,8 @@ $this->Menu->register('admin', static function ($menu): void {
 });
 
 echo $this->Menu->render('admin', [
-    'resolver' => (new \Menu\Resolver\ResolverCollection())
-        ->add(new \Menu\Resolver\SectionResolver($this->request)),
+    'resolver' => (new \CakeMenu\Resolver\ResolverCollection())
+        ->add(new \CakeMenu\Resolver\SectionResolver($this->request)),
 ]);
 ```
 
@@ -30,7 +30,7 @@ $account->getSubMenu()->addItem('Profile', '/profile');
 $account->getSubMenu()->addItem('Logout', '/logout');
 
 echo $this->Menu->render($menu, [
-    'renderer' => \Menu\Renderer\Bootstrap5Renderer::class,
+    'renderer' => \CakeMenu\Renderer\Bootstrap5Renderer::class,
 ]);
 ```
 
@@ -57,8 +57,8 @@ whether TinyAuth's ACL is INI- or DB-backed (e.g. via
 abstracts the adapter.
 
 ```php
-use Menu\Item\ItemInterface;
-use Menu\Resolver\AuthorizationResolver;
+use CakeMenu\Item\ItemInterface;
+use CakeMenu\Resolver\AuthorizationResolver;
 
 // In a template/view where the TinyAuth.AuthUser helper is loaded.
 $menu = $this->Menu->create('admin');
@@ -101,9 +101,9 @@ per role-set and cache its *structure* (active state is request-specific and alw
 The simplest way is the helper's built-in `cache` option on `register()`, keyed per role-set:
 
 ```php
-use Menu\Item\ItemInterface;
-use Menu\MenuInterface;
-use Menu\Resolver\AuthorizationResolver;
+use CakeMenu\Item\ItemInterface;
+use CakeMenu\MenuInterface;
+use CakeMenu\Resolver\AuthorizationResolver;
 
 $cacheKey = 'menu_main_' . implode('-', $this->AuthUser->roles());
 
@@ -127,7 +127,7 @@ If you'd rather control the cache yourself, cache `toArray()` and rebuild with `
 
 ```php
 use Cake\Cache\Cache;
-use Menu\Menu;
+use CakeMenu\Menu;
 
 $tree = Cache::read($cacheKey);
 if ($tree === null) {
@@ -144,7 +144,7 @@ echo $this->Menu->render(Menu::fromArray($tree));
 
 ## TinyAuth Backend Navigation
 
-`tinyauth-backend` exposes `$this->TinyAuth->getNavigationItems()` — its feature-gated admin
+`tinyauth-backend` exposes `$this->TinyAuth->getNavigationItems()`; its feature-gated admin
 sections (Dashboard, Roles, Resources, ...) as `['name', 'label', 'route']` arrays (already filtered
 to the enabled features). Turn it into a menu:
 
@@ -177,7 +177,7 @@ $menu->addItem('Profile', '/profile', ['icon' => 'fa fa-user', 'badge' => 'new']
 
 The markup is overridable per render with the `iconTemplate` / `badgeTemplate` options
 (`{{icon}}`, and `{{class}}`/`{{text}}` placeholders). For anything more custom, `before`, `after`,
-and `raw` are still emitted as trusted markup — cast or escape dynamic values you put there yourself
+and `raw` are still emitted as trusted markup; cast or escape dynamic values you put there yourself
 (e.g. `(int)$count`).
 
 ## Defining a Menu in Config
@@ -197,12 +197,12 @@ Configure::load('menu_main', 'default', true);
 echo $this->Menu->render('main');
 ```
 
-The helper auto-registers menus declared under `Configure::read('Menu.menus')` (each a
+The helper auto-registers menus declared under `Configure::read('CakeMenu.menus')` (each a
 `Menu::fromArray()` spec keyed by name), so a config-defined menu renders without any wiring:
 
 ```php
 // config/app.php (or a dedicated config/menu.php loaded with Configure::load('menu'))
-'Menu' => [
+'CakeMenu' => [
     'menus' => [
         'main' => [
             'attributes' => ['class' => 'nav'],
@@ -223,7 +223,7 @@ An explicit `create()`/`register()` of the same name overrides the configured me
 from an arbitrary array yourself, `Menu::fromArray()` accepts the same shape `toArray()` produces:
 
 ```php
-use Menu\Menu;
+use CakeMenu\Menu;
 
 $menu = Menu::fromArray(require CONFIG . 'menu.php');
 echo $this->Menu->render($menu);
@@ -236,7 +236,7 @@ editable CMS nav, …). The mapper turns each row into a spec (`key`, `parent`, 
 any `newItem()` `options`); rows may be in any order, and unknown parents fall back to root:
 
 ```php
-use Menu\Menu;
+use CakeMenu\Menu;
 
 $rows = $this->fetchTable('MenuItems')->find()->orderBy(['weight' => 'ASC'])->all();
 
@@ -260,7 +260,7 @@ from any template:
 public function initialize(): void
 {
     parent::initialize();
-    $this->loadHelper('Menu.Menu');
+    $this->loadHelper('CakeMenu.Menu');
 
     $this->Menu->register('main', function ($menu): void {
         $menu->addItem('Home', '/');

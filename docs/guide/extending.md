@@ -6,13 +6,13 @@ description: Extend cakephp-menu with custom renderers and resolvers, and integr
 
 ## Custom Renderers
 
-Implement `Menu\Renderer\RendererInterface` (or extend `StringTemplateRenderer`) and pass the class
+Implement `CakeMenu\Renderer\RendererInterface` (or extend `StringTemplateRenderer`) and pass the class
 name or an instance as the `renderer` option:
 
 ```php
-use Menu\Item\ItemInterface;
-use Menu\MenuInterface;
-use Menu\Renderer\RendererInterface;
+use CakeMenu\Item\ItemInterface;
+use CakeMenu\MenuInterface;
+use CakeMenu\Renderer\RendererInterface;
 
 class NavRenderer implements RendererInterface
 {
@@ -32,25 +32,26 @@ class NavRenderer implements RendererInterface
 echo $this->Menu->render('main', ['renderer' => NavRenderer::class]);
 ```
 
-A single item can also render itself by implementing `Menu\Item\SelfRendererInterface::render()`,
+A single item can also render itself by implementing `CakeMenu\Item\SelfRendererInterface::render()`,
 which the built-in renderers call directly.
 
 ## Custom Resolvers
 
-Implement `Menu\Resolver\ResolverInterface` (or `ContextAwareResolverInterface` for depth/parent
-awareness) and add it via `additionalResolvers` or a `ResolverCollection`:
+Implement `CakeMenu\Resolver\ResolverInterface` and add it via `additionalResolvers` or a
+`ResolverCollection`. The required context provides the depth and parent:
 
 ```php
-use Menu\Item\ItemInterface;
-use Menu\Resolver\ResolverInterface;
+use CakeMenu\Item\ItemInterface;
+use CakeMenu\Resolver\ResolverInterface;
+use CakeMenu\Resolver\ResolverContext;
 
 class FeatureFlagResolver implements ResolverInterface
 {
-    public function resolve(ItemInterface $item): void
+    public function resolve(ItemInterface $item, ResolverContext $context): void
     {
         $feature = $item->getData('feature');
         if ($feature !== null && !Features::enabled((string)$feature)) {
-            $item->setVisibility(false);
+            $item->setRuntimeVisible(false);
         }
     }
 }
@@ -62,8 +63,8 @@ A menu is plain PHP, so its structure and resolved state are easy to assert with
 
 ```php
 use Cake\Http\ServerRequest;
-use Menu\Menu;
-use Menu\Resolver\Psr7UrlResolver;
+use CakeMenu\Menu;
+use CakeMenu\Resolver\Psr7UrlResolver;
 
 $menu = Menu::create();
 $menu->addItem('Home', '/');

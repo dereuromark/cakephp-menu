@@ -2,18 +2,55 @@
 
 declare(strict_types=1);
 
-namespace Menu\Test\TestCase\Item;
+namespace CakeMenu\Test\TestCase\Item;
 
 use Cake\TestSuite\TestCase;
+use CakeMenu\Item\Item;
+use CakeMenu\Link\Link;
+use CakeMenu\Menu;
+use CakeMenu\MenuInterface;
 use LogicException;
-use Menu\Item\Item;
-use Menu\Link\Link;
-use Menu\Menu;
-use Menu\MenuInterface;
 use RuntimeException;
 
 class ItemTest extends TestCase
 {
+    public function testPathHelpers(): void
+    {
+        $root = new Item('Root');
+        $child = new Item('Child');
+        $leaf = new Item('Leaf');
+        $root->add($child);
+        $child->add($leaf);
+
+        $this->assertSame([$root], $root->getPath());
+        $this->assertSame(0, $root->getLevel());
+        $this->assertSame($root, $root->getRoot());
+        $this->assertSame([$root, $child, $leaf], $leaf->getPath());
+        $this->assertSame(2, $leaf->getLevel());
+        $this->assertSame($root, $leaf->getRoot());
+        $leaf->detach();
+        $this->assertSame([$leaf], $leaf->getPath());
+        $this->assertSame(0, $leaf->getLevel());
+        $this->assertSame($leaf, $leaf->getRoot());
+    }
+
+    public function testAuthoringSettersPreserveRuntimeOverrides(): void
+    {
+        $item = new Item('Item');
+        $item->setRuntimeVisible(false)->setRuntimeActive(true)->setRuntimeExpanded(true);
+        $item->setVisible(true)->setActive(false)->setExpanded(false);
+
+        $this->assertFalse($item->isVisible());
+        $this->assertTrue($item->isActive());
+        $this->assertTrue($item->isExpanded());
+        $item->resetState();
+        $this->assertTrue($item->isVisible());
+        $this->assertFalse($item->isActive());
+        $this->assertFalse($item->isExpanded());
+        $item->setFuzzy(null);
+        $this->assertNull($item->getFuzzy());
+    }
+
     public function testLabelEscapingFlag(): void
     {
         $escaped = (new Item())->setLabel('First<>');
@@ -114,6 +151,16 @@ class ItemTest extends TestCase
         $item->detach();
     }
 
+    public function testAuthoringSettersRespectFreezeButRuntimeSettersDoNot(): void
+    {
+        $item = Menu::create()->addItem('Child', '/child')->freeze();
+        $item->setRuntimeVisible(false);
+        $this->assertFalse($item->isVisible());
+
+        $this->expectException(LogicException::class);
+        $item->setVisible(false);
+    }
+
     public function testAddRestoresParentWhenCustomSubMenuRejectsItem(): void
     {
         $parent = new Item('Parent', '/parent');
@@ -168,14 +215,14 @@ class ItemTest extends TestCase
             ->addMatchRoute('/articles')
             ->addMatchRoute(['controller' => 'Articles', 'action' => 'view', 42])
             ->setIgnoreQueryString(true)
-            ->setFuzzyMatch();
+            ->setFuzzy(true);
 
         $this->assertSame([
             '/articles',
             ['controller' => 'Articles', 'action' => 'view', 42],
         ], $item->getMatchRoutes());
         $this->assertTrue($item->getIgnoreQueryString());
-        $this->assertTrue($item->isFuzzyMatch());
+        $this->assertTrue($item->getFuzzy());
     }
 
     public function testGetKeyDoesNotPersistDerivedSlug(): void

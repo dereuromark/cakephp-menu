@@ -2,11 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Menu\Resolver;
+namespace CakeMenu\Resolver;
 
 use Cake\Core\InstanceConfigTrait;
-use Menu\Item\Item;
-use Menu\Item\ItemInterface;
+use CakeMenu\Item\ItemInterface;
 use Psr\Http\Message\RequestInterface;
 use function array_filter;
 use function array_merge;
@@ -21,10 +20,9 @@ use function strtolower;
 use function urldecode;
 use const SORT_STRING;
 
-class Psr7UrlResolver implements ContextAwareResolverInterface
+class Psr7UrlResolver implements ResolverInterface
 {
     use InstanceConfigTrait;
-    use RuntimeStateTrait;
 
     /**
      * @var array<string, mixed>
@@ -44,12 +42,7 @@ class Psr7UrlResolver implements ContextAwareResolverInterface
         $this->setConfig($options);
     }
 
-    public function resolve(ItemInterface $item): void
-    {
-        $this->resolveWithContext($item, new ResolverContext());
-    }
-
-    public function resolveWithContext(ItemInterface $item, ResolverContext $context): void
+    public function resolve(ItemInterface $item, ResolverContext $context): void
     {
         $maxDepth = $this->getConfig('maxDepth');
         if (is_int($maxDepth) && $context->getDepth() > $maxDepth) {
@@ -59,9 +52,7 @@ class Psr7UrlResolver implements ContextAwareResolverInterface
         $uri = $this->request->getUri();
         $requestPath = $uri->getPath();
         $requestQuery = $uri->getQuery();
-        $ignoreQueryString = $item instanceof Item && $item->getIgnoreQueryString() !== null
-            ? $item->getIgnoreQueryString()
-            : (bool)$this->getConfig('ignoreQueryString');
+        $ignoreQueryString = $item->getIgnoreQueryString() ?? (bool)$this->getConfig('ignoreQueryString');
 
         foreach ($this->extractRoutes($item) as $route) {
             if (!is_string($route)) {
@@ -87,7 +78,7 @@ class Psr7UrlResolver implements ContextAwareResolverInterface
                 continue;
             }
 
-            $this->applyActive($item);
+            $item->setRuntimeActive(true);
 
             return;
         }
@@ -157,10 +148,7 @@ class Psr7UrlResolver implements ContextAwareResolverInterface
      */
     protected function extractRoutes(ItemInterface $item): array
     {
-        $routes = [];
-        if ($item instanceof Item) {
-            $routes = $item->getMatchRoutes();
-        }
+        $routes = $item->getMatchRoutes();
 
         $link = $item->getLink();
         if ($link === null) {

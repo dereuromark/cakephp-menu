@@ -1,5 +1,5 @@
 ---
-description: See every cakephp-menu renderer side by side — the same menu rendered as a string template, Bootstrap 5 nav, navbar, sidebar, breadcrumb, and JSON, with real output.
+description: See every cakephp-menu renderer side by side; the same menu rendered as a string template, Bootstrap 5 nav, navbar, sidebar, breadcrumb, and JSON, with real output.
 ---
 
 # Renderer Gallery
@@ -8,7 +8,7 @@ Every renderer consumes the **same** resolved menu and produces different output
 matches your layout, or write your own (see [Extending](/guide/extending)).
 
 ::: tip Try it live
-All renderers are wired up in the **[live sandbox](https://sandbox.dereuromark.de/menu-sandbox)** —
+All renderers are wired up in the **[live sandbox](https://sandbox.dereuromark.de/menu-sandbox)** -
 tweak a menu and see each renderer's output instantly.
 :::
 
@@ -19,7 +19,7 @@ renderers emit it without the extra whitespace.
 
 ## String Template (default)
 
-The dependency-free default. Plain, semantic `<ul>`/`<li>` markup with configurable classes — style
+The dependency-free default. Plain, semantic `<ul>`/`<li>` markup with configurable classes; style
 it however you like. Active items render as a `<span>` (not a link) when `currentAsLink` is `false`.
 
 ```php
@@ -76,7 +76,7 @@ echo (new Bootstrap5Renderer())->render($menu);
 
 ## Navbar
 
-A complete Bootstrap 5 `<nav class="navbar">` — brand, responsive toggler, and collapse wrapper
+A complete Bootstrap 5 `<nav class="navbar">`; brand, responsive toggler, and collapse wrapper
 around the menu. Set `brand`, `brandUrl`, `expand`, `theme`, and a unique `collapseId` per navbar on
 the page.
 
@@ -187,7 +187,7 @@ echo (new BreadcrumbRenderer())->render($menu);
 
 ## JSON
 
-Serializes the resolved menu — handy for SPAs, a JS-driven menu, or debugging active state. Pass
+Serializes the menu structure and authoring defaults. Runtime state is excluded. Pass
 `['pretty' => true]` for human-readable output. Every item carries the full property set (shown in
 full for `Home` below); nested items are abbreviated here for brevity.
 

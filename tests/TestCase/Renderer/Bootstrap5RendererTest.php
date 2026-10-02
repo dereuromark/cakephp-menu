@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Menu\Test\TestCase\Renderer;
+namespace CakeMenu\Test\TestCase\Renderer;
 
 use Cake\TestSuite\TestCase;
-use Menu\Link\Link;
-use Menu\Menu;
-use Menu\Renderer\Bootstrap5Renderer;
-use Menu\Renderer\StringTemplateRenderer;
+use CakeMenu\Link\Link;
+use CakeMenu\Menu;
+use CakeMenu\Renderer\Bootstrap5Renderer;
+use CakeMenu\Renderer\StringTemplateRenderer;
 
 class Bootstrap5RendererTest extends TestCase
 {
@@ -31,7 +31,7 @@ class Bootstrap5RendererTest extends TestCase
         $menu = Menu::create();
         $parent = $menu->addItem('Parent', '/parent');
         $child = $parent->getSubMenu()->addItem('Child', '/child');
-        $child->getSubMenu()->addItem('Hidden', '/hidden')->setVisibility(false);
+        $child->getSubMenu()->addItem('Hidden', '/hidden')->setVisible(false);
 
         $result = (new Bootstrap5Renderer())->render($menu, ['depth' => 2, 'hideEmptyBranches' => true]);
 

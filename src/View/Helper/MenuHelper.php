@@ -2,26 +2,25 @@
 
 declare(strict_types=1);
 
-namespace Menu\View\Helper;
+namespace CakeMenu\View\Helper;
 
 use Cake\Cache\Cache;
 use Cake\Core\Configure;
 use Cake\View\Helper;
+use CakeMenu\Item\ItemInterface;
+use CakeMenu\Menu;
+use CakeMenu\MenuInterface;
+use CakeMenu\Renderer\BreadcrumbRenderer;
+use CakeMenu\Renderer\RendererInterface;
+use CakeMenu\Renderer\StringTemplateRenderer;
+use CakeMenu\Resolver\Psr7UrlResolver;
+use CakeMenu\Resolver\ResolverCollection;
+use CakeMenu\Resolver\ResolverCollectionInterface;
+use CakeMenu\Resolver\ResolverInterface;
+use CakeMenu\Resolver\UrlArrayResolver;
 use Closure;
 use InvalidArgumentException;
-use Menu\Item\ItemInterface;
-use Menu\Item\StateResetInterface;
-use Menu\Menu;
-use Menu\MenuInterface;
-use Menu\Renderer\BreadcrumbRenderer;
-use Menu\Renderer\RendererInterface;
-use Menu\Renderer\StringTemplateRenderer;
-use Menu\Resolver\Psr7UrlResolver;
-use Menu\Resolver\ResolverCollection;
-use Menu\Resolver\ResolverCollectionInterface;
-use Menu\Resolver\ResolverInterface;
-use Menu\Resolver\UrlArrayResolver;
-use ReflectionFunction;
+use function Cake\Core\deprecationWarning;
 
 /**
  * @extends \Cake\View\Helper<\Cake\View\View>
@@ -35,7 +34,7 @@ class MenuHelper extends Helper
     protected array $helpers = ['Breadcrumbs'];
 
     /**
-     * @var array<string, \Menu\MenuInterface>
+     * @var array<string, \CakeMenu\MenuInterface>
      */
     protected array $menus = [];
 
@@ -45,7 +44,7 @@ class MenuHelper extends Helper
     protected array $menuConfigs = [];
 
     /**
-     * Specs from `Configure::read('Menu.menus')`, materialized lazily on first access so an explicit
+     * Specs from `Configure::read('CakeMenu.menus')`, materialized lazily on first access so an explicit
      * create()/register() of the same name takes precedence.
      *
      * @var array<string, array<string, mixed>>
@@ -81,14 +80,18 @@ class MenuHelper extends Helper
     }
 
     /**
-     * Stores menu specs declared in `Configure::read('Menu.menus')` (each value a `Menu::fromArray()`
+     * Stores menu specs declared in `Configure::read('CakeMenu.menus')` (each value a `Menu::fromArray()`
      * spec keyed by menu name) so config-defined menus are renderable without wiring. They are
      * materialized lazily by get(); an explicit create()/register() of the same name overrides the
      * configured menu entirely.
      */
     protected function loadConfiguredMenus(): void
     {
-        $menus = Configure::read('Menu.menus');
+        $menus = Configure::read('CakeMenu.menus');
+        if ($menus === null && Configure::check('Menu.menus')) {
+            deprecationWarning('0.2.0', 'Configure key `Menu.menus` is deprecated. Use `CakeMenu.menus` instead.');
+            $menus = Configure::read('Menu.menus');
+        }
         if (!is_array($menus)) {
             return;
         }
@@ -115,16 +118,11 @@ class MenuHelper extends Helper
             throw new InvalidArgumentException(sprintf('Menu `%s` already exists.', $name));
         }
 
-        $attributes = [];
-        if (isset($options['menuAttributes']) && is_array($options['menuAttributes'])) {
-            $attributes = $options['menuAttributes'];
-        } elseif (isset($options['attributes']) && is_array($options['attributes'])) {
-            $attributes = $options['attributes'];
-        }
+        $attributes = is_array($options['attributes'] ?? null) ? $options['attributes'] : [];
 
         $menu = Menu::create($attributes);
         $this->menus[$name] = $menu;
-        $this->menuConfigs[$name] = $options;
+        $this->menuConfigs[$name] = array_diff_key($options, array_flip(['attributes', 'overwrite', 'cache', 'rebuild']));
         $this->lastMenuName = $name;
         // Now explicitly defined in code; drop any config-origin marker so it is no longer
         // re-materialized from configuration.
@@ -152,10 +150,10 @@ class MenuHelper extends Helper
 
     /**
      * @param string $name
-     * @param callable(\Menu\MenuInterface): void|callable(\Menu\MenuInterface, self): void $callback
+     * @param \Closure(\CakeMenu\MenuInterface, self): void $callback
      * @param array<string, mixed> $options
      */
-    public function register(string $name, callable $callback, array $options = []): MenuInterface
+    public function register(string $name, Closure $callback, array $options = []): MenuInterface
     {
         if (isset($options['cache']) && $options['cache'] !== false) {
             return $this->registerWithCache($name, $callback, $options);
@@ -183,10 +181,10 @@ class MenuHelper extends Helper
      * relying on custom ItemInterface implementations.
      *
      * @param string $name
-     * @param callable(\Menu\MenuInterface): void|callable(\Menu\MenuInterface, self): void $callback
+     * @param \Closure(\CakeMenu\MenuInterface, self): void $callback
      * @param array<string, mixed> $options
      */
-    protected function registerWithCache(string $name, callable $callback, array $options): MenuInterface
+    protected function registerWithCache(string $name, Closure $callback, array $options): MenuInterface
     {
         if (isset($this->menus[$name]) && !isset($this->configOrigin[$name]) && empty($options['rebuild'])) {
             return $this->get($name);
@@ -199,7 +197,7 @@ class MenuHelper extends Helper
             if (is_array($cached)) {
                 $menu = Menu::fromArray($cached);
                 $this->menus[$name] = $menu;
-                $this->menuConfigs[$name] = $options;
+                $this->menuConfigs[$name] = array_diff_key($options, array_flip(['attributes', 'overwrite', 'cache', 'rebuild']));
                 $this->lastMenuName = $name;
                 // Now defined in code (from cache); drop any config-origin marker.
                 unset($this->configOrigin[$name]);
@@ -324,18 +322,11 @@ class MenuHelper extends Helper
     }
 
     /**
-     * @phpstan-param array<string, mixed> $options
-     *
-     * @return list<\Menu\Item\ItemInterface>
+     * @return list<\CakeMenu\Item\ItemInterface>
      */
-    public function extractPath(ItemInterface $item, array $options = []): array
+    public function extractPath(ItemInterface $item): array
     {
-        $path = [$item];
-        while (($item = $item->getParent()) !== null) {
-            $path[] = $item;
-        }
-
-        return array_reverse($path);
+        return $item->getPath();
     }
 
     /**
@@ -397,37 +388,30 @@ class MenuHelper extends Helper
 
     /**
      * @phpstan-param array<string, mixed> $options
-     * @phpstan-param array<string, mixed> $attributes
-     * @phpstan-param array<string, mixed> $separator
+     *
+     * @throws \InvalidArgumentException
      */
-    public function renderBreadcrumbs(
-        MenuInterface|string|null $menu = null,
-        array $options = [],
-        array $attributes = [],
-        array $separator = [],
-    ): string {
-        $renderer = $options['renderer'] ?? null;
-        if ($renderer === BreadcrumbRenderer::class || $renderer instanceof BreadcrumbRenderer) {
-            [$resolvedMenu, $resolvedOptions] = $this->resolveMenuAndOptions($menu, $options);
-            $state = $this->captureItemState($resolvedMenu);
-            try {
-                $this->applyResolvers($resolvedMenu, $resolvedOptions);
-                $activeItem = $resolvedMenu->getActiveItem();
-                if ($activeItem === null) {
-                    return '';
-                }
-
-                $resolvedOptions['path'] = $this->extractPath($activeItem);
-
-                return $this->getRenderer(['renderer' => BreadcrumbRenderer::class] + $resolvedOptions)->render($resolvedMenu, $resolvedOptions);
-            } finally {
-                $this->restoreItemState($resolvedMenu, $state);
-            }
+    public function renderBreadcrumbs(MenuInterface|string|null $menu = null, array $options = []): string
+    {
+        $renderer = $options['renderer'] ?? BreadcrumbRenderer::class;
+        if (!($renderer instanceof BreadcrumbRenderer) && !(is_string($renderer) && is_a($renderer, BreadcrumbRenderer::class, true))) {
+            throw new InvalidArgumentException('Breadcrumb renderer must extend BreadcrumbRenderer.');
         }
+        $options['renderer'] = $renderer;
+        [$resolvedMenu, $resolvedOptions] = $this->resolveMenuAndOptions($menu, $options);
+        $state = $this->captureItemState($resolvedMenu);
+        try {
+            $this->applyResolvers($resolvedMenu, $resolvedOptions);
+            $activeItem = $resolvedMenu->getActiveItem();
+            if ($activeItem === null) {
+                return '';
+            }
+            $resolvedOptions['path'] = $this->extractPath($activeItem);
 
-        $this->populateBreadcrumbs($menu, $options);
-
-        return $this->Breadcrumbs->render($attributes, $separator);
+            return $this->getRenderer($resolvedOptions)->render($resolvedMenu, $resolvedOptions);
+        } finally {
+            $this->restoreItemState($resolvedMenu, $state);
+        }
     }
 
     /**
@@ -435,7 +419,7 @@ class MenuHelper extends Helper
      *
      * @throws \InvalidArgumentException
      *
-     * @return array{0: \Menu\MenuInterface, 1: array<string, mixed>}
+     * @return array{0: \CakeMenu\MenuInterface, 1: array<string, mixed>}
      */
     protected function resolveMenuAndOptions(MenuInterface|string|null $menu, array $options): array
     {
@@ -470,8 +454,8 @@ class MenuHelper extends Helper
         }
 
         $resolver = $options['resolver'] ?? $this->createDefaultResolver($options);
-        if (!$resolver instanceof ResolverInterface && !$resolver instanceof ResolverCollectionInterface) {
-            throw new InvalidArgumentException('Resolver must implement ResolverInterface or ResolverCollectionInterface.');
+        if (!$resolver instanceof ResolverInterface) {
+            throw new InvalidArgumentException('Resolver must implement ResolverInterface.');
         }
 
         $menu->resetState();
@@ -491,7 +475,7 @@ class MenuHelper extends Helper
      */
     protected function enforceSingleActive(MenuInterface $menu): void
     {
-        /** @var list<array{item: \Menu\Item\ItemInterface, depth: int, visible: bool}> $active */
+        /** @var list<array{item: \CakeMenu\Item\ItemInterface, depth: int, visible: bool}> $active */
         $active = [];
         $this->collectActiveItems($menu, 1, true, $active);
         if ($active === []) {
@@ -516,11 +500,7 @@ class MenuHelper extends Helper
                 continue;
             }
             $item = $entry['item'];
-            if ($item instanceof StateResetInterface) {
-                $item->setRuntimeActive(false);
-            } else {
-                $item->setActive(false);
-            }
+            $item->setRuntimeActive(false);
         }
     }
 
@@ -528,10 +508,10 @@ class MenuHelper extends Helper
      * Collects every active item in the tree, recording its depth and whether it (and all its
      * ancestors) are visible — i.e. whether it would actually render.
      *
-     * @param \Menu\MenuInterface $menu
+     * @param \CakeMenu\MenuInterface $menu
      * @param int $depth
      * @param bool $ancestorsVisible
-     * @param list<array{item: \Menu\Item\ItemInterface, depth: int, visible: bool}> $active
+     * @param list<array{item: \CakeMenu\Item\ItemInterface, depth: int, visible: bool}> $active
      */
     protected function collectActiveItems(MenuInterface $menu, int $depth, bool $ancestorsVisible, array &$active): void
     {
@@ -546,30 +526,19 @@ class MenuHelper extends Helper
         }
     }
 
-    protected function invokeRegisterCallback(callable $callback, MenuInterface $menu): void
+    protected function invokeRegisterCallback(Closure $callback, MenuInterface $menu): void
     {
-        $reflectionFunction = new ReflectionFunction(Closure::fromCallable($callback));
-        if ($reflectionFunction->getNumberOfParameters() <= 1) {
-            $callback($menu);
-
-            return;
-        }
-
         $callback($menu, $this);
     }
 
     /**
-     * @return array<int, array{visible: bool, active: bool, expanded: bool}>
+     * @return array<int, array{visible: bool|null, active: bool|null, expanded: bool|null}>
      */
     protected function captureItemState(MenuInterface $menu): array
     {
         $state = [];
         foreach ($menu->getItems() as $item) {
-            $state[spl_object_id($item)] = [
-                'visible' => $item->isVisible(),
-                'active' => $item->isActive(),
-                'expanded' => $item->isExpanded(),
-            ];
+            $state[spl_object_id($item)] = $item->getRuntimeState();
             if ($item->hasSubMenu()) {
                 $state += $this->captureItemState($item->getSubMenu());
             }
@@ -579,24 +548,26 @@ class MenuHelper extends Helper
     }
 
     /**
-     * @param \Menu\MenuInterface $menu
-     * @param array<int, array{visible: bool, active: bool, expanded: bool}> $state
+     * @param \CakeMenu\MenuInterface $menu
+     * @param array<int, array{visible: bool|null, active: bool|null, expanded: bool|null}> $state
      */
     protected function restoreItemState(MenuInterface $menu, array $state): void
     {
         foreach ($menu->getItems() as $item) {
             $itemState = $state[spl_object_id($item)] ?? null;
             if ($itemState !== null) {
-                if ($item instanceof StateResetInterface) {
-                    $item->setRuntimeVisibility($itemState['visible']);
+                $item->resetState();
+                if ($itemState['visible'] !== null) {
+                    $item->setRuntimeVisible($itemState['visible']);
+                }
+                if ($itemState['active'] !== null) {
                     $item->setRuntimeActive($itemState['active']);
+                }
+                if ($itemState['expanded'] !== null) {
                     $item->setRuntimeExpanded($itemState['expanded']);
-                } else {
-                    $item->setVisibility($itemState['visible']);
-                    $item->setActive($itemState['active']);
-                    $item->setExpanded($itemState['expanded']);
                 }
             }
+
             if ($item->hasSubMenu()) {
                 $this->restoreItemState($item->getSubMenu(), $state);
             }
@@ -657,7 +628,7 @@ class MenuHelper extends Helper
             throw new InvalidArgumentException('Renderer must be a class name or RendererInterface instance.');
         }
 
-        /** @var class-string<\Menu\Renderer\RendererInterface> $renderer */
+        /** @var class-string<\CakeMenu\Renderer\RendererInterface> $renderer */
         return new $renderer($options);
     }
 }

@@ -2,35 +2,41 @@
 
 declare(strict_types=1);
 
-namespace Menu\Resolver;
+namespace CakeMenu\Resolver;
 
-use Menu\Item\ItemInterface;
+use Cake\Core\InstanceConfigTrait;
+use CakeMenu\Item\ItemInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use function is_string;
 use function preg_match;
 use function restore_error_handler;
 use function set_error_handler;
 
-/**
- * Marks items active when the current request path matches a regular expression stored in the item's
- * data (default key `match`). The value may be a single pattern or a list of patterns; the item is
- * activated when any pattern matches. Invalid patterns are ignored rather than raising a warning.
- *
- * Useful for activating a menu entry across a whole URL section that a route-array match cannot
- * express, e.g. `'#^/admin/(users|roles)#'`.
- */
 class RegexResolver implements ResolverInterface
 {
-    use RuntimeStateTrait;
+    use InstanceConfigTrait;
 
-    public function __construct(
-        protected string $path,
-        protected string $dataKey = 'match',
-    ) {
+    /**
+     * @var array<string, mixed>
+     */
+    protected array $_defaultConfig = ['dataKey' => 'match', 'maxDepth' => null];
+
+    /**
+     * @param \Psr\Http\Message\ServerRequestInterface $request
+     * @param array<string, mixed> $options
+     */
+    public function __construct(protected ServerRequestInterface $request, array $options = [])
+    {
+        $this->setConfig($options);
     }
 
-    public function resolve(ItemInterface $item): void
+    public function resolve(ItemInterface $item, ResolverContext $context): void
     {
-        $patterns = $item->getData($this->dataKey);
+        $maxDepth = $this->getConfig('maxDepth');
+        if (is_int($maxDepth) && $context->getDepth() > $maxDepth) {
+            return;
+        }
+        $patterns = $item->getData((string)$this->getConfig('dataKey'));
         if ($patterns === null) {
             return;
         }
@@ -40,22 +46,18 @@ class RegexResolver implements ResolverInterface
                 continue;
             }
             if ($this->matches($pattern)) {
-                $this->applyActive($item);
+                $item->setRuntimeActive(true);
 
                 return;
             }
         }
     }
 
-    /**
-     * Tests a pattern against the request path, swallowing the warning an invalid pattern emits so a
-     * bad entry never breaks rendering.
-     */
     protected function matches(string $pattern): bool
     {
         set_error_handler(static fn (): bool => true);
         try {
-            return preg_match($pattern, $this->path) === 1;
+            return preg_match($pattern, $this->request->getUri()->getPath()) === 1;
         } finally {
             restore_error_handler();
         }

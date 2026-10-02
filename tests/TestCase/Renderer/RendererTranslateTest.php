@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Menu\Test\TestCase\Renderer;
+namespace CakeMenu\Test\TestCase\Renderer;
 
 use Cake\Cache\Cache;
 use Cake\I18n\I18n;
 use Cake\I18n\Package;
 use Cake\TestSuite\TestCase;
-use Menu\Menu;
-use Menu\Renderer\StringTemplateRenderer;
+use CakeMenu\Menu;
+use CakeMenu\Renderer\StringTemplateRenderer;
 
 class RendererTranslateTest extends TestCase
 {

@@ -2,17 +2,17 @@
 
 declare(strict_types=1);
 
-namespace Menu\Test\TestCase\Menu;
+namespace CakeMenu\Test\TestCase\Menu;
 
 use Cake\TestSuite\TestCase;
+use CakeMenu\Menu;
 use InvalidArgumentException;
 use LogicException;
-use Menu\Menu;
 
 class MenuManipulationTest extends TestCase
 {
     /**
-     * @param \Menu\MenuInterface $menu
+     * @param \CakeMenu\MenuInterface $menu
      *
      * @return list<string>
      */

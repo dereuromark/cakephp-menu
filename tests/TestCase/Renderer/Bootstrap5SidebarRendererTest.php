@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Menu\Test\TestCase\Renderer;
+namespace CakeMenu\Test\TestCase\Renderer;
 
 use Cake\TestSuite\TestCase;
-use Menu\Link\Link;
-use Menu\Menu;
-use Menu\Renderer\Bootstrap5SidebarRenderer;
+use CakeMenu\Link\Link;
+use CakeMenu\Menu;
+use CakeMenu\Renderer\Bootstrap5SidebarRenderer;
 
 class Bootstrap5SidebarRendererTest extends TestCase
 {

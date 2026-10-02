@@ -21,6 +21,7 @@ function sidebar() {
         { text: 'Recipes', link: '/guide/recipes' },
         { text: 'Extending', link: '/guide/extending' },
         { text: 'FAQ & Troubleshooting', link: '/guide/faq' },
+        { text: 'Upgrading', link: '/guide/upgrading' },
       ],
     },
     {

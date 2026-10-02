@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Menu\Test\TestCase\View\Helper;
+namespace CakeMenu\Test\TestCase\View\Helper;
 
 use Cake\Cache\Cache;
 use Cake\Core\Configure;
@@ -10,9 +10,11 @@ use Cake\Http\Response;
 use Cake\Http\ServerRequest;
 use Cake\TestSuite\TestCase;
 use Cake\View\View;
+use CakeMenu\MenuInterface;
+use CakeMenu\Renderer\StringTemplateRenderer;
+use CakeMenu\View\Helper\MenuHelper;
 use InvalidArgumentException;
-use Menu\MenuInterface;
-use Menu\View\Helper\MenuHelper;
+use RuntimeException;
 
 class MenuHelperCacheConfigTest extends TestCase
 {
@@ -36,6 +38,7 @@ class MenuHelperCacheConfigTest extends TestCase
     {
         Cache::clear('menu_test');
         Cache::drop('menu_test');
+        Configure::delete('CakeMenu.menus');
         Configure::delete('Menu.menus');
         parent::tearDown();
     }
@@ -133,7 +136,7 @@ class MenuHelperCacheConfigTest extends TestCase
 
     public function testAutoLoadsMenusFromConfigure(): void
     {
-        Configure::write('Menu.menus', [
+        Configure::write('CakeMenu.menus', [
             'main' => [
                 'attributes' => ['class' => 'nav'],
                 'items' => [
@@ -151,9 +154,25 @@ class MenuHelperCacheConfigTest extends TestCase
         );
     }
 
-    public function testRegisterOverridesConfiguredMenu(): void
+    public function testAutoLoadsMenusFromDeprecatedConfigureKey(): void
     {
         Configure::write('Menu.menus', [
+            'main' => ['items' => [['label' => 'Home', 'link' => '/home']]],
+        ]);
+
+        $this->deprecated(function (): void {
+            $helper = $this->createHelper(new ServerRequest());
+
+            $this->assertSame(
+                '<ul><li><a href="/home">Home</a></li></ul>',
+                $helper->render('main'),
+            );
+        });
+    }
+
+    public function testRegisterOverridesConfiguredMenu(): void
+    {
+        Configure::write('CakeMenu.menus', [
             'main' => ['items' => [['label' => 'Home', 'link' => '/home']]],
         ]);
 
@@ -172,7 +191,7 @@ class MenuHelperCacheConfigTest extends TestCase
 
     public function testRegisterOverridesConfiguredMenuEvenAfterRender(): void
     {
-        Configure::write('Menu.menus', [
+        Configure::write('CakeMenu.menus', [
             'main' => ['items' => [['label' => 'Home', 'link' => '/home']]],
         ]);
 
@@ -191,7 +210,7 @@ class MenuHelperCacheConfigTest extends TestCase
 
     public function testRemoveDeletesConfiguredMenu(): void
     {
-        Configure::write('Menu.menus', [
+        Configure::write('CakeMenu.menus', [
             'main' => ['items' => [['label' => 'Home', 'link' => '/home']]],
         ]);
 
@@ -206,7 +225,7 @@ class MenuHelperCacheConfigTest extends TestCase
 
     public function testResetKeepsConfiguredMenusAvailable(): void
     {
-        Configure::write('Menu.menus', [
+        Configure::write('CakeMenu.menus', [
             'main' => ['items' => [['label' => 'Home', 'link' => '/home']]],
         ]);
 
@@ -220,5 +239,40 @@ class MenuHelperCacheConfigTest extends TestCase
             '<ul><li><a href="/home">Home</a></li></ul>',
             $helper->render('main'),
         );
+    }
+
+    public function testCachedRegistrationDoesNotForwardBuildOptions(): void
+    {
+        $renderer = new class extends StringTemplateRenderer {
+            public function render(MenuInterface $menu, array $options = []): string
+            {
+                foreach (['attributes', 'cache', 'overwrite', 'rebuild'] as $key) {
+                    if (array_key_exists($key, $options)) {
+                        throw new RuntimeException('Build option reached renderer: ' . $key);
+                    }
+                }
+
+                return $options['custom'];
+            }
+        };
+        $options = [
+            'cache' => ['key' => 'isolated', 'config' => 'menu_test'],
+            'overwrite' => true,
+            'attributes' => ['class' => 'nav'],
+            'renderer' => $renderer,
+            'custom' => 'kept',
+        ];
+        $builds = 0;
+        $build = static function (MenuInterface $menu) use (&$builds): void {
+            $builds++;
+            $menu->addItem('Home', '/home');
+        };
+        foreach ([true, false] as $rebuild) {
+            $helper = $this->createHelper(new ServerRequest());
+            $helper->register('main', $build, $options + ['rebuild' => $rebuild]);
+            $this->assertSame('kept', $helper->render('main'));
+            $this->assertSame(['class' => 'nav'], $helper->get('main')->getAttributes());
+        }
+        $this->assertSame(1, $builds);
     }
 }

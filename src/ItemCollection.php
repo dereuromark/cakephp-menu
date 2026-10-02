@@ -2,21 +2,21 @@
 
 declare(strict_types=1);
 
-namespace Menu;
+namespace CakeMenu;
 
+use CakeMenu\Item\ItemInterface;
 use Countable;
 use InvalidArgumentException;
 use IteratorAggregate;
-use Menu\Item\ItemInterface;
 use Traversable;
 
 /**
- * @implements \IteratorAggregate<int, \Menu\Item\ItemInterface>
+ * @implements \IteratorAggregate<int, \CakeMenu\Item\ItemInterface>
  */
 class ItemCollection implements Countable, IteratorAggregate
 {
     /**
-     * @var list<\Menu\Item\ItemInterface>
+     * @var list<\CakeMenu\Item\ItemInterface>
      */
     protected array $items = [];
 
@@ -53,7 +53,7 @@ class ItemCollection implements Countable, IteratorAggregate
     }
 
     /**
-     * @return list<\Menu\Item\ItemInterface>
+     * @return list<\CakeMenu\Item\ItemInterface>
      */
     public function all(): array
     {
@@ -83,7 +83,7 @@ class ItemCollection implements Countable, IteratorAggregate
     }
 
     /**
-     * @return list<\Menu\Item\ItemInterface>
+     * @return list<\CakeMenu\Item\ItemInterface>
      */
     public function findByParent(ItemInterface|string $parent): array
     {
@@ -101,7 +101,7 @@ class ItemCollection implements Countable, IteratorAggregate
     }
 
     /**
-     * @return \Traversable<int, \Menu\Item\ItemInterface>
+     * @return \Traversable<int, \CakeMenu\Item\ItemInterface>
      */
     public function getIterator(): Traversable
     {

@@ -22,8 +22,11 @@ composer require dereuromark/cakephp-menu
 Load the plugin:
 
 ```bash
-bin/cake plugin load Menu
+bin/cake plugin load CakeMenu
 ```
+
+> [!TIP] Changed in 0.2
+> The namespace and plugin name changed from `Menu` to `CakeMenu`. See [Upgrading](./upgrading.md#_0-1-to-0-2).
 
 Load the helper in your `AppView`:
 
@@ -36,7 +39,7 @@ class AppView extends View
     {
         parent::initialize();
 
-        $this->loadHelper('Menu.Menu');
+        $this->loadHelper('CakeMenu.Menu');
     }
 }
 ```
@@ -46,7 +49,7 @@ class AppView extends View
 Build a menu and render it from a template:
 
 ```php
-use Menu\Menu;
+use CakeMenu\Menu;
 
 $menu = Menu::create(['class' => 'nav']);
 $menu->addItem('Dashboard', ['controller' => 'Dashboard', 'action' => 'index']);
@@ -63,12 +66,12 @@ render.
 
 ## Where to next
 
-- [Concepts](/guide/concepts) — the build → resolve → render pipeline and the core types.
-- [Building Menus](/guide/building) — items, nesting, headers, icons/badges, import/export, database-backed menus.
-- [Resolvers & Active State](/guide/resolvers) — how the active item is matched, and the available resolvers.
-- [Rendering](/guide/rendering) — the helper, renderer options, and the bundled renderers.
-- [Renderer Gallery](/guide/gallery) — every bundled renderer with real output.
-- [Recipes](/guide/recipes) — role-based menus (TinyAuth), caching, breadcrumbs, and more.
-- [Extending](/guide/extending) — custom renderers and resolvers, plus testing tips.
-- [FAQ & Troubleshooting](/guide/faq) — common active-state and URL gotchas.
-- [Reference](/reference/renderer-options) — every renderer/item/helper option and an API cheat sheet.
+- [Concepts](/guide/concepts); the build → resolve → render pipeline and the core types.
+- [Building Menus](/guide/building); items, nesting, headers, icons/badges, import/export, database-backed menus.
+- [Resolvers & Active State](/guide/resolvers); how the active item is matched, and the available resolvers.
+- [Rendering](/guide/rendering); the helper, renderer options, and the bundled renderers.
+- [Renderer Gallery](/guide/gallery); every bundled renderer with real output.
+- [Recipes](/guide/recipes); role-based menus (TinyAuth), caching, breadcrumbs, and more.
+- [Extending](/guide/extending); custom renderers and resolvers, plus testing tips.
+- [FAQ & Troubleshooting](/guide/faq); common active-state and URL gotchas.
+- [Reference](/reference/renderer-options); every renderer/item/helper option and an API cheat sheet.

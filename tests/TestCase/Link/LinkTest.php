@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Menu\Test\TestCase\Link;
+namespace CakeMenu\Test\TestCase\Link;
 
 use Cake\Routing\Route\DashedRoute;
 use Cake\Routing\Router;
 use Cake\TestSuite\TestCase;
-use Menu\Link\Link;
+use CakeMenu\Link\Link;
 
 class LinkTest extends TestCase
 {

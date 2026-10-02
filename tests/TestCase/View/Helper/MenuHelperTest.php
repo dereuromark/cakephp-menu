@@ -2,24 +2,27 @@
 
 declare(strict_types=1);
 
-namespace Menu\Test\TestCase\View\Helper;
+namespace CakeMenu\Test\TestCase\View\Helper;
 
 use Cake\Http\Response;
 use Cake\Http\ServerRequest;
 use Cake\Routing\Route\Route;
 use Cake\TestSuite\TestCase;
 use Cake\View\View;
+use CakeMenu\Item\Item;
+use CakeMenu\Item\ItemInterface;
+use CakeMenu\Item\SelfRendererInterface;
+use CakeMenu\Menu;
+use CakeMenu\MenuInterface;
+use CakeMenu\Renderer\BreadcrumbRenderer;
+use CakeMenu\Renderer\StringTemplateRenderer;
+use CakeMenu\Resolver\AuthorizationResolver;
+use CakeMenu\Resolver\ResolverCollection;
+use CakeMenu\Resolver\ResolverContext;
+use CakeMenu\Resolver\SectionResolver;
+use CakeMenu\View\Helper\MenuHelper;
 use InvalidArgumentException;
-use Menu\Item\Item;
-use Menu\Item\ItemInterface;
-use Menu\Item\SelfRendererInterface;
-use Menu\Menu;
-use Menu\Renderer\BreadcrumbRenderer;
-use Menu\Resolver\AuthorizationResolver;
-use Menu\Resolver\ResolverCollection;
-use Menu\Resolver\ResolverContext;
-use Menu\Resolver\SectionResolver;
-use Menu\View\Helper\MenuHelper;
+use RuntimeException;
 
 class MenuHelperTest extends TestCase
 {
@@ -62,6 +65,19 @@ class MenuHelperTest extends TestCase
         );
     }
 
+    public function testRenderDoesNotPinRuntimeStateAfterRestore(): void
+    {
+        $menuHelper = $this->createHelper(new ServerRequest());
+        $menu = Menu::create();
+        $item = $menu->addItem('First', '/x');
+
+        $menuHelper->render($menu);
+        $item->setVisible(false);
+
+        $this->assertFalse($item->isVisible());
+        $this->assertSame(['visible' => null, 'active' => null, 'expanded' => null], $item->getRuntimeState());
+    }
+
     public function testCreateRenderAndGetByName(): void
     {
         $request = (new ServerRequest(['url' => '/articles/view']))
@@ -74,7 +90,7 @@ class MenuHelperTest extends TestCase
 
         $menuHelper = $this->createHelper($request);
         $menu = $menuHelper->create('main', [
-            'menuAttributes' => ['class' => 'nav'],
+            'attributes' => ['class' => 'nav'],
         ]);
         $menu->addItem('Home', '/');
         $menu->addItem('Articles', '/articles/view', [
@@ -150,7 +166,7 @@ class MenuHelperTest extends TestCase
         $this->assertSame('Articles', $crumbs[0]['title']);
         $this->assertSame('/articles', $crumbs[0]['url']);
         $this->assertNull($crumbs[1]['url']);
-        $this->assertStringContainsString('<ul>', $html);
+        $this->assertStringContainsString('<ol class="breadcrumb">', $html);
         $this->assertStringContainsString('aria-current="page"', $html);
     }
 
@@ -406,5 +422,47 @@ class MenuHelperTest extends TestCase
         $this->assertCount(2, $crumbs);
         $this->assertSame('Section', $crumbs[0]['title']);
         $this->assertSame('Articles', $crumbs[1]['title']);
+    }
+
+    public function testBuildOptionsDoNotReachRenderer(): void
+    {
+        $helper = $this->createHelper(new ServerRequest());
+        $renderer = new class extends StringTemplateRenderer {
+            public function render(MenuInterface $menu, array $options = []): string
+            {
+                foreach (['cache', 'overwrite', 'rebuild', 'attributes'] as $key) {
+                    if (array_key_exists($key, $options)) {
+                        throw new RuntimeException('Build option reached renderer: ' . $key);
+                    }
+                }
+
+                return $options['custom'];
+            }
+        };
+        $options = ['cache' => false, 'overwrite' => true, 'rebuild' => true, 'attributes' => ['class' => 'nav'], 'renderer' => $renderer, 'custom' => 'kept'];
+        $helper->create('created', $options);
+        $this->assertSame('kept', $helper->render('created'));
+        $helper->register('registered', static function ($menu, $receivedHelper) use ($helper): void {
+            self::assertSame($helper, $receivedHelper);
+            self::assertSame(2, func_num_args());
+        }, $options);
+        $this->assertSame('kept', $helper->render('registered'));
+    }
+
+    public function testBreadcrumbSubclassAndCakeHelper(): void
+    {
+        $helper = $this->createHelper(new ServerRequest());
+        $menu = $helper->create('main');
+        $menu->addItem('Current')->setActive(true);
+        $renderer = new class extends BreadcrumbRenderer {
+            public function render(MenuInterface $menu, array $options = []): string
+            {
+                return 'custom';
+            }
+        };
+        $this->assertSame('custom', $helper->renderBreadcrumbs('main', ['resolve' => false, 'renderer' => $renderer::class]));
+        $this->assertSame('custom', $helper->renderBreadcrumbs('main', ['resolve' => false, 'renderer' => $renderer]));
+        $helper->populateBreadcrumbs('main', ['resolve' => false]);
+        $this->assertStringContainsString('Current', $helper->Breadcrumbs->render());
     }
 }

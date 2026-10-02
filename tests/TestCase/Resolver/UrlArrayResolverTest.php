@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Menu\Test\TestCase\Resolver;
+namespace CakeMenu\Test\TestCase\Resolver;
 
 use Cake\Http\ServerRequest;
 use Cake\Routing\Route\DashedRoute;
@@ -10,12 +10,24 @@ use Cake\Routing\Route\Route;
 use Cake\Routing\RouteBuilder;
 use Cake\Routing\Router;
 use Cake\TestSuite\TestCase;
-use Menu\Item\Item;
-use Menu\Resolver\UrlArrayResolver;
+use CakeMenu\Item\Item;
+use CakeMenu\Item\ItemInterface;
+use CakeMenu\Resolver\ResolverContext;
+use CakeMenu\Resolver\UrlArrayResolver;
 use PHPUnit\Framework\Attributes\DataProvider;
 
 class UrlArrayResolverTest extends TestCase
 {
+    public function testCustomItemMatchingSettings(): void
+    {
+        $item = $this->createMock(ItemInterface::class);
+        $item->method('getMatchRoutes')->willReturn([['controller' => 'Articles']]);
+        $item->method('getFuzzy')->willReturn(true);
+        $item->expects($this->once())->method('setRuntimeActive')->with(true)->willReturnSelf();
+        $request = (new ServerRequest())->withAttribute('params', ['controller' => 'Articles', 'action' => 'view']);
+        (new UrlArrayResolver($request, ['fuzzy' => false]))->resolve($item, new ResolverContext());
+    }
+
     public function testMatchesControllerActionAndPass(): void
     {
         $item = new Item('View Article', [
@@ -32,7 +44,7 @@ class UrlArrayResolverTest extends TestCase
         ]);
 
         $resolver = new UrlArrayResolver($request);
-        $resolver->resolve($item);
+        $resolver->resolve($item, new ResolverContext());
 
         $this->assertTrue($item->isActive());
     }
@@ -47,7 +59,7 @@ class UrlArrayResolverTest extends TestCase
                 'controller' => 'Articles',
                 'action' => 'view',
             ])
-            ->setFuzzyMatch();
+            ->setFuzzy(true);
 
         $request = (new ServerRequest())
             ->withAttribute('params', [
@@ -57,7 +69,7 @@ class UrlArrayResolverTest extends TestCase
             ]);
 
         $resolver = new UrlArrayResolver($request);
-        $resolver->resolve($item);
+        $resolver->resolve($item, new ResolverContext());
 
         $this->assertTrue($item->isActive());
     }
@@ -73,7 +85,7 @@ class UrlArrayResolverTest extends TestCase
                 'action' => 'index',
                 '?' => ['sort' => 'desc'],
             ])
-            ->setFuzzyMatch();
+            ->setFuzzy(true);
 
         $request = (new ServerRequest())
             ->withAttribute('params', [
@@ -83,7 +95,7 @@ class UrlArrayResolverTest extends TestCase
             ->withQueryParams(['sort' => 'desc', 'page' => '2']);
 
         $resolver = new UrlArrayResolver($request);
-        $resolver->resolve($item);
+        $resolver->resolve($item, new ResolverContext());
 
         $this->assertTrue($item->isActive());
     }
@@ -100,7 +112,7 @@ class UrlArrayResolverTest extends TestCase
             ]);
 
         $resolver = new UrlArrayResolver($request);
-        $resolver->resolve($item);
+        $resolver->resolve($item, new ResolverContext());
 
         $this->assertTrue($item->isActive());
     }
@@ -111,7 +123,7 @@ class UrlArrayResolverTest extends TestCase
             'controller' => 'Articles',
             'action' => 'view',
             42,
-        ]))->setFuzzyMatch(false);
+        ]))->setFuzzy(false);
 
         $request = (new ServerRequest())->withAttribute('params', [
             'controller' => 'Articles',
@@ -121,7 +133,7 @@ class UrlArrayResolverTest extends TestCase
         ]);
 
         $resolver = new UrlArrayResolver($request, ['fuzzy' => false]);
-        $resolver->resolve($item);
+        $resolver->resolve($item, new ResolverContext());
 
         $this->assertTrue($item->isActive());
     }
@@ -131,7 +143,7 @@ class UrlArrayResolverTest extends TestCase
         $item = (new Item('View Article', [
             'controller' => 'Articles',
             'action' => 'view',
-        ]))->setFuzzyMatch(false);
+        ]))->setFuzzy(false);
 
         $request = (new ServerRequest())->withAttribute('params', [
             'controller' => 'Articles',
@@ -141,7 +153,7 @@ class UrlArrayResolverTest extends TestCase
         ]);
 
         $resolver = new UrlArrayResolver($request, ['fuzzy' => false]);
-        $resolver->resolve($item);
+        $resolver->resolve($item, new ResolverContext());
 
         $this->assertFalse($item->isActive());
     }
@@ -150,7 +162,7 @@ class UrlArrayResolverTest extends TestCase
     {
         $item = (new Item('Articles', [
             'controller' => 'Articles',
-        ]))->setFuzzyMatch(false);
+        ]))->setFuzzy(false);
 
         $request = (new ServerRequest())->withAttribute('params', [
             'controller' => 'Articles',
@@ -160,7 +172,7 @@ class UrlArrayResolverTest extends TestCase
         ]);
 
         $resolver = new UrlArrayResolver($request, ['fuzzy' => true]);
-        $resolver->resolve($item);
+        $resolver->resolve($item, new ResolverContext());
 
         $this->assertFalse($item->isActive());
     }
@@ -181,7 +193,7 @@ class UrlArrayResolverTest extends TestCase
         ]);
 
         $resolver = new UrlArrayResolver($request);
-        $resolver->resolve($item);
+        $resolver->resolve($item, new ResolverContext());
 
         $this->assertTrue($item->isActive());
     }
@@ -202,7 +214,7 @@ class UrlArrayResolverTest extends TestCase
         ]);
 
         $resolver = new UrlArrayResolver($request);
-        $resolver->resolve($item);
+        $resolver->resolve($item, new ResolverContext());
 
         $this->assertFalse($item->isActive());
     }
@@ -220,7 +232,7 @@ class UrlArrayResolverTest extends TestCase
         ]);
 
         $resolver = new UrlArrayResolver($request);
-        $resolver->resolve($item);
+        $resolver->resolve($item, new ResolverContext());
 
         $this->assertTrue($item->isActive());
     }
@@ -238,7 +250,7 @@ class UrlArrayResolverTest extends TestCase
         ]);
 
         $resolver = new UrlArrayResolver($request);
-        $resolver->resolve($item);
+        $resolver->resolve($item, new ResolverContext());
 
         $this->assertTrue($item->isActive());
     }
@@ -249,7 +261,7 @@ class UrlArrayResolverTest extends TestCase
             'controller' => 'Articles',
             'action' => 'index',
             '?' => ['action' => 'edit'],
-        ]))->setFuzzyMatch(false);
+        ]))->setFuzzy(false);
 
         // Link targets Articles/index?action=edit; the request is Articles/index with no query,
         // so the `?action=edit` constraint must not be satisfied by the routing `action` key.
@@ -261,7 +273,7 @@ class UrlArrayResolverTest extends TestCase
         ]);
 
         $resolver = new UrlArrayResolver($request, ['fuzzy' => false]);
-        $resolver->resolve($item);
+        $resolver->resolve($item, new ResolverContext());
 
         $this->assertFalse($item->isActive());
     }
@@ -272,7 +284,7 @@ class UrlArrayResolverTest extends TestCase
             'controller' => 'Articles',
             'action' => 'index',
             '?' => ['sort' => 'desc'],
-        ]))->setFuzzyMatch(false);
+        ]))->setFuzzy(false);
 
         $request = (new ServerRequest())
             ->withAttribute('params', [
@@ -284,7 +296,7 @@ class UrlArrayResolverTest extends TestCase
             ->withQueryParams(['sort' => 'desc']);
 
         $resolver = new UrlArrayResolver($request, ['fuzzy' => false]);
-        $resolver->resolve($item);
+        $resolver->resolve($item, new ResolverContext());
 
         $this->assertTrue($item->isActive());
     }
@@ -295,7 +307,7 @@ class UrlArrayResolverTest extends TestCase
             'controller' => 'Articles',
             'action' => 'index',
             '?' => ['prefix' => 'abc'],
-        ]))->setFuzzyMatch(false);
+        ]))->setFuzzy(false);
 
         $request = (new ServerRequest())
             ->withAttribute('params', [
@@ -307,7 +319,7 @@ class UrlArrayResolverTest extends TestCase
             ->withQueryParams(['prefix' => 'abc']);
 
         $resolver = new UrlArrayResolver($request, ['fuzzy' => false]);
-        $resolver->resolve($item);
+        $resolver->resolve($item, new ResolverContext());
 
         $this->assertTrue($item->isActive());
     }
@@ -318,7 +330,7 @@ class UrlArrayResolverTest extends TestCase
             'controller' => 'Articles',
             'action' => 'index',
             '?' => ['plugin' => 'abc'],
-        ]))->setFuzzyMatch(false);
+        ]))->setFuzzy(false);
 
         $request = (new ServerRequest())
             ->withAttribute('params', [
@@ -329,7 +341,7 @@ class UrlArrayResolverTest extends TestCase
             ->withQueryParams(['plugin' => 'abc']);
 
         $resolver = new UrlArrayResolver($request, ['fuzzy' => false]);
-        $resolver->resolve($item);
+        $resolver->resolve($item, new ResolverContext());
 
         $this->assertTrue($item->isActive());
     }
@@ -341,7 +353,7 @@ class UrlArrayResolverTest extends TestCase
             'controller' => 'Articles',
             'action' => 'index',
             '?' => ['prefix' => 'Admin'],
-        ]))->setFuzzyMatch(false);
+        ]))->setFuzzy(false);
 
         $request = (new ServerRequest())
             ->withAttribute('params', [
@@ -353,7 +365,7 @@ class UrlArrayResolverTest extends TestCase
             ->withQueryParams(['prefix' => 'Admin']);
 
         $resolver = new UrlArrayResolver($request, ['fuzzy' => false]);
-        $resolver->resolve($item);
+        $resolver->resolve($item, new ResolverContext());
 
         $this->assertFalse($item->isActive());
     }
@@ -400,10 +412,10 @@ class UrlArrayResolverTest extends TestCase
         $request = new ServerRequest(['url' => $path]);
         $request = $request->withAttribute('params', Router::parseRequest($request));
 
-        $item = (new Item('Articles', $url))->setFuzzyMatch($fuzzy);
+        $item = (new Item('Articles', $url))->setFuzzy($fuzzy);
 
         $resolver = new UrlArrayResolver($request);
-        $resolver->resolve($item);
+        $resolver->resolve($item, new ResolverContext());
 
         $this->assertSame($expected, $item->isActive());
     }

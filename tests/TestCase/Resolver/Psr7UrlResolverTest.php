@@ -2,15 +2,28 @@
 
 declare(strict_types=1);
 
-namespace Menu\Test\TestCase\Resolver;
+namespace CakeMenu\Test\TestCase\Resolver;
 
 use Cake\Http\ServerRequest;
 use Cake\TestSuite\TestCase;
-use Menu\Item\Item;
-use Menu\Resolver\Psr7UrlResolver;
+use CakeMenu\Item\Item;
+use CakeMenu\Item\ItemInterface;
+use CakeMenu\Resolver\Psr7UrlResolver;
+use CakeMenu\Resolver\ResolverContext;
 
 class Psr7UrlResolverTest extends TestCase
 {
+    public function testCustomItemMatchingSettings(): void
+    {
+        $item = $this->createMock(ItemInterface::class);
+        $item->method('getMatchRoutes')->willReturn(['/users?sort=asc']);
+        $item->method('getIgnoreQueryString')->willReturn(false);
+        $item->expects($this->never())->method('setRuntimeActive');
+        $request = new ServerRequest(['url' => '/users?sort=desc']);
+        $request = $request->withUri($request->getUri()->withPath('/users')->withQuery('sort=desc'));
+        (new Psr7UrlResolver($request))->resolve($item, new ResolverContext());
+    }
+
     public function testResolvesCurrentStringUrl(): void
     {
         $item = new Item('User Listing', '/users?sort=desc');
@@ -18,7 +31,7 @@ class Psr7UrlResolverTest extends TestCase
         $request = $request->withUri($request->getUri()->withPath('/users')->withQuery('sort=desc'));
 
         $resolver = new Psr7UrlResolver($request);
-        $resolver->resolve($item);
+        $resolver->resolve($item, new ResolverContext());
 
         $this->assertTrue($item->isActive());
     }
@@ -30,7 +43,7 @@ class Psr7UrlResolverTest extends TestCase
         $request = $request->withUri($request->getUri()->withPath('/users')->withQuery('sort=desc'));
 
         $resolver = new Psr7UrlResolver($request);
-        $resolver->resolve($item);
+        $resolver->resolve($item, new ResolverContext());
 
         $this->assertTrue($item->isActive());
     }
@@ -43,7 +56,7 @@ class Psr7UrlResolverTest extends TestCase
         $request = $request->withUri($request->getUri()->withPath('/users'));
 
         $resolver = new Psr7UrlResolver($request);
-        $resolver->resolve($item);
+        $resolver->resolve($item, new ResolverContext());
 
         $this->assertTrue($item->isActive());
     }
@@ -55,7 +68,7 @@ class Psr7UrlResolverTest extends TestCase
         $request = new ServerRequest(['url' => '/users?sort=desc']);
 
         $resolver = new Psr7UrlResolver($request, ['ignoreQueryString' => false]);
-        $resolver->resolve($item);
+        $resolver->resolve($item, new ResolverContext());
 
         $this->assertTrue($item->isActive());
     }
@@ -66,7 +79,7 @@ class Psr7UrlResolverTest extends TestCase
         $request = new ServerRequest(['url' => '/users?sort=asc']);
 
         $resolver = new Psr7UrlResolver($request, ['ignoreQueryString' => false]);
-        $resolver->resolve($item);
+        $resolver->resolve($item, new ResolverContext());
 
         $this->assertFalse($item->isActive());
     }
@@ -77,7 +90,7 @@ class Psr7UrlResolverTest extends TestCase
         $request = new ServerRequest(['url' => '/users?page=2&sort=desc']);
 
         $resolver = new Psr7UrlResolver($request, ['ignoreQueryString' => false]);
-        $resolver->resolve($item);
+        $resolver->resolve($item, new ResolverContext());
 
         $this->assertTrue($item->isActive());
     }
@@ -89,7 +102,7 @@ class Psr7UrlResolverTest extends TestCase
         $request = new ServerRequest(['url' => '/users']);
 
         $resolver = new Psr7UrlResolver($request);
-        $resolver->resolve($item);
+        $resolver->resolve($item, new ResolverContext());
 
         $this->assertFalse($item->isActive());
     }
@@ -100,7 +113,7 @@ class Psr7UrlResolverTest extends TestCase
         $request = new ServerRequest(['url' => '/articles?tag=b']);
 
         $resolver = new Psr7UrlResolver($request, ['ignoreQueryString' => false]);
-        $resolver->resolve($item);
+        $resolver->resolve($item, new ResolverContext());
 
         $this->assertFalse($item->isActive());
     }
@@ -112,7 +125,7 @@ class Psr7UrlResolverTest extends TestCase
         $request = new ServerRequest(['url' => '/users']);
 
         $resolver = new Psr7UrlResolver($request);
-        $resolver->resolve($item);
+        $resolver->resolve($item, new ResolverContext());
 
         $this->assertTrue($item->isActive());
     }

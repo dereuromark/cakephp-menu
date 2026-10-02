@@ -2,19 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Menu\Resolver;
+namespace CakeMenu\Resolver;
 
-use Menu\Item\ItemInterface;
-use ReflectionMethod;
+use CakeMenu\Item\ItemInterface;
 use function is_string;
 use function method_exists;
 
-class PermissionResolver implements ContextAwareResolverInterface
+class PermissionResolver implements ResolverInterface
 {
-    use RuntimeStateTrait;
-
-    protected ?int $parameterCount = null;
-
     public function __construct(
         protected object $authorizer,
         protected mixed $identity = null,
@@ -23,38 +18,16 @@ class PermissionResolver implements ContextAwareResolverInterface
     ) {
     }
 
-    public function resolve(ItemInterface $item): void
-    {
-        $this->resolveWithContext($item, new ResolverContext());
-    }
-
-    public function resolveWithContext(ItemInterface $item, ResolverContext $context): void
+    public function resolve(ItemInterface $item, ResolverContext $context): void
     {
         $permission = $item->getData($this->dataKey);
         if (!is_string($permission) || !method_exists($this->authorizer, $this->method)) {
             return;
         }
 
-        $allowed = $this->invokeAuthorizer($permission, $item, $context);
+        $allowed = $this->authorizer->{$this->method}($this->identity, $permission, $item);
         if (is_bool($allowed)) {
-            $this->applyVisibility($item, $allowed);
+            $item->setRuntimeVisible($allowed);
         }
-    }
-
-    protected function invokeAuthorizer(string $permission, ItemInterface $item, ResolverContext $context): mixed
-    {
-        if ($this->parameterCount === null) {
-            $reflectionMethod = new ReflectionMethod($this->authorizer, $this->method);
-            $this->parameterCount = $reflectionMethod->getNumberOfParameters()
-                - (int)$reflectionMethod->isVariadic();
-        }
-
-        return match (true) {
-            $this->parameterCount >= 4 => $this->authorizer->{$this->method}($this->identity, $permission, $item, $context),
-            $this->parameterCount === 3 => $this->authorizer->{$this->method}($this->identity, $permission, $item),
-            $this->parameterCount === 2 => $this->authorizer->{$this->method}($this->identity, $permission),
-            $this->parameterCount === 1 => $this->authorizer->{$this->method}($permission),
-            default => $this->authorizer->{$this->method}(),
-        };
     }
 }

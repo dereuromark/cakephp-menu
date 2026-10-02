@@ -7,7 +7,7 @@ description: The Menu helper's methods and the options accepted by render(), get
 The `Menu` helper builds, resolves, and renders named menus. Load it in `AppView`:
 
 ```php
-$this->loadHelper('Menu.Menu');
+$this->loadHelper('CakeMenu.Menu');
 ```
 
 ## Methods
@@ -15,7 +15,7 @@ $this->loadHelper('Menu.Menu');
 | Method | Purpose |
 |--------|---------|
 | `create(string $name, array $options = [])` | Create a new named menu. |
-| `register(string $name, callable $cb, array $options = [])` | Idempotently build a named menu via a callback. |
+| `register(string $name, Closure $cb, array $options = [])` | Idempotently build a named menu via a callback. |
 | `getOrCreate(string $name, array $options = [])` | Return an existing menu or create it. |
 | `has(string $name)` | Whether a named menu exists. |
 | `get(string $name)` | Return a named menu (throws if missing). |
@@ -25,7 +25,7 @@ $this->loadHelper('Menu.Menu');
 | `extractPath(ItemInterface $item)` | Root-to-item path (for breadcrumbs). |
 | `getBreadcrumbs($menu = null, array $options = [])` | Active path as an array of crumbs. |
 | `populateBreadcrumbs($menu = null, array $options = [])` | Push crumbs into Cake's `Breadcrumbs` helper. |
-| `renderBreadcrumbs($menu = null, $options = [], $attributes = [], $separator = [])` | Render breadcrumbs (via the `BreadcrumbRenderer` or Cake's helper). |
+| `renderBreadcrumbs($menu = null, array $options = [])` | Render through `BreadcrumbRenderer` or a subclass. |
 
 ## render() options
 
@@ -36,7 +36,7 @@ straight through to the renderer as [renderer options](/reference/renderer-optio
 |--------|---------|-------------|
 | `renderer` | `StringTemplateRenderer::class` | Renderer class name or instance. |
 | `resolve` | `true` | Set `false` to render without resolving active state. |
-| `resolver` | (built-in URL resolvers) | A `ResolverInterface`/`ResolverCollectionInterface` that **replaces** the defaults. |
+| `resolver` | (built-in URL resolvers) | A `ResolverInterface` that **replaces** the defaults. |
 | `additionalResolvers` | `[]` | Extra `ResolverInterface`s appended **after** the defaults (keeps active-state matching). |
 | `singleActive` | `false` | Keep only the deepest active item active (best-match arbitration). |
 | `fuzzy` | `true` | Fuzzy (prefix) matching for the default `UrlArrayResolver`. |
@@ -45,7 +45,7 @@ straight through to the renderer as [renderer options](/reference/renderer-optio
 | `currentAsLink` | `true` | Passed through: render the active item as a link. |
 
 ::: info Option precedence
-Options merge in this order (later wins): **helper config** → **create()/register() options** →
+Options merge in this order (later wins): **helper config** → **per-menu render defaults** →
 **this call's `$options`**. So defaults set at `create()` time apply to every later `render()` unless
 overridden in the call.
 :::
@@ -59,13 +59,22 @@ them and add your own, use `additionalResolvers`. See [Resolvers](/guide/resolve
 
 | Option | Description |
 |--------|-------------|
-| `attributes` / `menuAttributes` | HTML attributes for the root `<ul>`. |
+| `attributes` | HTML attributes for the root `<ul>`. |
 | `overwrite` | Allow `create()` to replace an existing menu of the same name. |
 | `rebuild` | Make `register()` rebuild even if the menu already exists. |
 | `cache` | Cache the built structure (see below). `true`, a string key, or `['key' => ..., 'config' => ...]`. |
 
+`attributes`, `overwrite`, `cache`, and `rebuild` are consumed during building. They are
+not stored as render defaults or forwarded to renderers.
+
 Any other keys (e.g. `renderer`, `singleActive`) set here become defaults for later `render()` calls
 on that menu.
+
+The registration closure always receives `($menu, $helper)`. It may omit unused parameters.
+
+`renderBreadcrumbs()` always uses `BreadcrumbRenderer`; its `renderer` option accepts a
+subclass name or instance. To use Cake's markup, call `populateBreadcrumbs()` and then
+`$this->Breadcrumbs->render($attributes, $separator)` yourself.
 
 ### Caching a built menu
 
@@ -86,12 +95,12 @@ Cache data-driven menus, not menus that rely on custom `ItemInterface` implement
 
 ## Config-defined menus
 
-The helper auto-registers menus declared in `Configure::read('Menu.menus')` (each value a
+The helper auto-registers menus declared in `Configure::read('CakeMenu.menus')` (each value a
 `Menu::fromArray()` spec keyed by name), so they render without any wiring:
 
 ```php
 // config/app.php (or a dedicated config/menu.php loaded via Configure::load)
-'Menu' => [
+'CakeMenu' => [
     'menus' => [
         'main' => [
             'attributes' => ['class' => 'nav'],
@@ -116,6 +125,6 @@ An explicit `create()`/`register()` of the same name overrides the configured me
 |--------|---------|-------------|
 | `linkCurrent` | `false` | Link the current (last) crumb too. |
 | `resetBreadcrumbs` | `true` | Reset Cake's `Breadcrumbs` helper before populating. |
-| `renderer` | — | Set to `BreadcrumbRenderer::class` to render directly instead of via Cake's helper. |
+| `renderer` | `BreadcrumbRenderer::class` | Renderer used by `renderBreadcrumbs()`. Pass a `BreadcrumbRenderer` subclass or instance to customize the output. |
 
 Per-item breadcrumb attributes can be set via the item's `data['breadcrumbOptions']`.

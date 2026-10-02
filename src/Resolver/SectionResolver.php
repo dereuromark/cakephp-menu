@@ -2,18 +2,16 @@
 
 declare(strict_types=1);
 
-namespace Menu\Resolver;
+namespace CakeMenu\Resolver;
 
-use Menu\Item\ItemInterface;
+use CakeMenu\Item\ItemInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use function array_is_list;
 use function is_array;
 use function is_string;
 
-class SectionResolver implements ContextAwareResolverInterface
+class SectionResolver implements ResolverInterface
 {
-    use RuntimeStateTrait;
-
     public function __construct(
         protected ServerRequestInterface $request,
         protected string $dataKey = 'section',
@@ -21,12 +19,7 @@ class SectionResolver implements ContextAwareResolverInterface
     ) {
     }
 
-    public function resolve(ItemInterface $item): void
-    {
-        $this->resolveWithContext($item, new ResolverContext());
-    }
-
-    public function resolveWithContext(ItemInterface $item, ResolverContext $context): void
+    public function resolve(ItemInterface $item, ResolverContext $context): void
     {
         $sections = $item->getData($this->dataKey);
         if ($sections === null) {
@@ -36,9 +29,9 @@ class SectionResolver implements ContextAwareResolverInterface
         $requestParams = (array)$this->request->getAttribute('params');
         foreach ($this->normalizeSections($sections) as $section) {
             if ($this->matchesSection($requestParams, $section)) {
-                $this->applyActive($item);
+                $item->setRuntimeActive(true);
                 if ($this->expand) {
-                    $this->applyExpanded($item);
+                    $item->setRuntimeExpanded(true);
                 }
 
                 return;

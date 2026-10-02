@@ -2,32 +2,27 @@
 
 declare(strict_types=1);
 
-namespace Menu\Resolver;
+namespace CakeMenu\Resolver;
 
+use CakeMenu\Item\ItemInterface;
 use Closure;
-use Menu\Item\ItemInterface;
 
-class CallbackResolver implements ContextAwareResolverInterface
+class CallbackResolver implements ResolverInterface
 {
     /**
-     * @var \Closure(\Menu\Item\ItemInterface, \Menu\Resolver\ResolverContext): void
+     * @var \Closure(\CakeMenu\Item\ItemInterface, \CakeMenu\Resolver\ResolverContext): void
      */
     protected Closure $callback;
 
     /**
-     * @param callable(\Menu\Item\ItemInterface, \Menu\Resolver\ResolverContext): void $callback
+     * @param \Closure(\CakeMenu\Item\ItemInterface, \CakeMenu\Resolver\ResolverContext): void $callback
      */
-    public function __construct(callable $callback)
+    public function __construct(Closure $callback)
     {
-        $this->callback = Closure::fromCallable($callback);
+        $this->callback = $callback;
     }
 
-    public function resolve(ItemInterface $item): void
-    {
-        ($this->callback)($item, new ResolverContext());
-    }
-
-    public function resolveWithContext(ItemInterface $item, ResolverContext $context): void
+    public function resolve(ItemInterface $item, ResolverContext $context): void
     {
         ($this->callback)($item, $context);
     }
