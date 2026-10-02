@@ -85,7 +85,7 @@ class ItemCollection implements Countable, IteratorAggregate
     /**
      * @return list<\Menu\Item\ItemInterface>
      */
-    public function findByParent(string|ItemInterface $parent): array
+    public function findByParent(ItemInterface|string $parent): array
     {
         $parentId = $parent instanceof ItemInterface ? $parent->getId() : $parent;
 

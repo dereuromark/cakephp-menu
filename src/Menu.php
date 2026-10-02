@@ -248,7 +248,7 @@ class Menu implements MenuInterface
      */
     public function addItem(
         string $label,
-        LinkInterface|string|array|null $link = null,
+        LinkInterface|array|string|null $link = null,
         array $options = [],
     ): ItemInterface {
         $item = $this->newItem($label, $link, $options);
@@ -301,7 +301,7 @@ class Menu implements MenuInterface
      */
     public function newItem(
         ?string $label = null,
-        LinkInterface|string|array|null $link = null,
+        LinkInterface|array|string|null $link = null,
         array $options = [],
     ): ItemInterface {
         $className = $this->itemClass;
@@ -664,7 +664,7 @@ class Menu implements MenuInterface
         return $this;
     }
 
-    public function slice(int|string $offset, int|string|null $length = null): static
+    public function slice(string|int $offset, string|int|null $length = null): static
     {
         $start = $this->resolveBoundary($offset);
         if ($length === null) {
@@ -689,7 +689,7 @@ class Menu implements MenuInterface
     /**
      * @phpstan-return array{primary: static, secondary: static}
      */
-    public function split(int|string $length): array
+    public function split(string|int $length): array
     {
         $boundary = $this->resolveBoundary($length);
 
@@ -724,7 +724,7 @@ class Menu implements MenuInterface
      *
      * @throws \InvalidArgumentException When a string id/key is not found.
      */
-    protected function resolveBoundary(int|string $value): int
+    protected function resolveBoundary(string|int $value): int
     {
         if (is_int($value)) {
             return max(0, min($value, count($this->items)));

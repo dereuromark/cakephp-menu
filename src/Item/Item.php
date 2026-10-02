@@ -93,7 +93,7 @@ class Item implements ItemInterface, StateResetInterface
      */
     public function __construct(
         ?string $label = null,
-        LinkInterface|string|array|null $link = null,
+        LinkInterface|array|string|null $link = null,
     ) {
         $this->id = 'menu-item-' . Text::uuid();
         if ($label !== null) {
@@ -187,7 +187,7 @@ class Item implements ItemInterface, StateResetInterface
     /**
      * @phpstan-param \Menu\Link\LinkInterface|array<string|int, mixed>|string|null $link
      */
-    public function setLink(LinkInterface|string|array|null $link): static
+    public function setLink(LinkInterface|array|string|null $link): static
     {
         $this->assertMutable();
         if (!$link instanceof LinkInterface) {
@@ -510,7 +510,7 @@ class Item implements ItemInterface, StateResetInterface
     /**
      * @phpstan-param array<string|int, mixed>|string $route
      */
-    public function addMatchRoute(string|array $route): static
+    public function addMatchRoute(array|string $route): static
     {
         $this->assertMutable();
         $this->matchRoutes[] = $route;
