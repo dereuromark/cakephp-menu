@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Menu\Test\TestCase\Renderer;
+namespace CakeMenu\Test\TestCase\Renderer;
 
 use Cake\TestSuite\TestCase;
+use CakeMenu\Item\Item;
+use CakeMenu\Menu;
+use CakeMenu\Renderer\JsonRenderer;
 use JsonException;
-use Menu\Item\Item;
-use Menu\Menu;
-use Menu\Renderer\JsonRenderer;
 
 class JsonRendererTest extends TestCase
 {

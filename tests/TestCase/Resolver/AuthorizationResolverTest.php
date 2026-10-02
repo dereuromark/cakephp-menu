@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Menu\Test\TestCase\Resolver;
+namespace CakeMenu\Test\TestCase\Resolver;
 
 use Cake\TestSuite\TestCase;
-use Menu\Item\Item;
-use Menu\Item\ItemInterface;
-use Menu\Resolver\AuthorizationResolver;
-use Menu\Resolver\ResolverContext;
+use CakeMenu\Item\Item;
+use CakeMenu\Item\ItemInterface;
+use CakeMenu\Resolver\AuthorizationResolver;
+use CakeMenu\Resolver\ResolverContext;
 
 class AuthorizationResolverTest extends TestCase
 {

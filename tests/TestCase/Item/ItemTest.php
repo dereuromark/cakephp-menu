@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Menu\Test\TestCase\Item;
+namespace CakeMenu\Test\TestCase\Item;
 
 use Cake\TestSuite\TestCase;
+use CakeMenu\Item\Item;
+use CakeMenu\Link\Link;
+use CakeMenu\Menu;
+use CakeMenu\MenuInterface;
 use LogicException;
-use Menu\Item\Item;
-use Menu\Link\Link;
-use Menu\Menu;
-use Menu\MenuInterface;
 use RuntimeException;
 
 class ItemTest extends TestCase

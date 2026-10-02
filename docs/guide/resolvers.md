@@ -19,8 +19,8 @@ flowchart LR
 ## URL Resolvers
 
 ```php
-use Menu\Resolver\Psr7UrlResolver;
-use Menu\Resolver\UrlArrayResolver;
+use CakeMenu\Resolver\Psr7UrlResolver;
+use CakeMenu\Resolver\UrlArrayResolver;
 
 $menu->resolve(new Psr7UrlResolver($request));
 $menu->resolve(new UrlArrayResolver($request));
@@ -54,7 +54,7 @@ $menu->addItem('Admin Articles', ['prefix' => 'Admin', 'controller' => 'Articles
 `SectionResolver` activates items from request parameter subsets:
 
 ```php
-use Menu\Resolver\SectionResolver;
+use CakeMenu\Resolver\SectionResolver;
 
 $menu->addItem('Admin Articles', '/admin/articles', [
     'data' => [
@@ -75,7 +75,7 @@ current request path — handy for lighting up a whole URL section that a route-
 express. A value may be a single pattern or a list; invalid patterns are ignored.
 
 ```php
-use Menu\Resolver\RegexResolver;
+use CakeMenu\Resolver\RegexResolver;
 
 $menu->addItem('Admin', '/admin', [
     'data' => ['match' => '#^/admin/(users|roles)#'],
@@ -99,7 +99,7 @@ $menu->addItem('Profile', '/profile', ['data' => ['auth' => 'loggedIn']]);
 Then resolve:
 
 ```php
-use Menu\Resolver\LoggedInResolver;
+use CakeMenu\Resolver\LoggedInResolver;
 
 $menu->resolve(new LoggedInResolver($identity !== null));
 ```
@@ -107,10 +107,10 @@ $menu->resolve(new LoggedInResolver($identity !== null));
 ## Authorization and Callback Resolvers
 
 ```php
-use Menu\Item\ItemInterface;
-use Menu\Resolver\AuthorizationResolver;
-use Menu\Resolver\CallbackResolver;
-use Menu\Resolver\ResolverContext;
+use CakeMenu\Item\ItemInterface;
+use CakeMenu\Resolver\AuthorizationResolver;
+use CakeMenu\Resolver\CallbackResolver;
+use CakeMenu\Resolver\ResolverContext;
 
 $menu->resolve(new AuthorizationResolver(
     static function (ItemInterface $item, ResolverContext $context): ?bool {
@@ -136,7 +136,7 @@ $menu->resolve(new CallbackResolver(
 For Authorization-style `can()` services there is also a convenience resolver:
 
 ```php
-use Menu\Resolver\PermissionResolver;
+use CakeMenu\Resolver\PermissionResolver;
 
 $menu->addItem('Admin', '/admin', [
     'data' => ['permission' => 'admin.access'],
@@ -148,7 +148,7 @@ $menu->resolve(new PermissionResolver($authorization, $identity));
 ## Multiple Resolvers
 
 ```php
-use Menu\Resolver\ResolverCollection;
+use CakeMenu\Resolver\ResolverCollection;
 
 $menu->resolve(
     (new ResolverCollection())
@@ -166,8 +166,8 @@ use `additionalResolvers` instead — they run after the URL resolvers.
 :::
 
 ```php
-use Menu\Item\ItemInterface;
-use Menu\Resolver\AuthorizationResolver;
+use CakeMenu\Item\ItemInterface;
+use CakeMenu\Resolver\AuthorizationResolver;
 
 echo $this->Menu->render('main', [
     'additionalResolvers' => [

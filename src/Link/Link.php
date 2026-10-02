@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Menu\Link;
+namespace CakeMenu\Link;
 
 use Cake\Routing\Router;
 use LogicException;

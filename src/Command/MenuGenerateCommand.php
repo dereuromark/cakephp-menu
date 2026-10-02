@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Menu\Command;
+namespace CakeMenu\Command;
 
 use Cake\Command\Command;
 use Cake\Console\Arguments;
@@ -72,12 +72,12 @@ class MenuGenerateCommand extends Command
  * Menu spec for "{$name}". Load this from your app/plugin bootstrap, e.g.:
  *     Configure::load('menu_{$snake}', 'default', true);
  *
- * The Menu helper auto-registers every entry under `Menu.menus` on initialize, so
+ * The Menu helper auto-registers every entry under `CakeMenu.menus` on initialize, so
  * `\$this->Menu->render('{$snake}')` works without any wiring.
  */
 
 return [
-    'Menu' => [
+    'CakeMenu' => [
         'menus' => [
             '{$snake}' => [
                 'attributes' => ['class' => 'nav'],

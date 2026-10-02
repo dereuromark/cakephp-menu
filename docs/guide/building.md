@@ -9,7 +9,7 @@ description: Build composable menu trees in cakephp-menu — nested items, strin
 Use `Menu::create()` for the root menu and `addItem()` for the common case:
 
 ```php
-use Menu\Menu;
+use CakeMenu\Menu;
 
 $menu = Menu::create(['class' => 'nav nav-pills']);
 $menu->addItem('Home', '/');

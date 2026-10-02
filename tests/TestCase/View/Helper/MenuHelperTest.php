@@ -2,24 +2,24 @@
 
 declare(strict_types=1);
 
-namespace Menu\Test\TestCase\View\Helper;
+namespace CakeMenu\Test\TestCase\View\Helper;
 
 use Cake\Http\Response;
 use Cake\Http\ServerRequest;
 use Cake\Routing\Route\Route;
 use Cake\TestSuite\TestCase;
 use Cake\View\View;
+use CakeMenu\Item\Item;
+use CakeMenu\Item\ItemInterface;
+use CakeMenu\Item\SelfRendererInterface;
+use CakeMenu\Menu;
+use CakeMenu\Renderer\BreadcrumbRenderer;
+use CakeMenu\Resolver\AuthorizationResolver;
+use CakeMenu\Resolver\ResolverCollection;
+use CakeMenu\Resolver\ResolverContext;
+use CakeMenu\Resolver\SectionResolver;
+use CakeMenu\View\Helper\MenuHelper;
 use InvalidArgumentException;
-use Menu\Item\Item;
-use Menu\Item\ItemInterface;
-use Menu\Item\SelfRendererInterface;
-use Menu\Menu;
-use Menu\Renderer\BreadcrumbRenderer;
-use Menu\Resolver\AuthorizationResolver;
-use Menu\Resolver\ResolverCollection;
-use Menu\Resolver\ResolverContext;
-use Menu\Resolver\SectionResolver;
-use Menu\View\Helper\MenuHelper;
 
 class MenuHelperTest extends TestCase
 {

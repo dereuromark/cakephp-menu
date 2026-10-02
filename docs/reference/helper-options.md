@@ -7,7 +7,7 @@ description: The Menu helper's methods and the options accepted by render(), get
 The `Menu` helper builds, resolves, and renders named menus. Load it in `AppView`:
 
 ```php
-$this->loadHelper('Menu.Menu');
+$this->loadHelper('CakeMenu.Menu');
 ```
 
 ## Methods
@@ -86,12 +86,12 @@ Cache data-driven menus, not menus that rely on custom `ItemInterface` implement
 
 ## Config-defined menus
 
-The helper auto-registers menus declared in `Configure::read('Menu.menus')` (each value a
+The helper auto-registers menus declared in `Configure::read('CakeMenu.menus')` (each value a
 `Menu::fromArray()` spec keyed by name), so they render without any wiring:
 
 ```php
 // config/app.php (or a dedicated config/menu.php loaded via Configure::load)
-'Menu' => [
+'CakeMenu' => [
     'menus' => [
         'main' => [
             'attributes' => ['class' => 'nav'],

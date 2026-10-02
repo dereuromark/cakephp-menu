@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Menu\Renderer;
+namespace CakeMenu\Renderer;
 
-use Menu\Item\ItemInterface;
-use Menu\MenuInterface;
+use CakeMenu\Item\ItemInterface;
+use CakeMenu\MenuInterface;
 
 interface RendererInterface
 {

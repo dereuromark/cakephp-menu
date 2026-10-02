@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Menu;
+namespace CakeMenu;
 
+use CakeMenu\Item\ItemInterface;
+use CakeMenu\Link\LinkInterface;
+use CakeMenu\Resolver\ResolverCollectionInterface;
+use CakeMenu\Resolver\ResolverInterface;
 use Closure;
-use Menu\Item\ItemInterface;
-use Menu\Link\LinkInterface;
-use Menu\Resolver\ResolverCollectionInterface;
-use Menu\Resolver\ResolverInterface;
 
 interface MenuInterface
 {
@@ -50,7 +50,7 @@ interface MenuInterface
     public function addItems(array $items): static;
 
     /**
-     * @phpstan-param \Menu\Link\LinkInterface|array<string|int, mixed>|string|null $link
+     * @phpstan-param \CakeMenu\Link\LinkInterface|array<string|int, mixed>|string|null $link
      * @phpstan-param array<string, mixed> $options
      */
     public function addItem(
@@ -75,7 +75,7 @@ interface MenuInterface
     public function addHeader(string $label, array $options = []): ItemInterface;
 
     /**
-     * @phpstan-param \Menu\Link\LinkInterface|array<string|int, mixed>|string|null $link
+     * @phpstan-param \CakeMenu\Link\LinkInterface|array<string|int, mixed>|string|null $link
      * @phpstan-param array<string, mixed> $options
      */
     public function newItem(
@@ -85,7 +85,7 @@ interface MenuInterface
     ): ItemInterface;
 
     /**
-     * @return list<\Menu\Item\ItemInterface>
+     * @return list<\CakeMenu\Item\ItemInterface>
      */
     public function getItems(): array;
 

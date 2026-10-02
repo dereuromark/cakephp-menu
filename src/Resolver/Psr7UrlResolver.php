@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Menu\Resolver;
+namespace CakeMenu\Resolver;
 
 use Cake\Core\InstanceConfigTrait;
-use Menu\Item\Item;
-use Menu\Item\ItemInterface;
+use CakeMenu\Item\Item;
+use CakeMenu\Item\ItemInterface;
 use Psr\Http\Message\RequestInterface;
 use function array_filter;
 use function array_merge;

@@ -2,25 +2,25 @@
 
 declare(strict_types=1);
 
-namespace Menu;
+namespace CakeMenu;
 
+use CakeMenu\Item\Item;
+use CakeMenu\Item\ItemInterface;
+use CakeMenu\Item\StateResetInterface;
+use CakeMenu\Link\Link;
+use CakeMenu\Link\LinkInterface;
+use CakeMenu\Resolver\ContextAwareResolverInterface;
+use CakeMenu\Resolver\ResolverCollectionInterface;
+use CakeMenu\Resolver\ResolverContext;
+use CakeMenu\Resolver\ResolverInterface;
 use Closure;
 use InvalidArgumentException;
 use LogicException;
-use Menu\Item\Item;
-use Menu\Item\ItemInterface;
-use Menu\Item\StateResetInterface;
-use Menu\Link\Link;
-use Menu\Link\LinkInterface;
-use Menu\Resolver\ContextAwareResolverInterface;
-use Menu\Resolver\ResolverCollectionInterface;
-use Menu\Resolver\ResolverContext;
-use Menu\Resolver\ResolverInterface;
 
 class Menu implements MenuInterface
 {
     /**
-     * @var list<\Menu\Item\ItemInterface>
+     * @var list<\CakeMenu\Item\ItemInterface>
      */
     protected array $items = [];
 
@@ -35,7 +35,7 @@ class Menu implements MenuInterface
     protected array $data = [];
 
     /**
-     * @var class-string<\Menu\Item\ItemInterface>
+     * @var class-string<\CakeMenu\Item\ItemInterface>
      */
     protected string $itemClass = Item::class;
 
@@ -133,9 +133,9 @@ class Menu implements MenuInterface
     public static function fromFlat(iterable $rows, Closure $mapper): static
     {
         $menu = static::create();
-        /** @var array<string, \Menu\Item\ItemInterface> $byKey */
+        /** @var array<string, \CakeMenu\Item\ItemInterface> $byKey */
         $byKey = [];
-        /** @var list<array{item: \Menu\Item\ItemInterface, parent: string|null}> $pending */
+        /** @var list<array{item: \CakeMenu\Item\ItemInterface, parent: string|null}> $pending */
         $pending = [];
 
         foreach ($rows as $row) {
@@ -243,7 +243,7 @@ class Menu implements MenuInterface
     }
 
     /**
-     * @phpstan-param \Menu\Link\LinkInterface|array<string|int, mixed>|string|null $link
+     * @phpstan-param \CakeMenu\Link\LinkInterface|array<string|int, mixed>|string|null $link
      * @phpstan-param array<string, mixed> $options
      */
     public function addItem(
@@ -296,7 +296,7 @@ class Menu implements MenuInterface
     }
 
     /**
-     * @phpstan-param \Menu\Link\LinkInterface|array<string|int, mixed>|string|null $link
+     * @phpstan-param \CakeMenu\Link\LinkInterface|array<string|int, mixed>|string|null $link
      * @phpstan-param array<string, mixed> $options
      */
     public function newItem(
@@ -405,8 +405,8 @@ class Menu implements MenuInterface
     }
 
     /**
-     * @param \Menu\ItemCollection $collection
-     * @param list<\Menu\Item\ItemInterface> $items
+     * @param \CakeMenu\ItemCollection $collection
+     * @param list<\CakeMenu\Item\ItemInterface> $items
      */
     protected function collectInto(ItemCollection $collection, array $items): void
     {
@@ -750,9 +750,9 @@ class Menu implements MenuInterface
      * Deep-clones a set of items so derived menus from slice()/split()/merge() own independent item
      * objects and leave the source tree untouched.
      *
-     * @param list<\Menu\Item\ItemInterface> $items
+     * @param list<\CakeMenu\Item\ItemInterface> $items
      *
-     * @return list<\Menu\Item\ItemInterface>
+     * @return list<\CakeMenu\Item\ItemInterface>
      */
     protected function cloneItems(array $items): array
     {
@@ -893,9 +893,9 @@ class Menu implements MenuInterface
     }
 
     /**
-     * @param \Menu\Resolver\ResolverInterface|\Menu\Resolver\ResolverCollectionInterface $resolver
-     * @param list<\Menu\Item\ItemInterface> $items
-     * @param \Menu\Item\ItemInterface|null $parent
+     * @param \CakeMenu\Resolver\ResolverInterface|\CakeMenu\Resolver\ResolverCollectionInterface $resolver
+     * @param list<\CakeMenu\Item\ItemInterface> $items
+     * @param \CakeMenu\Item\ItemInterface|null $parent
      * @param int $depth
      */
     protected function resolveItems(
@@ -923,7 +923,7 @@ class Menu implements MenuInterface
     }
 
     /**
-     * @param list<\Menu\Item\ItemInterface> $items
+     * @param list<\CakeMenu\Item\ItemInterface> $items
      */
     protected function assertUniqueItems(array $items): void
     {
@@ -994,9 +994,9 @@ class Menu implements MenuInterface
     }
 
     /**
-     * @param \Menu\ItemCollection $collection
-     * @param callable(\Menu\Item\ItemInterface): mixed $callback
-     * @param list<\Menu\Item\ItemInterface> $items
+     * @param \CakeMenu\ItemCollection $collection
+     * @param callable(\CakeMenu\Item\ItemInterface): mixed $callback
+     * @param list<\CakeMenu\Item\ItemInterface> $items
      */
     protected function findInto(ItemCollection $collection, callable $callback, array $items): void
     {
@@ -1078,7 +1078,7 @@ class Menu implements MenuInterface
     }
 
     /**
-     * @param \Menu\Item\ItemInterface $item
+     * @param \CakeMenu\Item\ItemInterface $item
      * @param array<string, true> $ids
      *
      * @throws \InvalidArgumentException

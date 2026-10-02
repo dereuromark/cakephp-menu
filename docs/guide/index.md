@@ -22,8 +22,11 @@ composer require dereuromark/cakephp-menu
 Load the plugin:
 
 ```bash
-bin/cake plugin load Menu
+bin/cake plugin load CakeMenu
 ```
+
+> [!TIP] Changed in 0.2
+> The namespace and plugin name changed from `Menu` to `CakeMenu`. See [Upgrading](./upgrading.md#_0-1-to-0-2).
 
 Load the helper in your `AppView`:
 
@@ -36,7 +39,7 @@ class AppView extends View
     {
         parent::initialize();
 
-        $this->loadHelper('Menu.Menu');
+        $this->loadHelper('CakeMenu.Menu');
     }
 }
 ```
@@ -46,7 +49,7 @@ class AppView extends View
 Build a menu and render it from a template:
 
 ```php
-use Menu\Menu;
+use CakeMenu\Menu;
 
 $menu = Menu::create(['class' => 'nav']);
 $menu->addItem('Dashboard', ['controller' => 'Dashboard', 'action' => 'index']);

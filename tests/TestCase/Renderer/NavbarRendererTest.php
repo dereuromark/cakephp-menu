@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Menu\Test\TestCase\Renderer;
+namespace CakeMenu\Test\TestCase\Renderer;
 
 use Cake\TestSuite\TestCase;
-use Menu\Menu;
-use Menu\Renderer\NavbarRenderer;
-use Menu\Renderer\StringTemplateRenderer;
+use CakeMenu\Menu;
+use CakeMenu\Renderer\NavbarRenderer;
+use CakeMenu\Renderer\StringTemplateRenderer;
 
 class NavbarRendererTest extends TestCase
 {

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Menu\Renderer;
+namespace CakeMenu\Renderer;
 
-use Menu\Item\ItemInterface;
+use CakeMenu\Item\ItemInterface;
 
 class Bootstrap5Renderer extends StringTemplateRenderer
 {

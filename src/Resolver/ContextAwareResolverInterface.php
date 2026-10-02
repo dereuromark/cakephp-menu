@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Menu\Resolver;
+namespace CakeMenu\Resolver;
 
-use Menu\Item\ItemInterface;
+use CakeMenu\Item\ItemInterface;
 
 interface ContextAwareResolverInterface extends ResolverInterface
 {

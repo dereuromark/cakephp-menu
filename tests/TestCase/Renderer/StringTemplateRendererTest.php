@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Menu\Test\TestCase\Renderer;
+namespace CakeMenu\Test\TestCase\Renderer;
 
 use Cake\TestSuite\TestCase;
-use Menu\Item\Item;
-use Menu\Item\SelfRendererInterface;
-use Menu\Menu;
-use Menu\Renderer\StringTemplateRenderer;
+use CakeMenu\Item\Item;
+use CakeMenu\Item\SelfRendererInterface;
+use CakeMenu\Menu;
+use CakeMenu\Renderer\StringTemplateRenderer;
 
 class StringTemplateRendererTest extends TestCase
 {

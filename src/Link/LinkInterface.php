@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Menu\Link;
+namespace CakeMenu\Link;
 
 interface LinkInterface
 {

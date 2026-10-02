@@ -17,7 +17,7 @@ return [
      * An explicit `$this->Menu->create('main')` / `register('main', ...)` in code overrides the
      * configured menu of the same name.
      */
-    'Menu' => [
+    'CakeMenu' => [
         'menus' => [
             'main' => [
                 'attributes' => ['class' => 'nav'],

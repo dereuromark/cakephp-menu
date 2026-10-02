@@ -2,20 +2,20 @@
 
 declare(strict_types=1);
 
-namespace Menu\Resolver;
+namespace CakeMenu\Resolver;
 
+use CakeMenu\Item\ItemInterface;
 use Closure;
-use Menu\Item\ItemInterface;
 
 class CallbackResolver implements ContextAwareResolverInterface
 {
     /**
-     * @var \Closure(\Menu\Item\ItemInterface, \Menu\Resolver\ResolverContext): void
+     * @var \Closure(\CakeMenu\Item\ItemInterface, \CakeMenu\Resolver\ResolverContext): void
      */
     protected Closure $callback;
 
     /**
-     * @param callable(\Menu\Item\ItemInterface, \Menu\Resolver\ResolverContext): void $callback
+     * @param callable(\CakeMenu\Item\ItemInterface, \CakeMenu\Resolver\ResolverContext): void $callback
      */
     public function __construct(callable $callback)
     {

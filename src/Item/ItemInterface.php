@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Menu\Item;
+namespace CakeMenu\Item;
 
-use Menu\Link\LinkInterface;
-use Menu\MenuInterface;
+use CakeMenu\Link\LinkInterface;
+use CakeMenu\MenuInterface;
 
 interface ItemInterface
 {
@@ -26,7 +26,7 @@ interface ItemInterface
     public function shouldEscapeLabel(): bool;
 
     /**
-     * @phpstan-param \Menu\Link\LinkInterface|array<string|int, mixed>|string|null $link
+     * @phpstan-param \CakeMenu\Link\LinkInterface|array<string|int, mixed>|string|null $link
      */
     public function setLink(LinkInterface|array|string|null $link): static;
 

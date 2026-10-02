@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Menu\Item;
+namespace CakeMenu\Item;
 
 use Cake\Utility\Text;
+use CakeMenu\Link\Link;
+use CakeMenu\Link\LinkInterface;
+use CakeMenu\Menu;
+use CakeMenu\MenuInterface;
 use LogicException;
-use Menu\Link\Link;
-use Menu\Link\LinkInterface;
-use Menu\Menu;
-use Menu\MenuInterface;
 use Throwable;
 
 class Item implements ItemInterface, StateResetInterface
@@ -89,7 +89,7 @@ class Item implements ItemInterface, StateResetInterface
     protected bool $frozen = false;
 
     /**
-     * @phpstan-param \Menu\Link\LinkInterface|array<string|int, mixed>|string|null $link
+     * @phpstan-param \CakeMenu\Link\LinkInterface|array<string|int, mixed>|string|null $link
      */
     public function __construct(
         ?string $label = null,
@@ -185,7 +185,7 @@ class Item implements ItemInterface, StateResetInterface
     }
 
     /**
-     * @phpstan-param \Menu\Link\LinkInterface|array<string|int, mixed>|string|null $link
+     * @phpstan-param \CakeMenu\Link\LinkInterface|array<string|int, mixed>|string|null $link
      */
     public function setLink(LinkInterface|array|string|null $link): static
     {

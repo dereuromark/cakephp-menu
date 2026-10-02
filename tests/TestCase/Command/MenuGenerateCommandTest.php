@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Menu\Test\TestCase\Command;
+namespace CakeMenu\Test\TestCase\Command;
 
 use Cake\Console\CommandCollection;
 use Cake\Console\TestSuite\ConsoleIntegrationTestTrait;
 use Cake\Core\ConsoleApplicationInterface;
 use Cake\TestSuite\TestCase;
-use Menu\Command\MenuGenerateCommand;
+use CakeMenu\Command\MenuGenerateCommand;
 
 class MenuGenerateCommandTest extends TestCase
 {

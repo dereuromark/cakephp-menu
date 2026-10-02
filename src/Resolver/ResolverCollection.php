@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Menu\Resolver;
+namespace CakeMenu\Resolver;
 
+use CakeMenu\Item\ItemInterface;
 use InvalidArgumentException;
-use Menu\Item\ItemInterface;
 
 class ResolverCollection implements ResolverCollectionInterface, ContextAwareResolverInterface
 {
     /**
-     * @var list<\Menu\Resolver\ResolverInterface>
+     * @var list<\CakeMenu\Resolver\ResolverInterface>
      */
     protected array $resolvers = [];
 
@@ -39,7 +39,7 @@ class ResolverCollection implements ResolverCollectionInterface, ContextAwareRes
     }
 
     /**
-     * @return list<\Menu\Resolver\ResolverInterface>
+     * @return list<\CakeMenu\Resolver\ResolverInterface>
      */
     public function all(): array
     {

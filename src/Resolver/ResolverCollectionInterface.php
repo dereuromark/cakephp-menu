@@ -2,23 +2,23 @@
 
 declare(strict_types=1);
 
-namespace Menu\Resolver;
+namespace CakeMenu\Resolver;
 
-use Menu\Item\ItemInterface;
+use CakeMenu\Item\ItemInterface;
 
 interface ResolverCollectionInterface
 {
     public function add(ResolverInterface $resolver): static;
 
     /**
-     * @param list<\Menu\Resolver\ResolverInterface> $resolvers
+     * @param list<\CakeMenu\Resolver\ResolverInterface> $resolvers
      *
      * @return $this
      */
     public function addMany(array $resolvers): static;
 
     /**
-     * @return list<\Menu\Resolver\ResolverInterface>
+     * @return list<\CakeMenu\Resolver\ResolverInterface>
      */
     public function all(): array;
 

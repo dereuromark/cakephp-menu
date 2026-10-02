@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Menu\Test\TestCase\Renderer;
+namespace CakeMenu\Test\TestCase\Renderer;
 
 use Cake\TestSuite\TestCase;
-use Menu\Menu;
-use Menu\Renderer\BreadcrumbRenderer;
+use CakeMenu\Menu;
+use CakeMenu\Renderer\BreadcrumbRenderer;
 
 class BreadcrumbRendererTest extends TestCase
 {

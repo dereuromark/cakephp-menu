@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Menu\Test\TestCase\Resolver;
+namespace CakeMenu\Test\TestCase\Resolver;
 
 use Cake\TestSuite\TestCase;
-use Menu\Item\Item;
-use Menu\Resolver\LoggedInResolver;
-use Menu\Resolver\ResolverCollection;
+use CakeMenu\Item\Item;
+use CakeMenu\Resolver\LoggedInResolver;
+use CakeMenu\Resolver\ResolverCollection;
 
 class ResolverCollectionTest extends TestCase
 {

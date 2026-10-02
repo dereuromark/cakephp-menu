@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Menu\Test\TestCase\Resolver;
+namespace CakeMenu\Test\TestCase\Resolver;
 
 use Cake\TestSuite\TestCase;
-use Menu\Item\Item;
-use Menu\Resolver\LoggedInResolver;
+use CakeMenu\Item\Item;
+use CakeMenu\Resolver\LoggedInResolver;
 
 class LoggedInResolverTest extends TestCase
 {

@@ -2,18 +2,18 @@
 
 declare(strict_types=1);
 
-namespace Menu\Test\TestCase\Menu;
+namespace CakeMenu\Test\TestCase\Menu;
 
 use Cake\Http\ServerRequest;
 use Cake\TestSuite\TestCase;
+use CakeMenu\Item\Item;
+use CakeMenu\Item\ItemInterface;
+use CakeMenu\ItemCollection;
+use CakeMenu\Menu;
+use CakeMenu\Resolver\CallbackResolver;
+use CakeMenu\Resolver\UrlArrayResolver;
 use InvalidArgumentException;
 use LogicException;
-use Menu\Item\Item;
-use Menu\Item\ItemInterface;
-use Menu\ItemCollection;
-use Menu\Menu;
-use Menu\Resolver\CallbackResolver;
-use Menu\Resolver\UrlArrayResolver;
 
 class MenuTest extends TestCase
 {

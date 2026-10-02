@@ -2,22 +2,22 @@
 
 declare(strict_types=1);
 
-namespace Menu\Resolver;
+namespace CakeMenu\Resolver;
 
+use CakeMenu\Item\ItemInterface;
 use Closure;
-use Menu\Item\ItemInterface;
 
 class AuthorizationResolver implements ContextAwareResolverInterface
 {
     use RuntimeStateTrait;
 
     /**
-     * @var \Closure(\Menu\Item\ItemInterface, \Menu\Resolver\ResolverContext): (bool|null)
+     * @var \Closure(\CakeMenu\Item\ItemInterface, \CakeMenu\Resolver\ResolverContext): (bool|null)
      */
     protected Closure $callback;
 
     /**
-     * @param callable(\Menu\Item\ItemInterface, \Menu\Resolver\ResolverContext): (bool|null) $callback
+     * @param callable(\CakeMenu\Item\ItemInterface, \CakeMenu\Resolver\ResolverContext): (bool|null) $callback
      */
     public function __construct(callable $callback)
     {

@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Menu\Test\TestCase\Renderer;
+namespace CakeMenu\Test\TestCase\Renderer;
 
 use Cake\TestSuite\TestCase;
-use Menu\Menu;
-use Menu\Renderer\Bootstrap5Renderer;
-use Menu\Renderer\Bootstrap5SidebarRenderer;
-use Menu\Renderer\BreadcrumbRenderer;
-use Menu\Renderer\NavbarRenderer;
-use Menu\Renderer\StringTemplateRenderer;
+use CakeMenu\Menu;
+use CakeMenu\Renderer\Bootstrap5Renderer;
+use CakeMenu\Renderer\Bootstrap5SidebarRenderer;
+use CakeMenu\Renderer\BreadcrumbRenderer;
+use CakeMenu\Renderer\NavbarRenderer;
+use CakeMenu\Renderer\StringTemplateRenderer;
 use Throwable;
 
 class RendererFeaturesTest extends TestCase

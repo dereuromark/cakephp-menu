@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Menu\Renderer;
+namespace CakeMenu\Renderer;
 
 use Cake\Core\InstanceConfigTrait;
 use Cake\View\StringTemplateTrait;
-use Menu\Item\ItemInterface;
-use Menu\Item\SelfRendererInterface;
-use Menu\MenuInterface;
+use CakeMenu\Item\ItemInterface;
+use CakeMenu\Item\SelfRendererInterface;
+use CakeMenu\MenuInterface;
 use function array_filter;
 use function array_map;
 use function array_unique;

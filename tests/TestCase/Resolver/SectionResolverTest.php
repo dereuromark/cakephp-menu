@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Menu\Test\TestCase\Resolver;
+namespace CakeMenu\Test\TestCase\Resolver;
 
 use Cake\Http\ServerRequest;
 use Cake\TestSuite\TestCase;
-use Menu\Item\Item;
-use Menu\Resolver\SectionResolver;
+use CakeMenu\Item\Item;
+use CakeMenu\Resolver\SectionResolver;
 
 class SectionResolverTest extends TestCase
 {

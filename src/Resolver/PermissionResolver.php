@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Menu\Resolver;
+namespace CakeMenu\Resolver;
 
-use Menu\Item\ItemInterface;
+use CakeMenu\Item\ItemInterface;
 use ReflectionMethod;
 use function is_string;
 use function method_exists;

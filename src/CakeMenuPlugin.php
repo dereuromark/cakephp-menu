@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Menu;
+namespace CakeMenu;
 
 use Cake\Console\CommandCollection;
 use Cake\Core\BasePlugin;
-use Menu\Command\MenuGenerateCommand;
+use CakeMenu\Command\MenuGenerateCommand;
 
-class MenuPlugin extends BasePlugin
+class CakeMenuPlugin extends BasePlugin
 {
     public function console(CommandCollection $commands): CommandCollection
     {

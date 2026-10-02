@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Menu\Test\TestCase\Resolver;
+namespace CakeMenu\Test\TestCase\Resolver;
 
 use Cake\Http\ServerRequest;
 use Cake\Routing\Route\DashedRoute;
@@ -10,8 +10,8 @@ use Cake\Routing\Route\Route;
 use Cake\Routing\RouteBuilder;
 use Cake\Routing\Router;
 use Cake\TestSuite\TestCase;
-use Menu\Item\Item;
-use Menu\Resolver\UrlArrayResolver;
+use CakeMenu\Item\Item;
+use CakeMenu\Resolver\UrlArrayResolver;
 use PHPUnit\Framework\Attributes\DataProvider;
 
 class UrlArrayResolverTest extends TestCase

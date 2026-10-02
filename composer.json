@@ -42,12 +42,12 @@
     "prefer-stable": true,
     "autoload": {
         "psr-4": {
-            "Menu\\": "src/"
+            "CakeMenu\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Menu\\Test\\": "tests/"
+            "CakeMenu\\Test\\": "tests/"
         }
     },
     "scripts": {

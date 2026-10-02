@@ -59,7 +59,7 @@ Or use the built-in breadcrumb renderer:
 
 ```php
 echo $this->Menu->renderBreadcrumbs('main', [
-    'renderer' => \Menu\Renderer\BreadcrumbRenderer::class,
+    'renderer' => \CakeMenu\Renderer\BreadcrumbRenderer::class,
 ]);
 ```
 
@@ -69,7 +69,7 @@ JSON export:
 
 ```php
 echo $this->Menu->render($menu, [
-    'renderer' => \Menu\Renderer\JsonRenderer::class,
+    'renderer' => \CakeMenu\Renderer\JsonRenderer::class,
     'pretty' => true,
 ]);
 ```
@@ -78,7 +78,7 @@ Bootstrap-flavored markup:
 
 ```php
 echo $this->Menu->render($menu, [
-    'renderer' => \Menu\Renderer\Bootstrap5Renderer::class,
+    'renderer' => \CakeMenu\Renderer\Bootstrap5Renderer::class,
 ]);
 ```
 
@@ -86,7 +86,7 @@ Collapsible Bootstrap 5 sidebar — a vertical `nav` whose branches are Bootstra
 
 ```php
 echo $this->Menu->render('sidebar', [
-    'renderer' => \Menu\Renderer\Bootstrap5SidebarRenderer::class,
+    'renderer' => \CakeMenu\Renderer\Bootstrap5SidebarRenderer::class,
 ]);
 ```
 
@@ -101,7 +101,7 @@ collapsible `navbar-nav` with dropdowns), rather than just the inner `<ul>`:
 
 ```php
 echo $this->Menu->render('main', [
-    'renderer' => \Menu\Renderer\NavbarRenderer::class,
+    'renderer' => \CakeMenu\Renderer\NavbarRenderer::class,
     'brand' => 'MyApp',
     'brandUrl' => '/',
     'expand' => 'lg',                 // navbar-expand-lg (collapse breakpoint)
@@ -188,8 +188,8 @@ as **trusted** — escape or cast dynamic values yourself.
 ::: info State is restored automatically
 Each helper render (or request-state lookup) applies resolvers temporarily and restores the original
 `active`, `visible`, and `expanded` item state afterward — so a registered menu renders safely many
-times per request. Custom item classes should extend `Menu\Item\Item` or implement
-`Menu\Item\StateResetInterface` for `Menu::resetState()` to restore their runtime defaults.
+times per request. Custom item classes should extend `CakeMenu\Item\Item` or implement
+`CakeMenu\Item\StateResetInterface` for `Menu::resetState()` to restore their runtime defaults.
 :::
 
 - String URLs and array URLs are both supported; active matching is automatic and uses both array and

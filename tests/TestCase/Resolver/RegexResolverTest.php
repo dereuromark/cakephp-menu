@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Menu\Test\TestCase\Resolver;
+namespace CakeMenu\Test\TestCase\Resolver;
 
 use Cake\TestSuite\TestCase;
-use Menu\Item\Item;
-use Menu\Resolver\RegexResolver;
+use CakeMenu\Item\Item;
+use CakeMenu\Resolver\RegexResolver;
 
 class RegexResolverTest extends TestCase
 {

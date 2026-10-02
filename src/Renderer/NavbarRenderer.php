@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Menu\Renderer;
+namespace CakeMenu\Renderer;
 
-use Menu\MenuInterface;
+use CakeMenu\MenuInterface;
 use function htmlspecialchars;
 use function sprintf;
 use function trim;
@@ -13,7 +13,7 @@ use const ENT_QUOTES;
 /**
  * Renders a complete Bootstrap 5 navbar: the `<nav>` wrapper, optional brand, the responsive
  * toggler, and the collapsible `navbar-nav` list (with dropdowns inherited from
- * {@see \Menu\Renderer\Bootstrap5Renderer}).
+ * {@see \CakeMenu\Renderer\Bootstrap5Renderer}).
  *
  * For just the `<ul class="navbar-nav">` (to place inside your own navbar chrome), use
  * `Bootstrap5Renderer` directly.

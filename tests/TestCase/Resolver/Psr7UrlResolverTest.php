@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Menu\Test\TestCase\Resolver;
+namespace CakeMenu\Test\TestCase\Resolver;
 
 use Cake\Http\ServerRequest;
 use Cake\TestSuite\TestCase;
-use Menu\Item\Item;
-use Menu\Resolver\Psr7UrlResolver;
+use CakeMenu\Item\Item;
+use CakeMenu\Resolver\Psr7UrlResolver;
 
 class Psr7UrlResolverTest extends TestCase
 {

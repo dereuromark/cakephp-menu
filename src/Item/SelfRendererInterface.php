@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Menu\Item;
+namespace CakeMenu\Item;
 
 interface SelfRendererInterface
 {
