@@ -7,7 +7,7 @@ namespace CakeMenu\Resolver;
 use CakeMenu\Item\ItemInterface;
 use Closure;
 
-class CallbackResolver implements ContextAwareResolverInterface
+class CallbackResolver implements ResolverInterface
 {
     /**
      * @var \Closure(\CakeMenu\Item\ItemInterface, \CakeMenu\Resolver\ResolverContext): void
@@ -22,12 +22,7 @@ class CallbackResolver implements ContextAwareResolverInterface
         $this->callback = Closure::fromCallable($callback);
     }
 
-    public function resolve(ItemInterface $item): void
-    {
-        ($this->callback)($item, new ResolverContext());
-    }
-
-    public function resolveWithContext(ItemInterface $item, ResolverContext $context): void
+    public function resolve(ItemInterface $item, ResolverContext $context): void
     {
         ($this->callback)($item, $context);
     }

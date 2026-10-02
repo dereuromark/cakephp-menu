@@ -8,7 +8,6 @@ use Cake\Cache\Cache;
 use Cake\Core\Configure;
 use Cake\View\Helper;
 use CakeMenu\Item\ItemInterface;
-use CakeMenu\Item\StateResetInterface;
 use CakeMenu\Menu;
 use CakeMenu\MenuInterface;
 use CakeMenu\Renderer\BreadcrumbRenderer;
@@ -329,18 +328,11 @@ class MenuHelper extends Helper
     }
 
     /**
-     * @phpstan-param array<string, mixed> $options
-     *
      * @return list<\CakeMenu\Item\ItemInterface>
      */
-    public function extractPath(ItemInterface $item, array $options = []): array
+    public function extractPath(ItemInterface $item): array
     {
-        $path = [$item];
-        while (($item = $item->getParent()) !== null) {
-            $path[] = $item;
-        }
-
-        return array_reverse($path);
+        return $item->getPath();
     }
 
     /**
@@ -475,8 +467,8 @@ class MenuHelper extends Helper
         }
 
         $resolver = $options['resolver'] ?? $this->createDefaultResolver($options);
-        if (!$resolver instanceof ResolverInterface && !$resolver instanceof ResolverCollectionInterface) {
-            throw new InvalidArgumentException('Resolver must implement ResolverInterface or ResolverCollectionInterface.');
+        if (!$resolver instanceof ResolverInterface) {
+            throw new InvalidArgumentException('Resolver must implement ResolverInterface.');
         }
 
         $menu->resetState();
@@ -521,11 +513,7 @@ class MenuHelper extends Helper
                 continue;
             }
             $item = $entry['item'];
-            if ($item instanceof StateResetInterface) {
-                $item->setRuntimeActive(false);
-            } else {
-                $item->setActive(false);
-            }
+            $item->setRuntimeActive(false);
         }
     }
 
@@ -592,16 +580,11 @@ class MenuHelper extends Helper
         foreach ($menu->getItems() as $item) {
             $itemState = $state[spl_object_id($item)] ?? null;
             if ($itemState !== null) {
-                if ($item instanceof StateResetInterface) {
-                    $item->setRuntimeVisibility($itemState['visible']);
-                    $item->setRuntimeActive($itemState['active']);
-                    $item->setRuntimeExpanded($itemState['expanded']);
-                } else {
-                    $item->setVisibility($itemState['visible']);
-                    $item->setActive($itemState['active']);
-                    $item->setExpanded($itemState['expanded']);
-                }
+                $item->setRuntimeVisible($itemState['visible']);
+                $item->setRuntimeActive($itemState['active']);
+                $item->setRuntimeExpanded($itemState['expanded']);
             }
+
             if ($item->hasSubMenu()) {
                 $this->restoreItemState($item->getSubMenu(), $state);
             }

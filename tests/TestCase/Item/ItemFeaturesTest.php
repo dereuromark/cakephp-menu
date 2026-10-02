@@ -85,6 +85,6 @@ class ItemFeaturesTest extends TestCase
         $item = $rebuilt->getByKey('parent');
 
         $this->assertNotNull($item);
-        $this->assertFalse($item->isFuzzyMatch());
+        $this->assertFalse($item->getFuzzy());
     }
 }

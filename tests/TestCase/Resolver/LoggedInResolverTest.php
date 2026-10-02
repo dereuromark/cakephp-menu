@@ -7,6 +7,7 @@ namespace CakeMenu\Test\TestCase\Resolver;
 use Cake\TestSuite\TestCase;
 use CakeMenu\Item\Item;
 use CakeMenu\Resolver\LoggedInResolver;
+use CakeMenu\Resolver\ResolverContext;
 
 class LoggedInResolverTest extends TestCase
 {
@@ -14,7 +15,7 @@ class LoggedInResolverTest extends TestCase
     {
         $item = (new Item('Login'))->setData('auth', 'loggedOut');
 
-        (new LoggedInResolver(true))->resolve($item);
+        (new LoggedInResolver(true))->resolve($item, new ResolverContext());
 
         $this->assertFalse($item->isVisible());
     }

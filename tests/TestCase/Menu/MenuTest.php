@@ -20,7 +20,6 @@ class MenuTest extends TestCase
     public function testFromArrayExternalLinkWithoutAttributes(): void
     {
         $menu = Menu::fromArray([
-
             'items' => [
                 ['label' => 'External', 'link' => 'https://example.com', 'external' => true],
             ],
@@ -31,6 +30,24 @@ class MenuTest extends TestCase
         $this->assertTrue($link->isExternal());
         $this->assertSame('https://example.com', $link->getRawUrl());
         $this->assertSame([], $link->getAttributes());
+    }
+
+    public function testSerializationDoesNotPersistResolvedState(): void
+    {
+        $menu = Menu::create();
+        $item = $menu->addItem('Articles', '/articles');
+        $menu->resolve(new CallbackResolver(static function ($item, $context): void {
+            $item->setRuntimeActive(true);
+            $item->setRuntimeVisible(false);
+            $item->setRuntimeExpanded(true);
+        }));
+
+        $this->assertTrue($item->isActive());
+        $rebuilt = Menu::fromArray($menu->toArray());
+        $rebuiltItem = $rebuilt->getItems()[0];
+        $this->assertFalse($rebuiltItem->isActive());
+        $this->assertTrue($rebuiltItem->isVisible());
+        $this->assertFalse($rebuiltItem->isExpanded());
     }
 
     public function testAttributeMerging(): void
@@ -76,7 +93,7 @@ class MenuTest extends TestCase
         $menu = Menu::create();
         $menu->addItem('Users', '/users', ['id' => 'users'])->setData('weight', 20);
         $menu->addItem('Dashboard', '/dashboard', ['id' => 'dashboard'])->setData('weight', 10);
-        $menu->addItem('Hidden', '/hidden', ['id' => 'hidden'])->setVisibility(false);
+        $menu->addItem('Hidden', '/hidden', ['id' => 'hidden'])->setVisible(false);
 
         $menu->filter(static fn ($item) => $item->isVisible());
         $menu->sortBy('weight');

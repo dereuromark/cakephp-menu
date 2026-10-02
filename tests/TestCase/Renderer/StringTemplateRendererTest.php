@@ -109,7 +109,7 @@ class StringTemplateRendererTest extends TestCase
     {
         $menu = Menu::create();
         $group = $menu->addItem('Admin', '#');
-        $group->getSubMenu()->addItem('Users', '/admin/users')->setVisibility(false);
+        $group->getSubMenu()->addItem('Users', '/admin/users')->setVisible(false);
         $menu->addItem('Home', '/');
 
         $result = (new StringTemplateRenderer())->render($menu, ['hideEmptyBranches' => true]);
@@ -122,7 +122,7 @@ class StringTemplateRendererTest extends TestCase
     {
         $menu = Menu::create();
         $group = $menu->addItem('Admin', '#');
-        $group->getSubMenu()->addItem('Users', '/admin/users')->setVisibility(false);
+        $group->getSubMenu()->addItem('Users', '/admin/users')->setVisible(false);
 
         $result = (new StringTemplateRenderer())->render($menu);
 
@@ -134,7 +134,7 @@ class StringTemplateRendererTest extends TestCase
         $menu = Menu::create();
         $admin = $menu->addItem('Admin', '#');
         $settings = $admin->getSubMenu()->addItem('Settings', '#');
-        $settings->getSubMenu()->addItem('Users', '/admin/users')->setVisibility(false);
+        $settings->getSubMenu()->addItem('Users', '/admin/users')->setVisible(false);
         $reports = $menu->addItem('Reports', '#');
         $reports->getSubMenu()->addItem('Daily', '/reports/daily');
 
@@ -157,7 +157,7 @@ class StringTemplateRendererTest extends TestCase
             }
         };
         // The self-rendering child has only hidden descendants, but it still renders itself.
-        $self->getSubMenu()->addItem('Hidden', '/hidden')->setVisibility(false);
+        $self->getSubMenu()->addItem('Hidden', '/hidden')->setVisible(false);
         $group->add($self);
 
         $result = (new StringTemplateRenderer())->render($menu, ['hideEmptyBranches' => true]);

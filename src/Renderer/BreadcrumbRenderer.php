@@ -51,12 +51,7 @@ class BreadcrumbRenderer extends StringTemplateRenderer
                     return '';
                 }
 
-                $path = [];
-                while ($activeItem !== null) {
-                    $path[] = $activeItem;
-                    $activeItem = $activeItem->getParent();
-                }
-                $path = array_reverse($path);
+                $path = $activeItem->getPath();
             }
 
             $items = [];

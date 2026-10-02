@@ -66,12 +66,12 @@ render.
 
 ## Where to next
 
-- [Concepts](/guide/concepts) — the build → resolve → render pipeline and the core types.
-- [Building Menus](/guide/building) — items, nesting, headers, icons/badges, import/export, database-backed menus.
-- [Resolvers & Active State](/guide/resolvers) — how the active item is matched, and the available resolvers.
-- [Rendering](/guide/rendering) — the helper, renderer options, and the bundled renderers.
-- [Renderer Gallery](/guide/gallery) — every bundled renderer with real output.
-- [Recipes](/guide/recipes) — role-based menus (TinyAuth), caching, breadcrumbs, and more.
-- [Extending](/guide/extending) — custom renderers and resolvers, plus testing tips.
-- [FAQ & Troubleshooting](/guide/faq) — common active-state and URL gotchas.
-- [Reference](/reference/renderer-options) — every renderer/item/helper option and an API cheat sheet.
+- [Concepts](/guide/concepts); the build → resolve → render pipeline and the core types.
+- [Building Menus](/guide/building); items, nesting, headers, icons/badges, import/export, database-backed menus.
+- [Resolvers & Active State](/guide/resolvers); how the active item is matched, and the available resolvers.
+- [Rendering](/guide/rendering); the helper, renderer options, and the bundled renderers.
+- [Renderer Gallery](/guide/gallery); every bundled renderer with real output.
+- [Recipes](/guide/recipes); role-based menus (TinyAuth), caching, breadcrumbs, and more.
+- [Extending](/guide/extending); custom renderers and resolvers, plus testing tips.
+- [FAQ & Troubleshooting](/guide/faq); common active-state and URL gotchas.
+- [Reference](/reference/renderer-options); every renderer/item/helper option and an API cheat sheet.

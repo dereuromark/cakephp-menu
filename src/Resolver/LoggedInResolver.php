@@ -6,26 +6,19 @@ namespace CakeMenu\Resolver;
 
 use CakeMenu\Item\ItemInterface;
 
-class LoggedInResolver implements ContextAwareResolverInterface
+class LoggedInResolver implements ResolverInterface
 {
-    use RuntimeStateTrait;
-
     public function __construct(protected bool $loggedIn)
     {
     }
 
-    public function resolve(ItemInterface $item): void
-    {
-        $this->resolveWithContext($item, new ResolverContext());
-    }
-
-    public function resolveWithContext(ItemInterface $item, ResolverContext $context): void
+    public function resolve(ItemInterface $item, ResolverContext $context): void
     {
         $auth = $item->getData('auth');
         if ($auth === 'loggedIn') {
-            $this->applyVisibility($item, $this->loggedIn);
+            $item->setRuntimeVisible($this->loggedIn);
         } elseif ($auth === 'loggedOut') {
-            $this->applyVisibility($item, !$this->loggedIn);
+            $item->setRuntimeVisible(!$this->loggedIn);
         }
     }
 }

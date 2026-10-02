@@ -6,7 +6,6 @@ namespace CakeMenu;
 
 use CakeMenu\Item\ItemInterface;
 use CakeMenu\Link\LinkInterface;
-use CakeMenu\Resolver\ResolverCollectionInterface;
 use CakeMenu\Resolver\ResolverInterface;
 use Closure;
 
@@ -38,6 +37,9 @@ interface MenuInterface
      */
     public static function fromFlat(iterable $rows, Closure $mapper): static;
 
+    /**
+     * @internal
+     */
     public function setOwnerItem(ItemInterface $ownerItem): static;
 
     public function getOwnerItem(): ?ItemInterface;
@@ -169,7 +171,7 @@ interface MenuInterface
 
     public function sortBy(callable|string $by, string $direction = self::SORT_ASC): static;
 
-    public function resolve(ResolverInterface|ResolverCollectionInterface $resolver): static;
+    public function resolve(ResolverInterface $resolver): static;
 
     public function resetState(): static;
 

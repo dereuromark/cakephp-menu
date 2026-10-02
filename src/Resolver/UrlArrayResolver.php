@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace CakeMenu\Resolver;
 
 use Cake\Core\InstanceConfigTrait;
-use CakeMenu\Item\Item;
 use CakeMenu\Item\ItemInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use function array_diff_key;
@@ -20,10 +19,9 @@ use function is_numeric;
 use function ksort;
 use const SORT_STRING;
 
-class UrlArrayResolver implements ContextAwareResolverInterface
+class UrlArrayResolver implements ResolverInterface
 {
     use InstanceConfigTrait;
-    use RuntimeStateTrait;
 
     /**
      * @var array<string, mixed>
@@ -43,12 +41,7 @@ class UrlArrayResolver implements ContextAwareResolverInterface
         $this->setConfig($options);
     }
 
-    public function resolve(ItemInterface $item): void
-    {
-        $this->resolveWithContext($item, new ResolverContext());
-    }
-
-    public function resolveWithContext(ItemInterface $item, ResolverContext $context): void
+    public function resolve(ItemInterface $item, ResolverContext $context): void
     {
         $maxDepth = $this->getConfig('maxDepth');
         if (is_int($maxDepth) && $context->getDepth() > $maxDepth) {
@@ -63,7 +56,7 @@ class UrlArrayResolver implements ContextAwareResolverInterface
         $requestParams = (array)$this->request->getAttribute('params');
         foreach ($routes as $route) {
             if ($this->matches($requestParams, $route, $item)) {
-                $this->applyActive($item);
+                $item->setRuntimeActive(true);
 
                 return;
             }
@@ -90,11 +83,7 @@ class UrlArrayResolver implements ContextAwareResolverInterface
             }
         }
 
-        if ($item instanceof Item && $item->getFuzzyMatchSetting() !== null) {
-            $fuzzy = $item->isFuzzyMatch();
-        } else {
-            $fuzzy = (bool)$this->getConfig('fuzzy');
-        }
+        $fuzzy = $item->getFuzzy() ?? (bool)$this->getConfig('fuzzy');
 
         if ($fuzzy) {
             if (isset($normalizedRoute['?'])) {
@@ -283,11 +272,9 @@ class UrlArrayResolver implements ContextAwareResolverInterface
             }
         }
 
-        if ($item instanceof Item) {
-            foreach ($item->getMatchRoutes() as $route) {
-                if (is_array($route)) {
-                    $routes[] = $route;
-                }
+        foreach ($item->getMatchRoutes() as $route) {
+            if (is_array($route)) {
+                $routes[] = $route;
             }
         }
 

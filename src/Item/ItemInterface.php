@@ -46,7 +46,15 @@ interface ItemInterface
 
     public function isHeader(): bool;
 
-    public function setVisibility(bool $isVisible): static;
+    public function resetState(): static;
+
+    public function setRuntimeVisible(bool $isVisible): static;
+
+    public function setRuntimeActive(bool $isActive): static;
+
+    public function setRuntimeExpanded(bool $expanded = true): static;
+
+    public function setVisible(bool $isVisible): static;
 
     public function isVisible(): bool;
 
@@ -62,7 +70,19 @@ interface ItemInterface
 
     public function hasSubMenu(): bool;
 
+    /**
+     * @internal
+     */
     public function setParent(?ItemInterface $item): static;
+
+    /**
+     * @return list<\CakeMenu\Item\ItemInterface>
+     */
+    public function getPath(): array;
+
+    public function getLevel(): int;
+
+    public function getRoot(): self;
 
     public function getParent(): ?ItemInterface;
 
@@ -70,6 +90,9 @@ interface ItemInterface
 
     public function getParentId(): ?string;
 
+    /**
+     * @internal
+     */
     public function setOwnerMenu(?MenuInterface $menu): static;
 
     public function getOwnerMenu(): ?MenuInterface;
@@ -131,9 +154,9 @@ interface ItemInterface
 
     public function getIgnoreQueryString(): ?bool;
 
-    public function setFuzzyMatch(bool $fuzzyMatch = true): static;
+    public function setFuzzy(?bool $fuzzyMatch): static;
 
-    public function isFuzzyMatch(): bool;
+    public function getFuzzy(): ?bool;
 
     public function setExpanded(bool $expanded = true): static;
 

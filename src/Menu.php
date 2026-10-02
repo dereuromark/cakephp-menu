@@ -6,11 +6,8 @@ namespace CakeMenu;
 
 use CakeMenu\Item\Item;
 use CakeMenu\Item\ItemInterface;
-use CakeMenu\Item\StateResetInterface;
 use CakeMenu\Link\Link;
 use CakeMenu\Link\LinkInterface;
-use CakeMenu\Resolver\ContextAwareResolverInterface;
-use CakeMenu\Resolver\ResolverCollectionInterface;
 use CakeMenu\Resolver\ResolverContext;
 use CakeMenu\Resolver\ResolverInterface;
 use Closure;
@@ -337,7 +334,7 @@ class Menu implements MenuInterface
             }
         }
         if (isset($options['visible'])) {
-            $item->setVisibility((bool)$options['visible']);
+            $item->setVisible((bool)$options['visible']);
         }
         if (isset($options['active'])) {
             $item->setActive((bool)$options['active']);
@@ -362,7 +359,7 @@ class Menu implements MenuInterface
             $item->setIgnoreQueryString(is_bool($ignoreQueryString) ? $ignoreQueryString : null);
         }
         if (array_key_exists('fuzzy', $options) && $options['fuzzy'] !== null) {
-            $item->setFuzzyMatch((bool)$options['fuzzy']);
+            $item->setFuzzy((bool)$options['fuzzy']);
         }
         if (array_key_exists('displayChildren', $options)) {
             $item->setDisplayChildren((bool)$options['displayChildren']);
@@ -762,11 +759,8 @@ class Menu implements MenuInterface
     public function clearActive(): static
     {
         foreach ($this->items as $item) {
-            if ($item instanceof StateResetInterface) {
-                $item->setRuntimeActive(false);
-            } else {
-                $item->setActive(false);
-            }
+            $item->setRuntimeActive(false);
+
             if ($item->hasSubMenu()) {
                 $item->getSubMenu()->clearActive();
             }
@@ -885,7 +879,7 @@ class Menu implements MenuInterface
         return $this;
     }
 
-    public function resolve(ResolverInterface|ResolverCollectionInterface $resolver): static
+    public function resolve(ResolverInterface $resolver): static
     {
         $this->resolveItems($resolver, $this->items, 1, $this->ownerItem);
 
@@ -893,24 +887,20 @@ class Menu implements MenuInterface
     }
 
     /**
-     * @param \CakeMenu\Resolver\ResolverInterface|\CakeMenu\Resolver\ResolverCollectionInterface $resolver
+     * @param \CakeMenu\Resolver\ResolverInterface $resolver
      * @param list<\CakeMenu\Item\ItemInterface> $items
      * @param \CakeMenu\Item\ItemInterface|null $parent
      * @param int $depth
      */
     protected function resolveItems(
-        ResolverInterface|ResolverCollectionInterface $resolver,
+        ResolverInterface $resolver,
         array $items,
         int $depth,
         ?ItemInterface $parent,
     ): void {
         $context = new ResolverContext($depth, $parent);
         foreach ($items as $item) {
-            if ($resolver instanceof ContextAwareResolverInterface) {
-                $resolver->resolveWithContext($item, $context);
-            } else {
-                $resolver->resolve($item);
-            }
+            $resolver->resolve($item, $context);
             if ($item->hasSubMenu()) {
                 $subMenu = $item->getSubMenu();
                 if ($subMenu instanceof self) {
@@ -1013,11 +1003,8 @@ class Menu implements MenuInterface
     public function resetState(): static
     {
         foreach ($this->items as $item) {
-            if ($item instanceof StateResetInterface) {
-                $item->resetState();
-            } else {
-                $item->setActive(false);
-            }
+            $item->resetState();
+
             if ($item->hasSubMenu()) {
                 $item->getSubMenu()->resetState();
             }

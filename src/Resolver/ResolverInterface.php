@@ -8,5 +8,5 @@ use CakeMenu\Item\ItemInterface;
 
 interface ResolverInterface
 {
-    public function resolve(ItemInterface $item): void;
+    public function resolve(ItemInterface $item, ResolverContext $context): void;
 }

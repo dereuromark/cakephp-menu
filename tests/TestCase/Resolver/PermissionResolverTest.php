@@ -7,6 +7,7 @@ namespace CakeMenu\Test\TestCase\Resolver;
 use Cake\TestSuite\TestCase;
 use CakeMenu\Item\Item;
 use CakeMenu\Resolver\PermissionResolver;
+use CakeMenu\Resolver\ResolverContext;
 
 class PermissionResolverTest extends TestCase
 {
@@ -27,8 +28,8 @@ class PermissionResolverTest extends TestCase
             }
         };
         $resolver = new PermissionResolver($authorizer);
-        $resolver->resolve($item);
-        $resolver->resolve($item);
+        $resolver->resolve($item, new ResolverContext());
+        $resolver->resolve($item, new ResolverContext());
 
         $this->assertSame([null, 'admin.access', $item], $authorizer->arguments);
         $this->assertFalse($item->isVisible());
@@ -44,7 +45,7 @@ class PermissionResolverTest extends TestCase
             }
         };
 
-        (new PermissionResolver($authorizer, ['id' => 1]))->resolve($item);
+        (new PermissionResolver($authorizer, ['id' => 1]))->resolve($item, new ResolverContext());
 
         $this->assertFalse($item->isVisible());
     }
@@ -59,7 +60,7 @@ class PermissionResolverTest extends TestCase
             }
         };
 
-        (new PermissionResolver($authorizer, ['id' => 1]))->resolve($item);
+        (new PermissionResolver($authorizer, ['id' => 1]))->resolve($item, new ResolverContext());
 
         $this->assertFalse($item->isVisible());
     }
@@ -77,7 +78,7 @@ class PermissionResolverTest extends TestCase
             }
         };
 
-        (new PermissionResolver($authorizer, ['id' => 1]))->resolve($item);
+        (new PermissionResolver($authorizer, ['id' => 1]))->resolve($item, new ResolverContext());
 
         $this->assertTrue($item->isVisible());
     }

@@ -37,20 +37,21 @@ which the built-in renderers call directly.
 
 ## Custom Resolvers
 
-Implement `CakeMenu\Resolver\ResolverInterface` (or `ContextAwareResolverInterface` for depth/parent
-awareness) and add it via `additionalResolvers` or a `ResolverCollection`:
+Implement `CakeMenu\Resolver\ResolverInterface` and add it via `additionalResolvers` or a
+`ResolverCollection`. The required context provides the depth and parent:
 
 ```php
 use CakeMenu\Item\ItemInterface;
 use CakeMenu\Resolver\ResolverInterface;
+use CakeMenu\Resolver\ResolverContext;
 
 class FeatureFlagResolver implements ResolverInterface
 {
-    public function resolve(ItemInterface $item): void
+    public function resolve(ItemInterface $item, ResolverContext $context): void
     {
         $feature = $item->getData('feature');
         if ($feature !== null && !Features::enabled((string)$feature)) {
-            $item->setVisibility(false);
+            $item->setRuntimeVisible(false);
         }
     }
 }

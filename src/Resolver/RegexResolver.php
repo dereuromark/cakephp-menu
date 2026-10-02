@@ -20,15 +20,13 @@ use function set_error_handler;
  */
 class RegexResolver implements ResolverInterface
 {
-    use RuntimeStateTrait;
-
     public function __construct(
         protected string $path,
         protected string $dataKey = 'match',
     ) {
     }
 
-    public function resolve(ItemInterface $item): void
+    public function resolve(ItemInterface $item, ResolverContext $context): void
     {
         $patterns = $item->getData($this->dataKey);
         if ($patterns === null) {
@@ -40,7 +38,7 @@ class RegexResolver implements ResolverInterface
                 continue;
             }
             if ($this->matches($pattern)) {
-                $this->applyActive($item);
+                $item->setRuntimeActive(true);
 
                 return;
             }

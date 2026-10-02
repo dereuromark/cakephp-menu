@@ -1,5 +1,5 @@
 ---
-description: Practical cakephp-menu recipes — admin sidebars, account dropdowns, breadcrumbs, role-based menus with TinyAuth, caching, and config- or database-backed menus.
+description: Practical cakephp-menu recipes; admin sidebars, account dropdowns, breadcrumbs, role-based menus with TinyAuth, caching, and config- or database-backed menus.
 ---
 
 # Recipes
@@ -144,7 +144,7 @@ echo $this->Menu->render(Menu::fromArray($tree));
 
 ## TinyAuth Backend Navigation
 
-`tinyauth-backend` exposes `$this->TinyAuth->getNavigationItems()` — its feature-gated admin
+`tinyauth-backend` exposes `$this->TinyAuth->getNavigationItems()`; its feature-gated admin
 sections (Dashboard, Roles, Resources, ...) as `['name', 'label', 'route']` arrays (already filtered
 to the enabled features). Turn it into a menu:
 
@@ -177,7 +177,7 @@ $menu->addItem('Profile', '/profile', ['icon' => 'fa fa-user', 'badge' => 'new']
 
 The markup is overridable per render with the `iconTemplate` / `badgeTemplate` options
 (`{{icon}}`, and `{{class}}`/`{{text}}` placeholders). For anything more custom, `before`, `after`,
-and `raw` are still emitted as trusted markup — cast or escape dynamic values you put there yourself
+and `raw` are still emitted as trusted markup; cast or escape dynamic values you put there yourself
 (e.g. `(int)$count`).
 
 ## Defining a Menu in Config

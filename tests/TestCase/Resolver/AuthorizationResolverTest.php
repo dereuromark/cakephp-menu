@@ -23,7 +23,7 @@ class AuthorizationResolverTest extends TestCase
 
             return null;
         });
-        $resolver->resolve($item);
+        $resolver->resolve($item, new ResolverContext());
 
         $this->assertFalse($item->isVisible());
     }

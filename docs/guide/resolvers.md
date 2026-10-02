@@ -1,5 +1,5 @@
 ---
-description: Apply active state and visibility in cakephp-menu with URL, section, login, permission, authorization, and callback resolvers — composed or layered on the defaults.
+description: Apply active state and visibility in cakephp-menu with URL, section, login, permission, authorization, and callback resolvers; composed or layered on the defaults.
 ---
 
 # Resolvers & Active State
@@ -71,7 +71,7 @@ $menu->resolve(new SectionResolver($request));
 ## Regex Resolver
 
 `RegexResolver` activates items whose regular expression (stored in `data['match']`) matches the
-current request path — handy for lighting up a whole URL section that a route-array match can't
+current request path; handy for lighting up a whole URL section that a route-array match can't
 express. A value may be a single pattern or a list; invalid patterns are ignored.
 
 ```php
@@ -125,7 +125,7 @@ $menu->resolve(new AuthorizationResolver(
 $menu->resolve(new CallbackResolver(
     static function (ItemInterface $item, ResolverContext $context): void {
         if ($context->getDepth() > 1) {
-            $item->setExpanded();
+            $item->setRuntimeExpanded();
         }
     }
 ));
@@ -162,7 +162,7 @@ $menu->resolve(
 ::: warning A custom `resolver` replaces the defaults
 Passing a `resolver` option **replaces** the built-in URL resolvers, so you lose automatic
 active-state matching. To **keep** the defaults and add your own (for example a visibility resolver),
-use `additionalResolvers` instead — they run after the URL resolvers.
+use `additionalResolvers` instead; they run after the URL resolvers.
 :::
 
 ```php
@@ -188,3 +188,8 @@ echo $this->Menu->render('main', [
 ]);
 ```
 
+
+All resolvers implement `resolve(ItemInterface $item, ResolverContext $context): void`.
+`Menu::resolve()` supplies the context. When resolving an item directly, pass a
+`new ResolverContext()` as the second argument. Custom resolvers use `setRuntimeVisible()`,
+`setRuntimeActive()`, and `setRuntimeExpanded()` to change request state.

@@ -9,10 +9,8 @@ use ReflectionMethod;
 use function is_string;
 use function method_exists;
 
-class PermissionResolver implements ContextAwareResolverInterface
+class PermissionResolver implements ResolverInterface
 {
-    use RuntimeStateTrait;
-
     protected ?int $parameterCount = null;
 
     public function __construct(
@@ -23,12 +21,7 @@ class PermissionResolver implements ContextAwareResolverInterface
     ) {
     }
 
-    public function resolve(ItemInterface $item): void
-    {
-        $this->resolveWithContext($item, new ResolverContext());
-    }
-
-    public function resolveWithContext(ItemInterface $item, ResolverContext $context): void
+    public function resolve(ItemInterface $item, ResolverContext $context): void
     {
         $permission = $item->getData($this->dataKey);
         if (!is_string($permission) || !method_exists($this->authorizer, $this->method)) {
@@ -37,7 +30,7 @@ class PermissionResolver implements ContextAwareResolverInterface
 
         $allowed = $this->invokeAuthorizer($permission, $item, $context);
         if (is_bool($allowed)) {
-            $this->applyVisibility($item, $allowed);
+            $item->setRuntimeVisible($allowed);
         }
     }
 

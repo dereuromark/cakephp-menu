@@ -24,7 +24,7 @@ $menu->addItem('Inbox', ['controller' => 'Messages', 'action' => 'index'], [
 | `key` | `string` | slug of label | Lookup key (auto-slugified from the label if unset). |
 | `label` | `string` | (from arg) | Item text. |
 | `escape` | `bool` | `true` | HTML-escape the label. |
-| `link` | `string\|array\|LinkInterface\|null` | `null` | URL — string, CakePHP route array, or `LinkInterface`. |
+| `link` | `string\|array\|LinkInterface\|null` | `null` | URL; string, CakePHP route array, or `LinkInterface`. |
 | `linkAttributes` | `array` | `[]` | HTML attributes on the `<a>`. |
 | `external` | `bool` | `false` | Mark the link external (skips routing). |
 | `before` | `string` | `''` | Trusted markup before the label. |
@@ -48,7 +48,7 @@ $menu->addItem('Inbox', ['controller' => 'Messages', 'action' => 'index'], [
 | `labelAttributes` | `array` | `[]` | HTML attributes on the rendered link/label element (classes merge). |
 
 ::: warning Trusted markup
-`before`, `after`, `raw`, and the icon/badge markup are emitted **as-is** — they are not escaped.
+`before`, `after`, `raw`, and the icon/badge markup are emitted **as-is**; they are not escaped.
 Cast or escape any dynamic value you put there yourself (e.g. `(int)$count`). The `label` is escaped
 unless `escape` is `false`.
 :::
@@ -62,7 +62,7 @@ $item = $menu->addItem('Profile', '/profile')
     ->setIcon('fa fa-user')
     ->setBadge('new', 'bg-success')
     ->setData('roles', ['admin'])
-    ->setFuzzyMatch()
+    ->setFuzzy(true)
     ->setExpanded();
 ```
 
@@ -77,16 +77,22 @@ $item = $menu->addItem('Profile', '/profile')
 | `badge` / `badgeType` | `setBadge($badge, $type)` |
 | `attributes` | `setAttribute()` / `setAttributes()` |
 | `data` | `setData($name, $value)` |
-| `visible` | `setVisibility()` |
+| `visible` | `setVisible()` |
 | `active` | `setActive()` |
 | `raw` | `setRaw()` |
 | `divider` | `setDivider()` |
 | `header` | `setHeader()` |
 | `matchRoutes` | `setMatchRoutes()` / `addMatchRoute()` |
 | `ignoreQueryString` | `setIgnoreQueryString()` |
-| `fuzzy` | `setFuzzyMatch()` |
+| `fuzzy` | `setFuzzy(true)` |
 | `expanded` | `setExpanded()` |
 | `displayChildren` | `setDisplayChildren()` |
 | `labelAttributes` | `setLabelAttributes()` |
 
 See the full method list in the [API Cheat Sheet](/reference/cheatsheet#item).
+
+`setVisible()`, `setActive()`, and `setExpanded()` change authoring defaults. Runtime
+setters override those defaults until `resetState()`. `toArray()` serializes defaults.
+
+`setFuzzy(?bool)` and `getFuzzy(): ?bool` use `null` to inherit the resolver setting,
+`true` for fuzzy matching, and `false` for exact matching. The option key remains `fuzzy`.

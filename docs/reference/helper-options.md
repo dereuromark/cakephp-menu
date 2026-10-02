@@ -36,7 +36,7 @@ straight through to the renderer as [renderer options](/reference/renderer-optio
 |--------|---------|-------------|
 | `renderer` | `StringTemplateRenderer::class` | Renderer class name or instance. |
 | `resolve` | `true` | Set `false` to render without resolving active state. |
-| `resolver` | (built-in URL resolvers) | A `ResolverInterface`/`ResolverCollectionInterface` that **replaces** the defaults. |
+| `resolver` | (built-in URL resolvers) | A `ResolverInterface` that **replaces** the defaults. |
 | `additionalResolvers` | `[]` | Extra `ResolverInterface`s appended **after** the defaults (keeps active-state matching). |
 | `singleActive` | `false` | Keep only the deepest active item active (best-match arbitration). |
 | `fuzzy` | `true` | Fuzzy (prefix) matching for the default `UrlArrayResolver`. |
@@ -116,6 +116,6 @@ An explicit `create()`/`register()` of the same name overrides the configured me
 |--------|---------|-------------|
 | `linkCurrent` | `false` | Link the current (last) crumb too. |
 | `resetBreadcrumbs` | `true` | Reset Cake's `Breadcrumbs` helper before populating. |
-| `renderer` | — | Set to `BreadcrumbRenderer::class` to render directly instead of via Cake's helper. |
+| `renderer` |; | Set to `BreadcrumbRenderer::class` to render directly instead of via Cake's helper. |
 
 Per-item breadcrumb attributes can be set via the item's `data['breadcrumbOptions']`.

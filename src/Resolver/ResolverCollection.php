@@ -7,7 +7,7 @@ namespace CakeMenu\Resolver;
 use CakeMenu\Item\ItemInterface;
 use InvalidArgumentException;
 
-class ResolverCollection implements ResolverCollectionInterface, ContextAwareResolverInterface
+class ResolverCollection implements ResolverCollectionInterface
 {
     /**
      * @var list<\CakeMenu\Resolver\ResolverInterface>
@@ -46,21 +46,10 @@ class ResolverCollection implements ResolverCollectionInterface, ContextAwareRes
         return $this->resolvers;
     }
 
-    public function resolve(ItemInterface $item): void
-    {
-        $this->resolveWithContext($item, new ResolverContext());
-    }
-
-    public function resolveWithContext(ItemInterface $item, ResolverContext $context): void
+    public function resolve(ItemInterface $item, ResolverContext $context): void
     {
         foreach ($this->resolvers as $resolver) {
-            if ($resolver instanceof ContextAwareResolverInterface) {
-                $resolver->resolveWithContext($item, $context);
-
-                continue;
-            }
-
-            $resolver->resolve($item);
+            $resolver->resolve($item, $context);
         }
     }
 }

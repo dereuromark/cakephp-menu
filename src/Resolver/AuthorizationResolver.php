@@ -7,10 +7,8 @@ namespace CakeMenu\Resolver;
 use CakeMenu\Item\ItemInterface;
 use Closure;
 
-class AuthorizationResolver implements ContextAwareResolverInterface
+class AuthorizationResolver implements ResolverInterface
 {
-    use RuntimeStateTrait;
-
     /**
      * @var \Closure(\CakeMenu\Item\ItemInterface, \CakeMenu\Resolver\ResolverContext): (bool|null)
      */
@@ -24,16 +22,11 @@ class AuthorizationResolver implements ContextAwareResolverInterface
         $this->callback = Closure::fromCallable($callback);
     }
 
-    public function resolve(ItemInterface $item): void
-    {
-        $this->resolveWithContext($item, new ResolverContext());
-    }
-
-    public function resolveWithContext(ItemInterface $item, ResolverContext $context): void
+    public function resolve(ItemInterface $item, ResolverContext $context): void
     {
         $allowed = ($this->callback)($item, $context);
         if ($allowed !== null) {
-            $this->applyVisibility($item, $allowed);
+            $item->setRuntimeVisible($allowed);
         }
     }
 }

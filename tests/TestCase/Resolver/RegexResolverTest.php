@@ -7,6 +7,7 @@ namespace CakeMenu\Test\TestCase\Resolver;
 use Cake\TestSuite\TestCase;
 use CakeMenu\Item\Item;
 use CakeMenu\Resolver\RegexResolver;
+use CakeMenu\Resolver\ResolverContext;
 
 class RegexResolverTest extends TestCase
 {
@@ -14,7 +15,7 @@ class RegexResolverTest extends TestCase
     {
         $item = (new Item('Articles', '/articles'))->setData('match', '#^/articles#');
 
-        (new RegexResolver('/articles/view/42'))->resolve($item);
+        (new RegexResolver('/articles/view/42'))->resolve($item, new ResolverContext());
 
         $this->assertTrue($item->isActive());
     }
@@ -23,7 +24,7 @@ class RegexResolverTest extends TestCase
     {
         $item = (new Item('Users', '/users'))->setData('match', '#^/users#');
 
-        (new RegexResolver('/articles'))->resolve($item);
+        (new RegexResolver('/articles'))->resolve($item, new ResolverContext());
 
         $this->assertFalse($item->isActive());
     }
@@ -32,7 +33,7 @@ class RegexResolverTest extends TestCase
     {
         $item = (new Item('Content'))->setData('match', ['#^/articles#', '#^/pages#']);
 
-        (new RegexResolver('/pages/about'))->resolve($item);
+        (new RegexResolver('/pages/about'))->resolve($item, new ResolverContext());
 
         $this->assertTrue($item->isActive());
     }
@@ -41,7 +42,7 @@ class RegexResolverTest extends TestCase
     {
         $item = new Item('Home', '/');
 
-        (new RegexResolver('/'))->resolve($item);
+        (new RegexResolver('/'))->resolve($item, new ResolverContext());
 
         $this->assertFalse($item->isActive());
     }
@@ -50,7 +51,7 @@ class RegexResolverTest extends TestCase
     {
         $item = (new Item('X'))->setData('activePattern', '#^/x#');
 
-        (new RegexResolver('/x/y', 'activePattern'))->resolve($item);
+        (new RegexResolver('/x/y', 'activePattern'))->resolve($item, new ResolverContext());
 
         $this->assertTrue($item->isActive());
     }
@@ -59,7 +60,7 @@ class RegexResolverTest extends TestCase
     {
         $item = (new Item('X'))->setData('match', 'not-a-valid-regex(');
 
-        (new RegexResolver('/x'))->resolve($item);
+        (new RegexResolver('/x'))->resolve($item, new ResolverContext());
 
         $this->assertFalse($item->isActive());
     }

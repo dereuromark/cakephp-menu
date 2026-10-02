@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace CakeMenu\Resolver;
 
-use CakeMenu\Item\ItemInterface;
-
-interface ResolverCollectionInterface
+interface ResolverCollectionInterface extends ResolverInterface
 {
     public function add(ResolverInterface $resolver): static;
 
@@ -21,8 +19,4 @@ interface ResolverCollectionInterface
      * @return list<\CakeMenu\Resolver\ResolverInterface>
      */
     public function all(): array;
-
-    public function resolve(ItemInterface $item): void;
-
-    public function resolveWithContext(ItemInterface $item, ResolverContext $context): void;
 }

@@ -31,7 +31,7 @@ class Bootstrap5RendererTest extends TestCase
         $menu = Menu::create();
         $parent = $menu->addItem('Parent', '/parent');
         $child = $parent->getSubMenu()->addItem('Child', '/child');
-        $child->getSubMenu()->addItem('Hidden', '/hidden')->setVisibility(false);
+        $child->getSubMenu()->addItem('Hidden', '/hidden')->setVisible(false);
 
         $result = (new Bootstrap5Renderer())->render($menu, ['depth' => 2, 'hideEmptyBranches' => true]);
 
