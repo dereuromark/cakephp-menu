@@ -109,9 +109,9 @@ class UrlArrayResolver implements ContextAwareResolverInterface
         $exactRoute = $this->canonicalizeForExactMatch($normalizedRoute);
         $exactRequest = $this->canonicalizeForExactMatch($normalizedRequestParams);
 
-        // Transport meta is always present on the request but rarely on a link, so only
-        // enforce host/method when the route explicitly constrains them.
-        foreach (['_host', '_method'] as $meta) {
+        // Transport meta and the auto-generated route name are always present on the request
+        // but rarely on a link, so only enforce them when the route explicitly constrains them.
+        foreach (['_host', '_method', '_name'] as $meta) {
             if (!array_key_exists($meta, $exactRoute)) {
                 unset($exactRequest[$meta]);
             }
@@ -190,9 +190,7 @@ class UrlArrayResolver implements ContextAwareResolverInterface
         if (is_object($route) && method_exists($route, 'getName')) {
             $params['_name'] = $route->getName();
         }
-        if (!isset($params['_ext'])) {
-            $params['_ext'] = null;
-        }
+        $params += ['prefix' => null, '_ext' => null];
 
         $pass = isset($params['pass']) && is_array($params['pass']) ? $params['pass'] : [];
         unset(

@@ -40,6 +40,15 @@ It also supports named routes:
 $menu->addItem('View', ['_name' => 'articles:view']);
 ```
 
+In apps that mix prefixed and non-prefixed routes, pass `'prefix' => false` on the non-prefixed links.
+With fuzzy matching (the default), a link without a `prefix` key matches regardless of the current
+prefix, the same way `Router::url()` inherits it from the current request:
+
+```php
+$menu->addItem('Articles', ['prefix' => false, 'controller' => 'Articles', 'action' => 'index']);
+$menu->addItem('Admin Articles', ['prefix' => 'Admin', 'controller' => 'Articles', 'action' => 'index']);
+```
+
 ## Section Resolver
 
 `SectionResolver` activates items from request parameter subsets:
