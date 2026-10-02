@@ -250,6 +250,7 @@ class Item implements ItemInterface
 
     public function setVisible(bool $isVisible): static
     {
+        $this->assertMutable();
         $this->defaultVisible = $isVisible;
 
         return $this;
@@ -262,6 +263,7 @@ class Item implements ItemInterface
 
     public function setActive(bool $isActive): static
     {
+        $this->assertMutable();
         $this->defaultActive = $isActive;
 
         return $this;
@@ -577,6 +579,7 @@ class Item implements ItemInterface
 
     public function setExpanded(bool $expanded = true): static
     {
+        $this->assertMutable();
         $this->defaultExpanded = $expanded;
 
         return $this;
@@ -673,6 +676,14 @@ class Item implements ItemInterface
         $this->expanded = null;
 
         return $this;
+    }
+
+    /**
+     * @return array{visible: bool|null, active: bool|null, expanded: bool|null}
+     */
+    public function getRuntimeState(): array
+    {
+        return ['visible' => $this->visible, 'active' => $this->active, 'expanded' => $this->expanded];
     }
 
     public function setRuntimeVisible(bool $isVisible): static

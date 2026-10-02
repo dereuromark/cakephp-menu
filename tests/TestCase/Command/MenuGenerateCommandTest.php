@@ -81,6 +81,8 @@ class MenuGenerateCommandTest extends TestCase
         $this->assertFileExists($path);
         $this->assertStringContainsString("'main' => [", (string)file_get_contents($path));
         $this->assertStringContainsString("'class' => 'nav'", (string)file_get_contents($path));
+        $this->assertStringContainsString("'CakeMenu' => [", (string)file_get_contents($path));
+        $this->assertStringNotContainsString("'Menu' => [", (string)file_get_contents($path));
     }
 
     public function testRefusesToOverwriteWithoutForce(): void

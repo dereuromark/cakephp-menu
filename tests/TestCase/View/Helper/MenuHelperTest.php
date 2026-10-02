@@ -65,6 +65,19 @@ class MenuHelperTest extends TestCase
         );
     }
 
+    public function testRenderDoesNotPinRuntimeStateAfterRestore(): void
+    {
+        $menuHelper = $this->createHelper(new ServerRequest());
+        $menu = Menu::create();
+        $item = $menu->addItem('First', '/x');
+
+        $menuHelper->render($menu);
+        $item->setVisible(false);
+
+        $this->assertFalse($item->isVisible());
+        $this->assertSame(['visible' => null, 'active' => null, 'expanded' => null], $item->getRuntimeState());
+    }
+
     public function testCreateRenderAndGetByName(): void
     {
         $request = (new ServerRequest(['url' => '/articles/view']))

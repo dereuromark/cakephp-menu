@@ -125,6 +125,6 @@ An explicit `create()`/`register()` of the same name overrides the configured me
 |--------|---------|-------------|
 | `linkCurrent` | `false` | Link the current (last) crumb too. |
 | `resetBreadcrumbs` | `true` | Reset Cake's `Breadcrumbs` helper before populating. |
-| `renderer` |; | Set to `BreadcrumbRenderer::class` to render directly instead of via Cake's helper. |
+| `renderer` | `BreadcrumbRenderer::class` | Renderer used by `renderBreadcrumbs()`. Pass a `BreadcrumbRenderer` subclass or instance to customize the output. |
 
 Per-item breadcrumb attributes can be set via the item's `data['breadcrumbOptions']`.

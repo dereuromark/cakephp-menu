@@ -88,7 +88,9 @@ $item->setExpanded(); // [!code --]
 $item->setRuntimeExpanded(); // [!code ++]
 ```
 
-Authoring setters change defaults only. Runtime setters override them until `resetState()`.
+Authoring setters change defaults only and throw on a frozen item. Runtime setters override
+the defaults until `resetState()` and stay available on frozen menus. Custom items also
+implement `getRuntimeState()`, which returns the raw overrides (`null` when unset).
 
 ### Visibility and matching
 

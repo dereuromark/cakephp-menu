@@ -48,6 +48,13 @@ interface ItemInterface
 
     public function resetState(): static;
 
+    /**
+     * Runtime overrides only; `null` means the authoring default applies.
+     *
+     * @return array{visible: bool|null, active: bool|null, expanded: bool|null}
+     */
+    public function getRuntimeState(): array;
+
     public function setRuntimeVisible(bool $isVisible): static;
 
     public function setRuntimeActive(bool $isActive): static;

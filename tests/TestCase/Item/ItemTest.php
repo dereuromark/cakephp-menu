@@ -151,6 +151,16 @@ class ItemTest extends TestCase
         $item->detach();
     }
 
+    public function testAuthoringSettersRespectFreezeButRuntimeSettersDoNot(): void
+    {
+        $item = Menu::create()->addItem('Child', '/child')->freeze();
+        $item->setRuntimeVisible(false);
+        $this->assertFalse($item->isVisible());
+
+        $this->expectException(LogicException::class);
+        $item->setVisible(false);
+    }
+
     public function testAddRestoresParentWhenCustomSubMenuRejectsItem(): void
     {
         $parent = new Item('Parent', '/parent');

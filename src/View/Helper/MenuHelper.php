@@ -532,17 +532,13 @@ class MenuHelper extends Helper
     }
 
     /**
-     * @return array<int, array{visible: bool, active: bool, expanded: bool}>
+     * @return array<int, array{visible: bool|null, active: bool|null, expanded: bool|null}>
      */
     protected function captureItemState(MenuInterface $menu): array
     {
         $state = [];
         foreach ($menu->getItems() as $item) {
-            $state[spl_object_id($item)] = [
-                'visible' => $item->isVisible(),
-                'active' => $item->isActive(),
-                'expanded' => $item->isExpanded(),
-            ];
+            $state[spl_object_id($item)] = $item->getRuntimeState();
             if ($item->hasSubMenu()) {
                 $state += $this->captureItemState($item->getSubMenu());
             }
@@ -553,16 +549,23 @@ class MenuHelper extends Helper
 
     /**
      * @param \CakeMenu\MenuInterface $menu
-     * @param array<int, array{visible: bool, active: bool, expanded: bool}> $state
+     * @param array<int, array{visible: bool|null, active: bool|null, expanded: bool|null}> $state
      */
     protected function restoreItemState(MenuInterface $menu, array $state): void
     {
         foreach ($menu->getItems() as $item) {
             $itemState = $state[spl_object_id($item)] ?? null;
             if ($itemState !== null) {
-                $item->setRuntimeVisible($itemState['visible']);
-                $item->setRuntimeActive($itemState['active']);
-                $item->setRuntimeExpanded($itemState['expanded']);
+                $item->resetState();
+                if ($itemState['visible'] !== null) {
+                    $item->setRuntimeVisible($itemState['visible']);
+                }
+                if ($itemState['active'] !== null) {
+                    $item->setRuntimeActive($itemState['active']);
+                }
+                if ($itemState['expanded'] !== null) {
+                    $item->setRuntimeExpanded($itemState['expanded']);
+                }
             }
 
             if ($item->hasSubMenu()) {
