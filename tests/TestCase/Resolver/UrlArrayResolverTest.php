@@ -289,6 +289,75 @@ class UrlArrayResolverTest extends TestCase
         $this->assertTrue($item->isActive());
     }
 
+    public function testExactMatchHonorsQueryParamNamedPrefix(): void
+    {
+        $item = (new Item('Filtered', [
+            'controller' => 'Articles',
+            'action' => 'index',
+            '?' => ['prefix' => 'abc'],
+        ]))->setFuzzyMatch(false);
+
+        $request = (new ServerRequest())
+            ->withAttribute('params', [
+                'controller' => 'Articles',
+                'action' => 'index',
+                'plugin' => null,
+                'pass' => [],
+            ])
+            ->withQueryParams(['prefix' => 'abc']);
+
+        $resolver = new UrlArrayResolver($request, ['fuzzy' => false]);
+        $resolver->resolve($item);
+
+        $this->assertTrue($item->isActive());
+    }
+
+    public function testExactMatchHonorsQueryParamNamedPluginWithoutPluginParam(): void
+    {
+        $item = (new Item('Filtered', [
+            'controller' => 'Articles',
+            'action' => 'index',
+            '?' => ['plugin' => 'abc'],
+        ]))->setFuzzyMatch(false);
+
+        $request = (new ServerRequest())
+            ->withAttribute('params', [
+                'controller' => 'Articles',
+                'action' => 'index',
+                'pass' => [],
+            ])
+            ->withQueryParams(['plugin' => 'abc']);
+
+        $resolver = new UrlArrayResolver($request, ['fuzzy' => false]);
+        $resolver->resolve($item);
+
+        $this->assertTrue($item->isActive());
+    }
+
+    public function testExactMatchDoesNotTreatQueryPrefixAsRoutingPrefix(): void
+    {
+        $item = (new Item('Admin Filtered', [
+            'prefix' => 'Admin',
+            'controller' => 'Articles',
+            'action' => 'index',
+            '?' => ['prefix' => 'Admin'],
+        ]))->setFuzzyMatch(false);
+
+        $request = (new ServerRequest())
+            ->withAttribute('params', [
+                'controller' => 'Articles',
+                'action' => 'index',
+                'plugin' => null,
+                'pass' => [],
+            ])
+            ->withQueryParams(['prefix' => 'Admin']);
+
+        $resolver = new UrlArrayResolver($request, ['fuzzy' => false]);
+        $resolver->resolve($item);
+
+        $this->assertFalse($item->isActive());
+    }
+
     /**
      * @return array<string, array{array<string, mixed>, string, bool, bool}>
      */
