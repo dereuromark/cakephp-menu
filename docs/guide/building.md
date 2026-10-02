@@ -80,7 +80,7 @@ sidebar renderer), not a link.
 
 ```php
 $menu = $this->Menu->create('main', [
-    'menuAttributes' => ['class' => 'nav nav-pills'],
+    'attributes' => ['class' => 'nav nav-pills'],
 ]);
 $menu->addItem('Home', '/');
 
@@ -254,3 +254,29 @@ $otherMenu->add($item);
 
 `toArray()` exports authoring defaults for `visible`, `active`, and `expanded`.
 Runtime resolver state is excluded; resolve a rebuilt menu for the current request.
+
+## Callback types and sort direction
+
+`filter()`, `find()`, and the callback form of `sortBy()` accept `Closure`.
+Use first-class callable syntax for a named function or method:
+
+```php
+use CakeMenu\SortDirection;
+
+$menu->filter($service->isVisible(...));
+$menu->sortBy('weight', SortDirection::Desc);
+```
+
+## Custom item classes
+
+Set the item class before adding items. It must implement `ItemInterface`.
+New submenus inherit their owning menu's item class, including nested submenus:
+
+```php
+$menu->setItemClass(CustomItem::class);
+$parent = $menu->addItem('Parent');
+$child = $parent->getSubMenu()->addItem('Child');
+```
+
+`getItemClass()` returns the configured class. `MenuInterface` also exposes `collect()`,
+which returns all items in an `ItemCollection`.

@@ -20,7 +20,6 @@ use CakeMenu\Resolver\ResolverInterface;
 use CakeMenu\Resolver\UrlArrayResolver;
 use Closure;
 use InvalidArgumentException;
-use ReflectionFunction;
 use function Cake\Core\deprecationWarning;
 
 /**
@@ -119,16 +118,11 @@ class MenuHelper extends Helper
             throw new InvalidArgumentException(sprintf('Menu `%s` already exists.', $name));
         }
 
-        $attributes = [];
-        if (isset($options['menuAttributes']) && is_array($options['menuAttributes'])) {
-            $attributes = $options['menuAttributes'];
-        } elseif (isset($options['attributes']) && is_array($options['attributes'])) {
-            $attributes = $options['attributes'];
-        }
+        $attributes = is_array($options['attributes'] ?? null) ? $options['attributes'] : [];
 
         $menu = Menu::create($attributes);
         $this->menus[$name] = $menu;
-        $this->menuConfigs[$name] = $options;
+        $this->menuConfigs[$name] = array_diff_key($options, array_flip(['attributes', 'overwrite', 'cache', 'rebuild']));
         $this->lastMenuName = $name;
         // Now explicitly defined in code; drop any config-origin marker so it is no longer
         // re-materialized from configuration.
@@ -156,10 +150,10 @@ class MenuHelper extends Helper
 
     /**
      * @param string $name
-     * @param callable(\CakeMenu\MenuInterface): void|callable(\CakeMenu\MenuInterface, self): void $callback
+     * @param \Closure(\CakeMenu\MenuInterface, self): void $callback
      * @param array<string, mixed> $options
      */
-    public function register(string $name, callable $callback, array $options = []): MenuInterface
+    public function register(string $name, Closure $callback, array $options = []): MenuInterface
     {
         if (isset($options['cache']) && $options['cache'] !== false) {
             return $this->registerWithCache($name, $callback, $options);
@@ -187,10 +181,10 @@ class MenuHelper extends Helper
      * relying on custom ItemInterface implementations.
      *
      * @param string $name
-     * @param callable(\CakeMenu\MenuInterface): void|callable(\CakeMenu\MenuInterface, self): void $callback
+     * @param \Closure(\CakeMenu\MenuInterface, self): void $callback
      * @param array<string, mixed> $options
      */
-    protected function registerWithCache(string $name, callable $callback, array $options): MenuInterface
+    protected function registerWithCache(string $name, Closure $callback, array $options): MenuInterface
     {
         if (isset($this->menus[$name]) && !isset($this->configOrigin[$name]) && empty($options['rebuild'])) {
             return $this->get($name);
@@ -203,7 +197,7 @@ class MenuHelper extends Helper
             if (is_array($cached)) {
                 $menu = Menu::fromArray($cached);
                 $this->menus[$name] = $menu;
-                $this->menuConfigs[$name] = $options;
+                $this->menuConfigs[$name] = array_diff_key($options, array_flip(['attributes', 'overwrite', 'cache', 'rebuild']));
                 $this->lastMenuName = $name;
                 // Now defined in code (from cache); drop any config-origin marker.
                 unset($this->configOrigin[$name]);
@@ -394,37 +388,30 @@ class MenuHelper extends Helper
 
     /**
      * @phpstan-param array<string, mixed> $options
-     * @phpstan-param array<string, mixed> $attributes
-     * @phpstan-param array<string, mixed> $separator
+     *
+     * @throws \InvalidArgumentException
      */
-    public function renderBreadcrumbs(
-        MenuInterface|string|null $menu = null,
-        array $options = [],
-        array $attributes = [],
-        array $separator = [],
-    ): string {
-        $renderer = $options['renderer'] ?? null;
-        if ($renderer === BreadcrumbRenderer::class || $renderer instanceof BreadcrumbRenderer) {
-            [$resolvedMenu, $resolvedOptions] = $this->resolveMenuAndOptions($menu, $options);
-            $state = $this->captureItemState($resolvedMenu);
-            try {
-                $this->applyResolvers($resolvedMenu, $resolvedOptions);
-                $activeItem = $resolvedMenu->getActiveItem();
-                if ($activeItem === null) {
-                    return '';
-                }
-
-                $resolvedOptions['path'] = $this->extractPath($activeItem);
-
-                return $this->getRenderer(['renderer' => BreadcrumbRenderer::class] + $resolvedOptions)->render($resolvedMenu, $resolvedOptions);
-            } finally {
-                $this->restoreItemState($resolvedMenu, $state);
-            }
+    public function renderBreadcrumbs(MenuInterface|string|null $menu = null, array $options = []): string
+    {
+        $renderer = $options['renderer'] ?? BreadcrumbRenderer::class;
+        if (!($renderer instanceof BreadcrumbRenderer) && !(is_string($renderer) && is_a($renderer, BreadcrumbRenderer::class, true))) {
+            throw new InvalidArgumentException('Breadcrumb renderer must extend BreadcrumbRenderer.');
         }
+        $options['renderer'] = $renderer;
+        [$resolvedMenu, $resolvedOptions] = $this->resolveMenuAndOptions($menu, $options);
+        $state = $this->captureItemState($resolvedMenu);
+        try {
+            $this->applyResolvers($resolvedMenu, $resolvedOptions);
+            $activeItem = $resolvedMenu->getActiveItem();
+            if ($activeItem === null) {
+                return '';
+            }
+            $resolvedOptions['path'] = $this->extractPath($activeItem);
 
-        $this->populateBreadcrumbs($menu, $options);
-
-        return $this->Breadcrumbs->render($attributes, $separator);
+            return $this->getRenderer($resolvedOptions)->render($resolvedMenu, $resolvedOptions);
+        } finally {
+            $this->restoreItemState($resolvedMenu, $state);
+        }
     }
 
     /**
@@ -539,15 +526,8 @@ class MenuHelper extends Helper
         }
     }
 
-    protected function invokeRegisterCallback(callable $callback, MenuInterface $menu): void
+    protected function invokeRegisterCallback(Closure $callback, MenuInterface $menu): void
     {
-        $reflectionFunction = new ReflectionFunction(Closure::fromCallable($callback));
-        if ($reflectionFunction->getNumberOfParameters() <= 1) {
-            $callback($menu);
-
-            return;
-        }
-
         $callback($menu, $this);
     }
 

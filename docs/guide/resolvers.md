@@ -81,19 +81,25 @@ $menu->addItem('Admin', '/admin', [
     'data' => ['match' => '#^/admin/(users|roles)#'],
 ]);
 
-$menu->resolve(new RegexResolver($request->getUri()->getPath()));
+$menu->resolve(new RegexResolver($request));
 ```
 
 Pass a second argument to read patterns from a different data key, e.g.
-`new RegexResolver($path, 'activePattern')`.
+`new RegexResolver($request, ['dataKey' => 'activePattern'])`.
+
+`RegexResolver` accepts a `ServerRequestInterface` and matches only its URI path.
+Set `['maxDepth' => 2]` to limit matching to the first two levels. As with the other
+request resolvers, `null` scans the whole tree.
 
 ## Login Visibility Resolver
 
 Mark items with metadata:
 
 ```php
-$menu->addItem('Login', '/login', ['data' => ['auth' => 'loggedOut']]);
-$menu->addItem('Profile', '/profile', ['data' => ['auth' => 'loggedIn']]);
+use CakeMenu\Resolver\AuthState;
+
+$menu->addItem('Login', '/login', ['data' => ['auth' => AuthState::LoggedOut]]);
+$menu->addItem('Profile', '/profile', ['data' => ['auth' => AuthState::LoggedIn]]);
 ```
 
 Then resolve:
@@ -104,7 +110,13 @@ use CakeMenu\Resolver\LoggedInResolver;
 $menu->resolve(new LoggedInResolver($identity !== null));
 ```
 
+The `auth` data value accepts `AuthState` or its backed string (`'loggedIn'` or
+`'loggedOut'`), including `Menu::fromArray()` configuration. Unknown strings throw
+`InvalidArgumentException`.
+
 ## Authorization and Callback Resolvers
+
+Both resolvers require a `Closure`. Convert method references with `$service->method(...)`.
 
 ```php
 use CakeMenu\Item\ItemInterface;
@@ -118,7 +130,7 @@ $menu->resolve(new AuthorizationResolver(
             return null;
         }
 
-        return $authorization->can($identity, (string)$item->getData('permission'));
+        return $authorization->can($identity, (string)$item->getData('permission'), $item);
     }
 ));
 
@@ -144,6 +156,10 @@ $menu->addItem('Admin', '/admin', [
 
 $menu->resolve(new PermissionResolver($authorization, $identity));
 ```
+
+The authorizer receives exactly `can($identity, $permission, $item)`, matching Cake's
+`AuthorizationService::can($user, $action, $resource)`. A custom method name uses the same
+three arguments; context is not passed.
 
 ## Multiple Resolvers
 

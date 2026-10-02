@@ -5,14 +5,11 @@ declare(strict_types=1);
 namespace CakeMenu\Resolver;
 
 use CakeMenu\Item\ItemInterface;
-use ReflectionMethod;
 use function is_string;
 use function method_exists;
 
 class PermissionResolver implements ResolverInterface
 {
-    protected ?int $parameterCount = null;
-
     public function __construct(
         protected object $authorizer,
         protected mixed $identity = null,
@@ -28,26 +25,9 @@ class PermissionResolver implements ResolverInterface
             return;
         }
 
-        $allowed = $this->invokeAuthorizer($permission, $item, $context);
+        $allowed = $this->authorizer->{$this->method}($this->identity, $permission, $item);
         if (is_bool($allowed)) {
             $item->setRuntimeVisible($allowed);
         }
-    }
-
-    protected function invokeAuthorizer(string $permission, ItemInterface $item, ResolverContext $context): mixed
-    {
-        if ($this->parameterCount === null) {
-            $reflectionMethod = new ReflectionMethod($this->authorizer, $this->method);
-            $this->parameterCount = $reflectionMethod->getNumberOfParameters()
-                - (int)$reflectionMethod->isVariadic();
-        }
-
-        return match (true) {
-            $this->parameterCount >= 4 => $this->authorizer->{$this->method}($this->identity, $permission, $item, $context),
-            $this->parameterCount === 3 => $this->authorizer->{$this->method}($this->identity, $permission, $item),
-            $this->parameterCount === 2 => $this->authorizer->{$this->method}($this->identity, $permission),
-            $this->parameterCount === 1 => $this->authorizer->{$this->method}($permission),
-            default => $this->authorizer->{$this->method}(),
-        };
     }
 }

@@ -39,7 +39,7 @@ class PermissionResolverTest extends TestCase
     {
         $item = (new Item('Admin', '/admin'))->setData('permission', 'admin.access');
         $authorizer = new class {
-            public function can(mixed $identity, string $permission): bool
+            public function can(mixed $identity, string $permission, Item $item): bool
             {
                 return $permission !== 'admin.access';
             }
@@ -50,31 +50,30 @@ class PermissionResolverTest extends TestCase
         $this->assertFalse($item->isVisible());
     }
 
-    public function testSupportsTwoArgumentCanMethod(): void
+    public function testSupportsCustomMethod(): void
     {
         $item = (new Item('Admin', '/admin'))->setData('permission', 'admin.access');
         $authorizer = new class {
-            public function can(mixed $identity, string $permission): bool
+            public function allows(mixed $identity, string $permission, Item $item): bool
             {
                 return $permission !== 'admin.access';
             }
         };
 
-        (new PermissionResolver($authorizer, ['id' => 1]))->resolve($item, new ResolverContext());
+        (new PermissionResolver($authorizer, ['id' => 1], method: 'allows'))->resolve($item, new ResolverContext());
 
         $this->assertFalse($item->isVisible());
     }
 
-    public function testSupportsFourArgumentCanMethod(): void
+    public function testReceivesIdentityPermissionAndItem(): void
     {
         $item = (new Item('Admin', '/admin'))->setData('permission', 'admin.access');
         $authorizer = new class {
-            public function can(mixed $identity, string $permission, Item $item, object $context): bool
+            public function can(mixed $identity, string $permission, Item $item): bool
             {
                 return $identity === ['id' => 1]
                     && $permission === 'admin.access'
-                    && $item->getLabel() === 'Admin'
-                    && method_exists($context, 'getDepth');
+                    && $item->getLabel() === 'Admin';
             }
         };
 

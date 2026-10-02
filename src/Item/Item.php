@@ -315,7 +315,7 @@ class Item implements ItemInterface
     public function getSubMenu(): MenuInterface
     {
         if ($this->subMenu === null) {
-            $this->subMenu = (new Menu())->setOwnerItem($this);
+            $this->subMenu = (new Menu())->setItemClass($this->ownerMenu?->getItemClass() ?? self::class)->setOwnerItem($this);
         }
 
         return $this->subMenu;

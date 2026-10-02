@@ -58,10 +58,12 @@ echo $this->Breadcrumbs->render();
 Or use the built-in breadcrumb renderer:
 
 ```php
-echo $this->Menu->renderBreadcrumbs('main', [
-    'renderer' => \CakeMenu\Renderer\BreadcrumbRenderer::class,
-]);
+echo $this->Menu->renderBreadcrumbs('main');
 ```
+
+`renderBreadcrumbs()` always uses `BreadcrumbRenderer`. Pass a subclass name or instance
+as `renderer` to customize it. Cake's attributes and separator belong in your separate
+`$this->Breadcrumbs->render(...)` call after `populateBreadcrumbs()`.
 
 ### Alternate Renderers
 

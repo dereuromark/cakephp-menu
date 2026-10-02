@@ -12,8 +12,11 @@ use CakeMenu\ItemCollection;
 use CakeMenu\Menu;
 use CakeMenu\Resolver\CallbackResolver;
 use CakeMenu\Resolver\UrlArrayResolver;
+use CakeMenu\SortDirection;
 use InvalidArgumentException;
 use LogicException;
+use ReflectionMethod;
+use stdClass;
 
 class MenuTest extends TestCase
 {
@@ -649,5 +652,39 @@ class MenuTest extends TestCase
 
         $this->assertTrue($menu->getItems()[0]->toArray()['header']);
         $this->assertSame('Section', $menu->getItems()[0]->getLabel());
+    }
+
+    public function testCustomItemClassPropagates(): void
+    {
+        $custom = new class extends Item {
+        };
+        $menu = Menu::create()->setItemClass($custom::class);
+        $parent = $menu->addItem('Parent', options: ['submenuAttributes' => ['class' => 'nested']]);
+        $child = $parent->getSubMenu()->addItem('Child');
+        $grandchild = $child->getSubMenu()->addItem('Grandchild');
+        $this->assertInstanceOf($custom::class, $parent);
+        $this->assertInstanceOf($custom::class, $child);
+        $this->assertInstanceOf($custom::class, $grandchild);
+        $this->assertSame($custom::class, $child->getSubMenu()->getItemClass());
+        $this->assertCount(3, $menu->collect());
+    }
+
+    public function testSortDirections(): void
+    {
+        $menu = Menu::create();
+        $menu->addItem('A')->setData('weight', 1);
+        $menu->addItem('B')->setData('weight', 2);
+        $menu->sortBy('weight', SortDirection::Desc);
+        $this->assertSame('B', $menu->getItems()[0]->getLabel());
+        $menu->sortBy(static fn ($item) => $item->getData('weight'), SortDirection::Asc);
+        $this->assertSame('A', $menu->getItems()[0]->getLabel());
+    }
+
+    public function testInvalidItemClassThrows(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $menu = Menu::create();
+        $method = new ReflectionMethod($menu, 'setItemClass');
+        $method->invoke($menu, stdClass::class);
     }
 }

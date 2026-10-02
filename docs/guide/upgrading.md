@@ -121,3 +121,95 @@ $path = $item->getPath(); // [!code ++]
 `Item::toArray()` now writes authoring defaults for `visible`, `active`, and `expanded`.
 Rebuilding a resolved menu with `Menu::fromArray()` no longer preserves request-specific
 state. Apply resolvers again for the current request.
+
+### Helper build options
+
+Replace `menuAttributes` with `attributes`:
+
+```php
+$this->Menu->create('main', ['menuAttributes' => ['class' => 'nav']]); // [!code --]
+$this->Menu->create('main', ['attributes' => ['class' => 'nav']]); // [!code ++]
+```
+
+`attributes`, `overwrite`, `cache`, and `rebuild` are build options. Renderers no longer
+receive them as per-menu defaults. Other options still become render defaults.
+
+### Breadcrumb rendering
+
+`renderBreadcrumbs()` takes only the menu and options, and always uses `BreadcrumbRenderer`.
+Its `renderer` option accepts a subclass name or instance. For Cake's helper markup:
+
+```php
+$this->Menu->renderBreadcrumbs('main', [], $attributes, $separator); // [!code --]
+$this->Menu->populateBreadcrumbs('main'); // [!code ++]
+$this->Breadcrumbs->render($attributes, $separator); // [!code ++]
+```
+
+### Callback and authorizer arguments
+
+Registration closures always receive `($menu, $helper)`. Closures may omit unused parameters.
+`PermissionResolver` always calls `can($identity, $permission, $item)`; adapt authorizers
+that previously expected another argument order or a resolver context.
+
+```php
+public function can(string $permission): bool // [!code --]
+public function can(mixed $identity, string $permission, ItemInterface $item): bool // [!code ++]
+```
+
+### Sort direction
+
+Replace string directions and the removed `Menu::SORT_ASC` / `SORT_DESC` constants with
+`CakeMenu\SortDirection`:
+
+```php
+$menu->sortBy('weight', Menu::SORT_DESC); // [!code --]
+$menu->sortBy('weight', SortDirection::Desc); // [!code ++]
+```
+
+`SortDirection::Asc` remains the default. Custom menus must update their method signature.
+
+### Authentication state
+
+`LoggedInResolver` accepts `CakeMenu\Resolver\AuthState` in item data:
+
+```php
+$item->setData('auth', 'loggedIn'); // [!code --]
+$item->setData('auth', AuthState::LoggedIn); // [!code ++]
+```
+
+The backed strings `'loggedIn'` and `'loggedOut'` still work in array configuration.
+Unknown strings now throw `InvalidArgumentException` instead of being ignored.
+
+### Closure signatures
+
+Menu filter/find/sort callbacks, helper registration callbacks, `CallbackResolver`, and
+`AuthorizationResolver` now require `Closure`. Convert function names and method arrays
+with first-class callable syntax:
+
+```php
+$menu->filter([$service, 'isVisible']); // [!code --]
+$menu->filter($service->isVisible(...)); // [!code ++]
+```
+
+Custom implementations must replace `callable` parameter types with `Closure`.
+
+### Custom menu interfaces
+
+Custom `MenuInterface` implementations must add `collect(): ItemCollection`,
+`setItemClass(string $class): static`, and `getItemClass(): string`.
+`Menu::setItemClass()` validates that the class implements `ItemInterface`.
+New item submenus inherit the owning menu's item class instead of always using `Item`.
+Set the class before building the tree.
+
+### Regex request matching
+
+Pass a `ServerRequestInterface` instead of a path string. Move the custom data key
+into the options array:
+
+```php
+new RegexResolver($request->getUri()->getPath(), 'activePattern'); // [!code --]
+new RegexResolver($request, ['dataKey' => 'activePattern', 'maxDepth' => 2]); // [!code ++]
+```
+
+The resolver matches the URI path. `maxDepth` uses `ResolverContext` depth (top level is 1),
+like the other request resolvers; `null` leaves depth unlimited.

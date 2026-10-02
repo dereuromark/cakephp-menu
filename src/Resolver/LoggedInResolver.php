@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace CakeMenu\Resolver;
 
 use CakeMenu\Item\ItemInterface;
+use InvalidArgumentException;
 
 class LoggedInResolver implements ResolverInterface
 {
@@ -15,9 +16,12 @@ class LoggedInResolver implements ResolverInterface
     public function resolve(ItemInterface $item, ResolverContext $context): void
     {
         $auth = $item->getData('auth');
-        if ($auth === 'loggedIn') {
+        if (is_string($auth)) {
+            $auth = AuthState::tryFrom($auth) ?? throw new InvalidArgumentException('Unknown auth state: ' . $auth);
+        }
+        if ($auth === AuthState::LoggedIn) {
             $item->setRuntimeVisible($this->loggedIn);
-        } elseif ($auth === 'loggedOut') {
+        } elseif ($auth === AuthState::LoggedOut) {
             $item->setRuntimeVisible(!$this->loggedIn);
         }
     }

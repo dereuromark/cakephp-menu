@@ -11,8 +11,10 @@ use Cake\Http\ServerRequest;
 use Cake\TestSuite\TestCase;
 use Cake\View\View;
 use CakeMenu\MenuInterface;
+use CakeMenu\Renderer\StringTemplateRenderer;
 use CakeMenu\View\Helper\MenuHelper;
 use InvalidArgumentException;
+use RuntimeException;
 
 class MenuHelperCacheConfigTest extends TestCase
 {
@@ -237,5 +239,40 @@ class MenuHelperCacheConfigTest extends TestCase
             '<ul><li><a href="/home">Home</a></li></ul>',
             $helper->render('main'),
         );
+    }
+
+    public function testCachedRegistrationDoesNotForwardBuildOptions(): void
+    {
+        $renderer = new class extends StringTemplateRenderer {
+            public function render(MenuInterface $menu, array $options = []): string
+            {
+                foreach (['attributes', 'cache', 'overwrite', 'rebuild'] as $key) {
+                    if (array_key_exists($key, $options)) {
+                        throw new RuntimeException('Build option reached renderer: ' . $key);
+                    }
+                }
+
+                return $options['custom'];
+            }
+        };
+        $options = [
+            'cache' => ['key' => 'isolated', 'config' => 'menu_test'],
+            'overwrite' => true,
+            'attributes' => ['class' => 'nav'],
+            'renderer' => $renderer,
+            'custom' => 'kept',
+        ];
+        $builds = 0;
+        $build = static function (MenuInterface $menu) use (&$builds): void {
+            $builds++;
+            $menu->addItem('Home', '/home');
+        };
+        foreach ([true, false] as $rebuild) {
+            $helper = $this->createHelper(new ServerRequest());
+            $helper->register('main', $build, $options + ['rebuild' => $rebuild]);
+            $this->assertSame('kept', $helper->render('main'));
+            $this->assertSame(['class' => 'nav'], $helper->get('main')->getAttributes());
+        }
+        $this->assertSame(1, $builds);
     }
 }

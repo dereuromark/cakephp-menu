@@ -15,11 +15,11 @@ class AuthorizationResolver implements ResolverInterface
     protected Closure $callback;
 
     /**
-     * @param callable(\CakeMenu\Item\ItemInterface, \CakeMenu\Resolver\ResolverContext): (bool|null) $callback
+     * @param \Closure(\CakeMenu\Item\ItemInterface, \CakeMenu\Resolver\ResolverContext): (bool|null) $callback
      */
-    public function __construct(callable $callback)
+    public function __construct(Closure $callback)
     {
-        $this->callback = Closure::fromCallable($callback);
+        $this->callback = $callback;
     }
 
     public function resolve(ItemInterface $item, ResolverContext $context): void

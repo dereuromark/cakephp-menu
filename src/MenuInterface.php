@@ -12,16 +12,6 @@ use Closure;
 interface MenuInterface
 {
     /**
-     * @var string
-     */
-    public const SORT_ASC = 'asc';
-
-    /**
-     * @var string
-     */
-    public const SORT_DESC = 'desc';
-
-    /**
      * @phpstan-param array<string, mixed> $attributes
      */
     public static function create(array $attributes = []): static;
@@ -165,11 +155,23 @@ interface MenuInterface
      */
     public function setAttributes(array $attributes, bool $merge = false): static;
 
-    public function filter(callable $callback): static;
+    public function collect(): ItemCollection;
 
-    public function find(callable $callback): ItemCollection;
+    /**
+     * @param class-string<\CakeMenu\Item\ItemInterface> $class
+     */
+    public function setItemClass(string $class): static;
 
-    public function sortBy(callable|string $by, string $direction = self::SORT_ASC): static;
+    /**
+     * @return class-string<\CakeMenu\Item\ItemInterface>
+     */
+    public function getItemClass(): string;
+
+    public function filter(Closure $callback): static;
+
+    public function find(Closure $callback): ItemCollection;
+
+    public function sortBy(Closure|string $by, SortDirection $direction = SortDirection::Asc): static;
 
     public function resolve(ResolverInterface $resolver): static;
 

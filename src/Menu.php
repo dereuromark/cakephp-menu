@@ -349,7 +349,7 @@ class Menu implements MenuInterface
             $item->setHeader();
         }
         if (isset($options['submenuAttributes']) && is_array($options['submenuAttributes'])) {
-            $item->getSubMenu()->setAttributes($options['submenuAttributes']);
+            $item->getSubMenu()->setItemClass($this->itemClass)->setAttributes($options['submenuAttributes']);
         }
         if (isset($options['matchRoutes']) && is_array($options['matchRoutes'])) {
             $item->setMatchRoutes(array_values($options['matchRoutes']));
@@ -830,7 +830,36 @@ class Menu implements MenuInterface
         return $this;
     }
 
-    public function filter(callable $callback): static
+    protected static function isItemClass(string $class): bool
+    {
+        return class_exists($class) && is_a($class, ItemInterface::class, true);
+    }
+
+    /**
+     * @param class-string<\CakeMenu\Item\ItemInterface> $class
+     *
+     * @throws \InvalidArgumentException
+     */
+    public function setItemClass(string $class): static
+    {
+        $this->assertMutable();
+        if (!self::isItemClass($class)) {
+            throw new InvalidArgumentException('Item class must implement ItemInterface.');
+        }
+        $this->itemClass = $class;
+
+        return $this;
+    }
+
+    /**
+     * @return class-string<\CakeMenu\Item\ItemInterface>
+     */
+    public function getItemClass(): string
+    {
+        return $this->itemClass;
+    }
+
+    public function filter(Closure $callback): static
     {
         $this->assertMutable();
         $items = [];
@@ -850,7 +879,7 @@ class Menu implements MenuInterface
         return $this;
     }
 
-    public function find(callable $callback): ItemCollection
+    public function find(Closure $callback): ItemCollection
     {
         $collection = new ItemCollection();
         $this->findInto($collection, $callback, $this->items);
@@ -858,7 +887,7 @@ class Menu implements MenuInterface
         return $collection;
     }
 
-    public function sortBy(callable|string $by, string $direction = self::SORT_ASC): static
+    public function sortBy(Closure|string $by, SortDirection $direction = SortDirection::Asc): static
     {
         $this->assertMutable();
         usort($this->items, function (ItemInterface $left, ItemInterface $right) use ($by, $direction): int {
@@ -867,7 +896,7 @@ class Menu implements MenuInterface
 
             $result = $leftValue <=> $rightValue;
 
-            return $direction === self::SORT_DESC ? -$result : $result;
+            return $direction === SortDirection::Desc ? -$result : $result;
         });
 
         foreach ($this->items as $item) {
@@ -985,10 +1014,10 @@ class Menu implements MenuInterface
 
     /**
      * @param \CakeMenu\ItemCollection $collection
-     * @param callable(\CakeMenu\Item\ItemInterface): mixed $callback
+     * @param \Closure(\CakeMenu\Item\ItemInterface): mixed $callback
      * @param list<\CakeMenu\Item\ItemInterface> $items
      */
-    protected function findInto(ItemCollection $collection, callable $callback, array $items): void
+    protected function findInto(ItemCollection $collection, Closure $callback, array $items): void
     {
         foreach ($items as $item) {
             if ($callback($item)) {
@@ -1040,9 +1069,9 @@ class Menu implements MenuInterface
         ];
     }
 
-    protected function extractSortValue(ItemInterface $item, callable|string $by): mixed
+    protected function extractSortValue(ItemInterface $item, Closure|string $by): mixed
     {
-        if (is_callable($by)) {
+        if ($by instanceof Closure) {
             return $by($item);
         }
 

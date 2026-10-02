@@ -40,9 +40,11 @@ Menu::fromFlat(iterable $rows, Closure $mapper): static  // build a tree from fl
 | `clearActive()` | Deactivate all items. |
 | `getAttributes()` / `setAttribute()` / `setAttributes()` | Root HTML attributes. |
 | `getData()` / `setData()` | Menu-level metadata. |
-| `filter(callable)` | Keep only matching items. |
-| `find(callable)` | Return matching items as an `ItemCollection` without mutating the tree. |
-| `sortBy(callable\|string $by, string $direction = Menu::SORT_ASC)` | Sort items. |
+| `setItemClass(string $class)` / `getItemClass()` | Set or read the class used for new items and their submenus. |
+| `collect()` | Return all items as an `ItemCollection`. |
+| `filter(Closure)` | Keep only matching items. |
+| `find(Closure)` | Return matching items as an `ItemCollection` without mutating the tree. |
+| `sortBy(Closure\|string $by, SortDirection $direction = SortDirection::Asc)` | Sort items. |
 | `resolve(ResolverInterface)` | Apply a resolver. |
 | `resetState()` | Reset active/visible/expanded to defaults. |
 | `freeze()` / `isFrozen()` | Make immutable / check. |

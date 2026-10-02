@@ -15,7 +15,7 @@ $this->loadHelper('CakeMenu.Menu');
 | Method | Purpose |
 |--------|---------|
 | `create(string $name, array $options = [])` | Create a new named menu. |
-| `register(string $name, callable $cb, array $options = [])` | Idempotently build a named menu via a callback. |
+| `register(string $name, Closure $cb, array $options = [])` | Idempotently build a named menu via a callback. |
 | `getOrCreate(string $name, array $options = [])` | Return an existing menu or create it. |
 | `has(string $name)` | Whether a named menu exists. |
 | `get(string $name)` | Return a named menu (throws if missing). |
@@ -25,7 +25,7 @@ $this->loadHelper('CakeMenu.Menu');
 | `extractPath(ItemInterface $item)` | Root-to-item path (for breadcrumbs). |
 | `getBreadcrumbs($menu = null, array $options = [])` | Active path as an array of crumbs. |
 | `populateBreadcrumbs($menu = null, array $options = [])` | Push crumbs into Cake's `Breadcrumbs` helper. |
-| `renderBreadcrumbs($menu = null, $options = [], $attributes = [], $separator = [])` | Render breadcrumbs (via the `BreadcrumbRenderer` or Cake's helper). |
+| `renderBreadcrumbs($menu = null, array $options = [])` | Render through `BreadcrumbRenderer` or a subclass. |
 
 ## render() options
 
@@ -45,7 +45,7 @@ straight through to the renderer as [renderer options](/reference/renderer-optio
 | `currentAsLink` | `true` | Passed through: render the active item as a link. |
 
 ::: info Option precedence
-Options merge in this order (later wins): **helper config** → **create()/register() options** →
+Options merge in this order (later wins): **helper config** → **per-menu render defaults** →
 **this call's `$options`**. So defaults set at `create()` time apply to every later `render()` unless
 overridden in the call.
 :::
@@ -59,13 +59,22 @@ them and add your own, use `additionalResolvers`. See [Resolvers](/guide/resolve
 
 | Option | Description |
 |--------|-------------|
-| `attributes` / `menuAttributes` | HTML attributes for the root `<ul>`. |
+| `attributes` | HTML attributes for the root `<ul>`. |
 | `overwrite` | Allow `create()` to replace an existing menu of the same name. |
 | `rebuild` | Make `register()` rebuild even if the menu already exists. |
 | `cache` | Cache the built structure (see below). `true`, a string key, or `['key' => ..., 'config' => ...]`. |
 
+`attributes`, `overwrite`, `cache`, and `rebuild` are consumed during building. They are
+not stored as render defaults or forwarded to renderers.
+
 Any other keys (e.g. `renderer`, `singleActive`) set here become defaults for later `render()` calls
 on that menu.
+
+The registration closure always receives `($menu, $helper)`. It may omit unused parameters.
+
+`renderBreadcrumbs()` always uses `BreadcrumbRenderer`; its `renderer` option accepts a
+subclass name or instance. To use Cake's markup, call `populateBreadcrumbs()` and then
+`$this->Breadcrumbs->render($attributes, $separator)` yourself.
 
 ### Caching a built menu
 
