@@ -5,10 +5,14 @@ declare(strict_types=1);
 namespace Menu\Test\TestCase\Resolver;
 
 use Cake\Http\ServerRequest;
+use Cake\Routing\Route\DashedRoute;
 use Cake\Routing\Route\Route;
+use Cake\Routing\RouteBuilder;
+use Cake\Routing\Router;
 use Cake\TestSuite\TestCase;
 use Menu\Item\Item;
 use Menu\Resolver\UrlArrayResolver;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 class UrlArrayResolverTest extends TestCase
 {
@@ -283,5 +287,124 @@ class UrlArrayResolverTest extends TestCase
         $resolver->resolve($item);
 
         $this->assertTrue($item->isActive());
+    }
+
+    public function testExactMatchHonorsQueryParamNamedPrefix(): void
+    {
+        $item = (new Item('Filtered', [
+            'controller' => 'Articles',
+            'action' => 'index',
+            '?' => ['prefix' => 'abc'],
+        ]))->setFuzzyMatch(false);
+
+        $request = (new ServerRequest())
+            ->withAttribute('params', [
+                'controller' => 'Articles',
+                'action' => 'index',
+                'plugin' => null,
+                'pass' => [],
+            ])
+            ->withQueryParams(['prefix' => 'abc']);
+
+        $resolver = new UrlArrayResolver($request, ['fuzzy' => false]);
+        $resolver->resolve($item);
+
+        $this->assertTrue($item->isActive());
+    }
+
+    public function testExactMatchHonorsQueryParamNamedPluginWithoutPluginParam(): void
+    {
+        $item = (new Item('Filtered', [
+            'controller' => 'Articles',
+            'action' => 'index',
+            '?' => ['plugin' => 'abc'],
+        ]))->setFuzzyMatch(false);
+
+        $request = (new ServerRequest())
+            ->withAttribute('params', [
+                'controller' => 'Articles',
+                'action' => 'index',
+                'pass' => [],
+            ])
+            ->withQueryParams(['plugin' => 'abc']);
+
+        $resolver = new UrlArrayResolver($request, ['fuzzy' => false]);
+        $resolver->resolve($item);
+
+        $this->assertTrue($item->isActive());
+    }
+
+    public function testExactMatchDoesNotTreatQueryPrefixAsRoutingPrefix(): void
+    {
+        $item = (new Item('Admin Filtered', [
+            'prefix' => 'Admin',
+            'controller' => 'Articles',
+            'action' => 'index',
+            '?' => ['prefix' => 'Admin'],
+        ]))->setFuzzyMatch(false);
+
+        $request = (new ServerRequest())
+            ->withAttribute('params', [
+                'controller' => 'Articles',
+                'action' => 'index',
+                'plugin' => null,
+                'pass' => [],
+            ])
+            ->withQueryParams(['prefix' => 'Admin']);
+
+        $resolver = new UrlArrayResolver($request, ['fuzzy' => false]);
+        $resolver->resolve($item);
+
+        $this->assertFalse($item->isActive());
+    }
+
+    /**
+     * @return array<string, array{array<string, mixed>, string, bool, bool}>
+     */
+    public static function prefixRoutingProvider(): array
+    {
+        $front = ['prefix' => false, 'plugin' => false, 'controller' => 'Articles', 'action' => 'index'];
+        $admin = ['prefix' => 'Admin', 'plugin' => false, 'controller' => 'Articles', 'action' => 'index'];
+
+        return [
+            'prefix false on non-prefixed page, fuzzy' => [$front, '/articles/index', true, true],
+            'prefix false on non-prefixed page, exact' => [$front, '/articles/index', false, true],
+            'prefix false on prefixed page, fuzzy' => [$front, '/admin/articles/index', true, false],
+            'prefix false on prefixed page, exact' => [$front, '/admin/articles/index', false, false],
+            'prefix on prefixed page, fuzzy' => [$admin, '/admin/articles/index', true, true],
+            'prefix on prefixed page, exact' => [$admin, '/admin/articles/index', false, true],
+            'prefix on non-prefixed page, fuzzy' => [$admin, '/articles/index', true, false],
+            'prefix on non-prefixed page, exact' => [$admin, '/articles/index', false, false],
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $url
+     * @param bool $expected
+     * @param bool $fuzzy
+     * @param string $path
+     */
+    #[DataProvider('prefixRoutingProvider')]
+    public function testMatchesPrefixAgainstRoutedRequest(array $url, string $path, bool $fuzzy, bool $expected): void
+    {
+        Router::reload();
+        $builder = Router::createRouteBuilder('/');
+        $builder->setRouteClass(DashedRoute::class);
+        $builder->scope('/', function (RouteBuilder $routes): void {
+            $routes->connect('/{controller}/{action}/*');
+        });
+        $builder->prefix('Admin', function (RouteBuilder $routes): void {
+            $routes->connect('/{controller}/{action}/*');
+        });
+
+        $request = new ServerRequest(['url' => $path]);
+        $request = $request->withAttribute('params', Router::parseRequest($request));
+
+        $item = (new Item('Articles', $url))->setFuzzyMatch($fuzzy);
+
+        $resolver = new UrlArrayResolver($request);
+        $resolver->resolve($item);
+
+        $this->assertSame($expected, $item->isActive());
     }
 }

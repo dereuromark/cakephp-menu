@@ -8,6 +8,8 @@ use Cake\Core\InstanceConfigTrait;
 use Menu\Item\Item;
 use Menu\Item\ItemInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use function array_diff_key;
+use function array_flip;
 use function array_intersect_key;
 use function array_key_exists;
 use function array_merge;
@@ -109,9 +111,9 @@ class UrlArrayResolver implements ContextAwareResolverInterface
         $exactRoute = $this->canonicalizeForExactMatch($normalizedRoute);
         $exactRequest = $this->canonicalizeForExactMatch($normalizedRequestParams);
 
-        // Transport meta is always present on the request but rarely on a link, so only
-        // enforce host/method when the route explicitly constrains them.
-        foreach (['_host', '_method'] as $meta) {
+        // Transport meta and the auto-generated route name are always present on the request
+        // but rarely on a link, so only enforce them when the route explicitly constrains them.
+        foreach (['_host', '_method', '_name'] as $meta) {
             if (!array_key_exists($meta, $exactRoute)) {
                 unset($exactRequest[$meta]);
             }
@@ -141,13 +143,15 @@ class UrlArrayResolver implements ContextAwareResolverInterface
     {
         $query = isset($params['?']) && is_array($params['?']) ? $params['?'] : [];
         $params['?'] = $query;
-        $params += $query;
 
-        foreach (['plugin', 'prefix', '_ext'] as $key) {
+        $routingKeys = ['plugin', 'prefix', '_ext'];
+        foreach ($routingKeys as $key) {
             if (array_key_exists($key, $params) && $params[$key] === null) {
                 unset($params[$key]);
             }
         }
+        // A query value must never stand in for a routing segment; it is still compared via `?`.
+        $params += array_diff_key($query, array_flip($routingKeys));
 
         ksort($params, SORT_STRING);
 
@@ -190,9 +194,9 @@ class UrlArrayResolver implements ContextAwareResolverInterface
         if (is_object($route) && method_exists($route, 'getName')) {
             $params['_name'] = $route->getName();
         }
-        if (!isset($params['_ext'])) {
-            $params['_ext'] = null;
-        }
+        $params['plugin'] ??= null;
+        $params['prefix'] ??= null;
+        $params['_ext'] ??= null;
 
         $pass = isset($params['pass']) && is_array($params['pass']) ? $params['pass'] : [];
         unset(
