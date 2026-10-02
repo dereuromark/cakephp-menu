@@ -16,6 +16,8 @@ use Menu\View\Helper\MenuHelper;
 
 class MenuHelperCacheConfigTest extends TestCase
 {
+    protected int $buildCalls = 0;
+
     protected function createHelper(ServerRequest $request): MenuHelper
     {
         return new MenuHelper(new View(
@@ -40,21 +42,21 @@ class MenuHelperCacheConfigTest extends TestCase
 
     public function testRegisterWithCacheBuildsOnceThenReadsFromCache(): void
     {
-        $calls = 0;
-        $build = function (MenuInterface $menu) use (&$calls): void {
-            $calls++;
+        $this->buildCalls = 0;
+        $build = function (MenuInterface $menu): void {
+            $this->buildCalls++;
             $menu->addItem('Home', '/home');
         };
         $options = ['cache' => ['key' => 'menu_main', 'config' => 'menu_test']];
 
         $this->createHelper(new ServerRequest())->register('main', $build, $options);
-        $this->assertSame(1, $calls);
+        $this->assertSame(1, $this->buildCalls);
 
         // A fresh helper (simulating another request) loads from cache without rebuilding.
         $helper = $this->createHelper(new ServerRequest());
         $helper->register('main', $build, $options);
 
-        $this->assertSame(1, $calls);
+        $this->assertSame(1, $this->buildCalls);
         $this->assertSame(
             '<ul><li><a href="/home">Home</a></li></ul>',
             $helper->render('main'),

@@ -190,7 +190,8 @@ class UrlArrayResolver implements ContextAwareResolverInterface
         if (is_object($route) && method_exists($route, 'getName')) {
             $params['_name'] = $route->getName();
         }
-        $params += ['prefix' => null, '_ext' => null];
+        $params['prefix'] ??= null;
+        $params['_ext'] ??= null;
 
         $pass = isset($params['pass']) && is_array($params['pass']) ? $params['pass'] : [];
         unset(
