@@ -71,7 +71,7 @@ class MenuHelperTest extends TestCase
         $parent = $menu->addItem('Articles', ['controller' => 'Articles']);
         $child = $parent->getSubMenu()->addItem('View', ['controller' => 'Articles', 'action' => 'view']);
 
-        $this->assertSame($child, $helper->getCurrentItem('nested', ['singleActive' => false]));
+        $this->assertSame('View', $helper->getCurrentItem('nested', ['singleActive' => false])?->getLabel());
         $this->assertSame(['Articles', 'View'], array_column($helper->getBreadcrumbs('nested', ['singleActive' => false]), 'title'));
     }
 
@@ -84,6 +84,57 @@ class MenuHelperTest extends TestCase
         $this->assertSame('<ul></ul>', $helper->render('private', ['resolver' => new LoggedInResolver(false)]));
         $this->assertNull($item->getRuntimeState()['visible']);
         $this->assertStringContainsString('Private', $helper->render('private', ['resolver' => new LoggedInResolver(true)]));
+    }
+
+    public function testRenderPreservesVisibilityResolvedBeforeHelperCall(): void
+    {
+        $helper = $this->createHelper(new ServerRequest());
+        $menu = $helper->create('private');
+        $item = $menu->addItem('Profile', '/profile')->setData('auth', 'loggedIn');
+        $menu->resolve(new LoggedInResolver(false));
+
+        $this->assertSame('<ul></ul>', $helper->render($menu));
+        $this->assertFalse($item->isVisible());
+        $this->assertFalse($item->getRuntimeState()['visible']);
+    }
+
+    public function testBreadcrumbsOmitHiddenActiveItemAndAncestors(): void
+    {
+        $request = new ServerRequest(['url' => '/secret']);
+        $helper = $this->createHelper($request);
+        $menu = $helper->create('private');
+        $parent = $menu->addItem('Private', '/private');
+        $child = $parent->getSubMenu()->addItem('Secret', '/secret');
+
+        foreach (['authoring', 'runtime'] as $mode) {
+            if ($mode === 'authoring') {
+                $parent->setVisible(false);
+            } else {
+                $parent->setVisible(true)->setRuntimeVisible(false);
+            }
+            $this->assertSame([], $helper->getBreadcrumbs($menu));
+            $helper->populateBreadcrumbs($menu);
+            $this->assertSame('', $helper->Breadcrumbs->render());
+            $this->assertSame('', $helper->renderBreadcrumbs($menu));
+            $this->assertNull($helper->getCurrentItem($menu));
+        }
+
+        $parent->setRuntimeVisible(true);
+        $child->setVisible(false);
+        $this->assertSame([], $helper->getBreadcrumbs($menu));
+        $this->assertSame('', $helper->renderBreadcrumbs($menu));
+    }
+
+    public function testBreadcrumbsSelectVisibleActiveSibling(): void
+    {
+        $helper = $this->createHelper(new ServerRequest(['url' => '/target']));
+        $menu = $helper->create('siblings');
+        $menu->addItem('Hidden', '/target')->setVisible(false);
+        $menu->addItem('Visible', '/target');
+
+        $this->assertSame('Visible', $helper->getCurrentItem($menu)?->getLabel());
+        $this->assertSame(['Visible'], array_column($helper->getBreadcrumbs($menu), 'title'));
+        $this->assertStringNotContainsString('Hidden', $helper->renderBreadcrumbs($menu));
     }
 
     protected function createSelfRenderingItem(string $label, string $url, string $id): ItemInterface
@@ -184,7 +235,12 @@ class MenuHelperTest extends TestCase
         $currentItem = $menuHelper->getCurrentItem('main');
         $path = $menuHelper->extractPath($child);
 
-        $this->assertSame($child, $currentItem);
+        $this->assertInstanceOf(ItemInterface::class, $currentItem);
+        $this->assertNotSame($child, $currentItem);
+        $this->assertSame($child->getId(), $currentItem->getId());
+        $this->assertTrue($currentItem->isActive());
+        $this->assertNull($child->getRuntimeState()['active']);
+        $this->assertNull($currentItem->getParent());
         $this->assertSame([$parent, $child], $path);
     }
 

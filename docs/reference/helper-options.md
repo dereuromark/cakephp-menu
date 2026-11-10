@@ -21,9 +21,9 @@ $this->loadHelper('CakeMenu.Menu');
 | `get(string $name)` | Return a named menu (throws if missing). |
 | `remove(string $name)` / `reset()` | Drop one / all named menus. |
 | `render($menu = null, array $options = [])` | Resolve and render a menu (by name, instance, or the last-created). |
-| `getCurrentItem($menu = null, array $options = [])` | The deepest active item after resolution. |
+| `getCurrentItem($menu = null, array $options = [])` | A detached clone of the selected visible active item, with its resolved state. The menu itself is restored after the call. |
 | `extractPath(ItemInterface $item)` | Root-to-item path (for breadcrumbs). |
-| `getBreadcrumbs($menu = null, array $options = [])` | Active path as an array of crumbs. Titles are HTML-escaped (unless the item opts out) and honor `translate`. |
+| `getBreadcrumbs($menu = null, array $options = [])` | Visible active path as an array of crumbs. Hidden items and their descendants yield no crumbs. Titles are HTML-escaped (unless the item opts out) and honor `translate`. |
 | `populateBreadcrumbs($menu = null, array $options = [])` | Push crumbs into Cake's `Breadcrumbs` helper. |
 | `renderBreadcrumbs($menu = null, array $options = [])` | Render through `BreadcrumbRenderer` or a subclass. |
 
@@ -44,6 +44,9 @@ straight through to the renderer as [renderer options](/reference/renderer-optio
 | `resolveDepth` | `null` | Max depth the default URL resolvers scan (`null` = unlimited). |
 | `currentAsLink` | `true` | Passed through: render the active item as a link. |
 
+State applied to the menu before a helper call is the baseline for that call. The helper restores
+that state afterward, so its own resolver results do not carry into the next call.
+
 ::: info Option precedence
 Options merge in this order (later wins): **helper config** → **per-menu render defaults** →
 **this call's `$options`**. So defaults set at `create()` time apply to every later `render()` unless
@@ -60,7 +63,7 @@ them and add your own, use `additionalResolvers`. See [Resolvers](/guide/resolve
 | Option | Description |
 |--------|-------------|
 | `attributes` | HTML attributes for the root `<ul>`. |
-| `overwrite` | Allow `create()` to replace an existing menu of the same name. |
+| `overwrite` | Allow `create()` to replace an existing code-defined menu of the same name. Config-defined menus can be replaced without it, even after `get()`. |
 | `rebuild` | Make `register()` rebuild even if the menu already exists. |
 | `cache` | Cache the built structure (see below). `true`, a string key, or `['key' => ..., 'config' => ...]`. |
 

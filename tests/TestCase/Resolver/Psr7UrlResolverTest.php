@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace CakeMenu\Test\TestCase\Resolver;
 
 use Cake\Http\ServerRequest;
+use Cake\Routing\Router;
 use Cake\TestSuite\TestCase;
 use CakeMenu\Item\Item;
 use CakeMenu\Item\ItemInterface;
@@ -128,5 +129,39 @@ class Psr7UrlResolverTest extends TestCase
         $resolver->resolve($item, new ResolverContext());
 
         $this->assertTrue($item->isActive());
+    }
+
+    public function testMatchesRenderedStringUrlUnderBasePath(): void
+    {
+        $request = (new ServerRequest(['url' => '/subdir/users']))->withAttribute('base', '/subdir');
+        Router::setRequest($request);
+        try {
+            $item = new Item('Users', '/users');
+            $this->assertSame('/subdir/users', $item->getLink()?->getUrl());
+            (new Psr7UrlResolver($request))->resolve($item, new ResolverContext());
+            $this->assertTrue($item->isActive());
+        } finally {
+            Router::reload();
+        }
+    }
+
+    public function testNormalizesStringUrlPath(): void
+    {
+        $request = new ServerRequest(['url' => '/caf%C3%A9/']);
+        $item = new Item('Cafe', '/café');
+
+        (new Psr7UrlResolver($request))->resolve($item, new ResolverContext());
+
+        $this->assertTrue($item->isActive());
+    }
+
+    public function testEncodedSlashDoesNotMatchPathSeparator(): void
+    {
+        $request = new ServerRequest(['url' => '/files/a/b']);
+        $item = new Item('File', '/files/a%2Fb');
+
+        (new Psr7UrlResolver($request))->resolve($item, new ResolverContext());
+
+        $this->assertFalse($item->isActive());
     }
 }

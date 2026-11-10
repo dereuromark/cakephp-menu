@@ -123,7 +123,7 @@ class MenuHelper extends Helper
         if ($name === '') {
             throw new InvalidArgumentException('Menu name must not be empty.');
         }
-        if (isset($this->menus[$name]) && empty($options['overwrite'])) {
+        if (isset($this->menus[$name]) && !isset($this->configOrigin[$name]) && empty($options['overwrite'])) {
             throw new InvalidArgumentException(sprintf('Menu `%s` already exists.', $name));
         }
 
@@ -331,7 +331,9 @@ class MenuHelper extends Helper
         try {
             $this->applyResolvers($menu, $resolvedOptions);
 
-            return $menu->getActiveItem();
+            $item = $this->getVisibleActiveItem($menu);
+
+            return $item === null ? null : clone $item;
         } finally {
             $this->restoreItemState($menu, $state);
         }
@@ -357,7 +359,7 @@ class MenuHelper extends Helper
         try {
             $this->applyResolvers($menu, $resolvedOptions);
 
-            $currentItem = $menu->getActiveItem();
+            $currentItem = $this->getVisibleActiveItem($menu);
             if ($currentItem === null) {
                 return [];
             }
@@ -431,7 +433,7 @@ class MenuHelper extends Helper
         $state = $this->captureItemState($resolvedMenu);
         try {
             $this->applyResolvers($resolvedMenu, $resolvedOptions);
-            $activeItem = $resolvedMenu->getActiveItem();
+            $activeItem = $this->getVisibleActiveItem($resolvedMenu);
             if ($activeItem === null) {
                 return '';
             }
@@ -487,12 +489,31 @@ class MenuHelper extends Helper
             throw new InvalidArgumentException('Resolver must implement ResolverInterface.');
         }
 
-        $menu->resetState();
         $menu->resolve($resolver);
 
         if (!empty($options['singleActive'])) {
             $this->enforceSingleActive($menu);
         }
+    }
+
+    protected function getVisibleActiveItem(MenuInterface $menu): ?ItemInterface
+    {
+        foreach ($menu->getItems() as $item) {
+            if (!$item->isVisible()) {
+                continue;
+            }
+            if ($item->hasSubMenu()) {
+                $activeItem = $this->getVisibleActiveItem($item->getSubMenu());
+                if ($activeItem !== null) {
+                    return $activeItem;
+                }
+            }
+            if ($item->isActive()) {
+                return $item;
+            }
+        }
+
+        return null;
     }
 
     /**

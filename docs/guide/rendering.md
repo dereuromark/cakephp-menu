@@ -10,11 +10,12 @@ description: Render cakephp-menu menus with the string-template, Bootstrap 5, na
 echo $this->Menu->render($menu);
 ```
 
-You can also fetch the resolved active item and extract its path:
+You can also fetch the resolved active item. It is a detached clone, so its resolved state remains
+available after the helper restores the menu. Use breadcrumbs to read the visible path:
 
 ```php
 $current = $this->Menu->getCurrentItem('main');
-$path = $current ? $this->Menu->extractPath($current) : [];
+$crumbs = $this->Menu->getBreadcrumbs('main');
 ```
 
 ### Hiding Empty Branches
@@ -60,6 +61,9 @@ Or use the built-in breadcrumb renderer:
 ```php
 echo $this->Menu->renderBreadcrumbs('main');
 ```
+
+Breadcrumbs include only visible items. If the active item or one of its ancestors is hidden,
+the helper returns no crumbs for that path.
 
 `renderBreadcrumbs()` always uses `BreadcrumbRenderer`. Pass a subclass name or instance
 as `renderer` to customize it. Cake's attributes and separator belong in your separate

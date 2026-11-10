@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace CakeMenu\Resolver;
 
 use Cake\Core\InstanceConfigTrait;
+use Cake\Routing\Router;
 use CakeMenu\Item\ItemInterface;
 use Psr\Http\Message\RequestInterface;
 use function array_filter;
@@ -14,7 +15,10 @@ use function explode;
 use function is_int;
 use function is_string;
 use function parse_url;
+use function rawurldecode;
+use function rtrim;
 use function sort;
+use function str_ireplace;
 use function strcasecmp;
 use function strtolower;
 use function urldecode;
@@ -71,7 +75,9 @@ class Psr7UrlResolver implements ResolverInterface
             if (isset($parts['host']) && !$this->hostMatches($parts)) {
                 continue;
             }
-            if ($requestPath !== ($parts['path'] ?? '')) {
+            $renderedRoute = isset($parts['host']) ? $route : Router::url($route);
+            $renderedPath = parse_url($renderedRoute, PHP_URL_PATH);
+            if ($this->normalizePath($requestPath) !== $this->normalizePath(is_string($renderedPath) ? $renderedPath : '')) {
                 continue;
             }
             if (!$ignoreQueryString && !$this->queryMatches($requestQuery, $parts['query'] ?? '')) {
@@ -82,6 +88,12 @@ class Psr7UrlResolver implements ResolverInterface
 
             return;
         }
+    }
+
+    protected function normalizePath(string $path): string
+    {
+        // Keep an encoded slash distinct from a path separator.
+        return rtrim(rawurldecode(str_ireplace('%2F', '%252F', $path)), '/') ?: '/';
     }
 
     /**
