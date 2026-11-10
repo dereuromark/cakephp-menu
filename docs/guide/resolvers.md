@@ -5,8 +5,10 @@ description: Apply active state and visibility in cakephp-menu with URL, section
 # Resolvers & Active State
 
 Resolvers apply cross-cutting state without mixing request/session logic into menu construction.
-Each resolver inspects every item and sets its active and/or visible state; chained together with a
-`ResolverCollection`, they run in order, so later resolvers see what earlier ones decided.
+Each resolver inspects every item and sets its active and/or visible state. In a
+`ResolverCollection`, resolvers run in order. Login, permission, and authorization visibility
+decisions combine with AND: a denial hides the item, and a later allowance cannot show it again.
+An item built with `visible => false` stays hidden when these resolvers allow it.
 
 ```mermaid
 flowchart LR

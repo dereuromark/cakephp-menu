@@ -20,6 +20,24 @@ use stdClass;
 
 class MenuTest extends TestCase
 {
+    public function testGetActiveItemPrefersDeepestDescendantInFirstMatchingBranch(): void
+    {
+        $menu = Menu::create();
+        $parent = $menu->addItem('Parent');
+        $child = $parent->getSubMenu()->addItem('Child');
+        $grandchild = $child->getSubMenu()->addItem('Grandchild');
+        $later = $menu->addItem('Later');
+        foreach ([$parent, $child, $grandchild, $later] as $item) {
+            $item->setRuntimeActive(true);
+        }
+
+        $this->assertSame($grandchild, $menu->getActiveItem());
+        $grandchild->setRuntimeActive(false);
+        $this->assertSame($child, $menu->getActiveItem());
+        $child->setRuntimeActive(false);
+        $this->assertSame($parent, $menu->getActiveItem());
+    }
+
     public function testFromArrayExternalLinkWithoutAttributes(): void
     {
         $menu = Menu::fromArray([

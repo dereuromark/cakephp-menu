@@ -6,13 +6,38 @@ namespace CakeMenu\Test\TestCase\Resolver;
 
 use Cake\TestSuite\TestCase;
 use CakeMenu\Item\Item;
+use CakeMenu\Resolver\AuthorizationResolver;
 use CakeMenu\Resolver\CallbackResolver;
 use CakeMenu\Resolver\LoggedInResolver;
+use CakeMenu\Resolver\PermissionResolver;
 use CakeMenu\Resolver\ResolverCollection;
 use CakeMenu\Resolver\ResolverContext;
 
 class ResolverCollectionTest extends TestCase
 {
+    public function testVisibilityResolversOnlyHideInEitherOrder(): void
+    {
+        $item = (new Item('Private'))->setData('auth', 'loggedIn')->setData('permission', 'read');
+        $allow = new AuthorizationResolver(static fn (): bool => true);
+        $deny = new LoggedInResolver(false);
+        $permission = new PermissionResolver(new class {
+            public function can(): bool
+            {
+                return false;
+            }
+        });
+
+        foreach ([[$deny, $allow], [$allow, $deny], [$permission, $allow], [$allow, $permission]] as $resolvers) {
+            $item->resetState();
+            (new ResolverCollection())->addMany($resolvers)->resolve($item, new ResolverContext());
+            $this->assertFalse($item->isVisible());
+        }
+
+        $item->resetState()->setVisible(false);
+        $allow->resolve($item, new ResolverContext());
+        $this->assertFalse($item->isVisible());
+    }
+
     public function testPassesSameContextToNestedCollections(): void
     {
         $item = new Item('Child');

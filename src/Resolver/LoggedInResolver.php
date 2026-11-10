@@ -19,10 +19,11 @@ class LoggedInResolver implements ResolverInterface
         if (is_string($auth)) {
             $auth = AuthState::tryFrom($auth) ?? throw new InvalidArgumentException('Unknown auth state: ' . $auth);
         }
-        if ($auth === AuthState::LoggedIn) {
-            $item->setRuntimeVisible($this->loggedIn);
-        } elseif ($auth === AuthState::LoggedOut) {
-            $item->setRuntimeVisible(!$this->loggedIn);
+        if (
+            ($auth === AuthState::LoggedIn && !$this->loggedIn)
+            || ($auth === AuthState::LoggedOut && $this->loggedIn)
+        ) {
+            $item->setRuntimeVisible(false);
         }
     }
 }

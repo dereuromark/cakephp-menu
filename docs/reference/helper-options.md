@@ -23,7 +23,7 @@ $this->loadHelper('CakeMenu.Menu');
 | `render($menu = null, array $options = [])` | Resolve and render a menu (by name, instance, or the last-created). |
 | `getCurrentItem($menu = null, array $options = [])` | The deepest active item after resolution. |
 | `extractPath(ItemInterface $item)` | Root-to-item path (for breadcrumbs). |
-| `getBreadcrumbs($menu = null, array $options = [])` | Active path as an array of crumbs. |
+| `getBreadcrumbs($menu = null, array $options = [])` | Active path as an array of crumbs. Titles are HTML-escaped (unless the item opts out) and honor `translate`. |
 | `populateBreadcrumbs($menu = null, array $options = [])` | Push crumbs into Cake's `Breadcrumbs` helper. |
 | `renderBreadcrumbs($menu = null, array $options = [])` | Render through `BreadcrumbRenderer` or a subclass. |
 
@@ -81,6 +81,7 @@ subclass name or instance. To use Cake's markup, call `populateBreadcrumbs()` an
 `register()` with a `cache` option builds the menu through the callback once and caches its
 **structure** (not its active state); later requests skip the build and load the tree from cache,
 while active state is always resolved fresh per request. Pass `rebuild => true` to refresh.
+Cache keys include the current locale, so each locale builds its own menu structure.
 
 ```php
 $this->Menu->register('main', function ($menu): void {
@@ -91,6 +92,8 @@ $this->Menu->register('main', function ($menu): void {
 ::: warning
 The cached form is the serialized array, so custom item classes are restored as the base item class.
 Cache data-driven menus, not menus that rely on custom `ItemInterface` implementations.
+If items depend on the user or role, include that value in the key, for example
+`['key' => 'menu_main_' . $role]`. See the [role-based menu recipe](../guide/recipes.md#role-based-menus-tinyauth).
 :::
 
 ## Config-defined menus

@@ -772,14 +772,14 @@ class Menu implements MenuInterface
     public function getActiveItem(): ?ItemInterface
     {
         foreach ($this->items as $item) {
-            if ($item->isActive()) {
-                return $item;
-            }
             if ($item->hasSubMenu()) {
                 $activeItem = $item->getSubMenu()->getActiveItem();
                 if ($activeItem !== null) {
                     return $activeItem;
                 }
+            }
+            if ($item->isActive()) {
+                return $item;
             }
         }
 
