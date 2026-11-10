@@ -8,6 +8,7 @@ use Cake\Cache\Cache;
 use Cake\Core\Configure;
 use Cake\Http\Response;
 use Cake\Http\ServerRequest;
+use Cake\I18n\I18n;
 use Cake\TestSuite\TestCase;
 use Cake\View\View;
 use CakeMenu\MenuInterface;
@@ -18,6 +19,57 @@ use RuntimeException;
 
 class MenuHelperCacheConfigTest extends TestCase
 {
+    public function testCacheSeparatesLocalesAndReusesEachLocale(): void
+    {
+        $oldLocale = I18n::getLocale();
+        $calls = 0;
+        $build = static function (MenuInterface $menu) use (&$calls): void {
+            $calls++;
+            $menu->addItem(I18n::getLocale(), '/locale');
+        };
+        $options = ['cache' => ['key' => 'localized', 'config' => 'menu_test']];
+
+        try {
+            I18n::setLocale('en_US');
+            $this->createHelper(new ServerRequest())->register('localized', $build, $options);
+            $this->createHelper(new ServerRequest())->register('localized', $build, $options);
+            $this->assertSame(1, $calls);
+
+            I18n::setLocale('de_DE');
+            $helper = $this->createHelper(new ServerRequest());
+            $helper->register('localized', $build, $options);
+            $this->assertSame(2, $calls);
+            $this->assertStringContainsString('de_DE', $helper->render('localized'));
+            $this->createHelper(new ServerRequest())->register('localized', $build, $options);
+            $this->assertSame(2, $calls);
+        } finally {
+            I18n::setLocale($oldLocale);
+        }
+    }
+
+    public function testLocaleChangeOnSameHelperRebuildsCachedMenu(): void
+    {
+        $oldLocale = I18n::getLocale();
+        $build = static function (MenuInterface $menu): void {
+            $menu->addItem(I18n::getLocale(), '/locale');
+        };
+        $options = ['cache' => ['key' => 'same_helper', 'config' => 'menu_test']];
+
+        try {
+            I18n::setLocale('en_US');
+            $helper = $this->createHelper(new ServerRequest());
+            $helper->register('localized', $build, $options);
+
+            I18n::setLocale('de_DE');
+            $helper->register('localized', $build, $options);
+            $html = $helper->render('localized');
+            $this->assertStringContainsString('de_DE', $html);
+            $this->assertStringNotContainsString('en_US', $html);
+        } finally {
+            I18n::setLocale($oldLocale);
+        }
+    }
+
     protected int $buildCalls = 0;
 
     protected function createHelper(ServerRequest $request): MenuHelper

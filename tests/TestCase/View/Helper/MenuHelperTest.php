@@ -6,6 +6,8 @@ namespace CakeMenu\Test\TestCase\View\Helper;
 
 use Cake\Http\Response;
 use Cake\Http\ServerRequest;
+use Cake\I18n\I18n;
+use Cake\I18n\Package;
 use Cake\Routing\Route\Route;
 use Cake\TestSuite\TestCase;
 use Cake\View\View;
@@ -17,6 +19,7 @@ use CakeMenu\MenuInterface;
 use CakeMenu\Renderer\BreadcrumbRenderer;
 use CakeMenu\Renderer\StringTemplateRenderer;
 use CakeMenu\Resolver\AuthorizationResolver;
+use CakeMenu\Resolver\LoggedInResolver;
 use CakeMenu\Resolver\ResolverCollection;
 use CakeMenu\Resolver\ResolverContext;
 use CakeMenu\Resolver\SectionResolver;
@@ -26,6 +29,63 @@ use RuntimeException;
 
 class MenuHelperTest extends TestCase
 {
+    public function testBreadcrumbTitlesEscapeTranslateAndRespectOptOut(): void
+    {
+        $request = (new ServerRequest(['url' => '/target']))
+            ->withUri((new ServerRequest())->getUri()->withPath('/target'));
+        $helper = $this->createHelper($request);
+        $menu = $helper->create('crumbs');
+        $item = $menu->addItem('<script>x</script>', '/target');
+
+        $this->assertSame('&lt;script&gt;x&lt;/script&gt;', $helper->getBreadcrumbs('crumbs')[0]['title']);
+        $helper->populateBreadcrumbs('crumbs');
+        $this->assertStringContainsString('&lt;script&gt;x&lt;/script&gt;', $helper->Breadcrumbs->render());
+
+        $item->setLabel('<script>x</script>', false);
+        $this->assertSame('<script>x</script>', $helper->getBreadcrumbs('crumbs')[0]['title']);
+
+        $oldLocale = I18n::getLocale();
+        try {
+            I18n::setLocale('en_US');
+            I18n::setTranslator('default', static function (): Package {
+                $package = new Package('default');
+                $package->setMessages(['<script>x</script>' => '<b>Translated</b>']);
+
+                return $package;
+            }, 'en_US');
+            $item->setLabel('<script>x</script>');
+            $this->assertSame('&lt;b&gt;Translated&lt;/b&gt;', $helper->getBreadcrumbs('crumbs', ['translate' => true])[0]['title']);
+        } finally {
+            I18n::clear();
+            I18n::setLocale($oldLocale);
+        }
+    }
+
+    public function testNestedFuzzyMatchesUseDeepestItemWithoutSingleActive(): void
+    {
+        $request = (new ServerRequest(['url' => '/articles/view/42']))
+            ->withAttribute('params', ['controller' => 'Articles', 'action' => 'view', 'pass' => [42]])
+            ->withUri((new ServerRequest())->getUri()->withPath('/articles/view/42'));
+        $helper = $this->createHelper($request);
+        $menu = $helper->create('nested');
+        $parent = $menu->addItem('Articles', ['controller' => 'Articles']);
+        $child = $parent->getSubMenu()->addItem('View', ['controller' => 'Articles', 'action' => 'view']);
+
+        $this->assertSame($child, $helper->getCurrentItem('nested', ['singleActive' => false]));
+        $this->assertSame(['Articles', 'View'], array_column($helper->getBreadcrumbs('nested', ['singleActive' => false]), 'title'));
+    }
+
+    public function testVisibilityDoesNotLeakBetweenRenders(): void
+    {
+        $helper = $this->createHelper(new ServerRequest());
+        $menu = $helper->create('private');
+        $item = $menu->addItem('Private', '/private')->setData('auth', 'loggedIn');
+
+        $this->assertSame('<ul></ul>', $helper->render('private', ['resolver' => new LoggedInResolver(false)]));
+        $this->assertNull($item->getRuntimeState()['visible']);
+        $this->assertStringContainsString('Private', $helper->render('private', ['resolver' => new LoggedInResolver(true)]));
+    }
+
     protected function createSelfRenderingItem(string $label, string $url, string $id): ItemInterface
     {
         return new class ($label, $url, $id) extends Item implements SelfRendererInterface {
@@ -373,8 +433,7 @@ class MenuHelperTest extends TestCase
         $parent = $menu->addItem('Section', '/articles');
         $parent->getSubMenu()->addItem('Articles', '/articles');
 
-        // Both items match; the default returns the first (shallowest) match.
-        $this->assertSame('Section', $menuHelper->getCurrentItem($menu)?->getLabel());
+        $this->assertSame('Articles', $menuHelper->getCurrentItem($menu)?->getLabel());
     }
 
     public function testSingleActivePrefersDeepestMatch(): void

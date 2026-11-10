@@ -6,6 +6,7 @@ namespace CakeMenu\View\Helper;
 
 use Cake\Cache\Cache;
 use Cake\Core\Configure;
+use Cake\I18n\I18n;
 use Cake\View\Helper;
 use CakeMenu\Item\ItemInterface;
 use CakeMenu\Menu;
@@ -21,6 +22,7 @@ use CakeMenu\Resolver\UrlArrayResolver;
 use Closure;
 use InvalidArgumentException;
 use function Cake\Core\deprecationWarning;
+use function Cake\I18n\__;
 
 /**
  * @extends \Cake\View\Helper<\Cake\View\View>
@@ -58,6 +60,13 @@ class MenuHelper extends Helper
      * @var array<string, true>
      */
     protected array $configOrigin = [];
+
+    /**
+     * Cache key each cached menu was loaded or built under, so a locale change rebuilds it.
+     *
+     * @var array<string, string>
+     */
+    protected array $cacheKeys = [];
 
     protected ?string $lastMenuName = null;
 
@@ -186,11 +195,15 @@ class MenuHelper extends Helper
      */
     protected function registerWithCache(string $name, Closure $callback, array $options): MenuInterface
     {
-        if (isset($this->menus[$name]) && !isset($this->configOrigin[$name]) && empty($options['rebuild'])) {
+        [$cacheKey, $cacheConfig] = $this->resolveCacheTarget($options['cache'], $name);
+        if (
+            isset($this->menus[$name])
+            && !isset($this->configOrigin[$name])
+            && empty($options['rebuild'])
+            && ($this->cacheKeys[$name] ?? $cacheKey) === $cacheKey
+        ) {
             return $this->get($name);
         }
-
-        [$cacheKey, $cacheConfig] = $this->resolveCacheTarget($options['cache'], $name);
 
         if (empty($options['rebuild'])) {
             $cached = Cache::read($cacheKey, $cacheConfig);
@@ -201,6 +214,7 @@ class MenuHelper extends Helper
                 $this->lastMenuName = $name;
                 // Now defined in code (from cache); drop any config-origin marker.
                 unset($this->configOrigin[$name]);
+                $this->cacheKeys[$name] = $cacheKey;
 
                 return $menu;
             }
@@ -210,6 +224,7 @@ class MenuHelper extends Helper
         $menu = $this->create($name, $options);
         $this->invokeRegisterCallback($callback, $menu);
         Cache::write($cacheKey, $menu->toArray(), $cacheConfig);
+        $this->cacheKeys[$name] = $cacheKey;
 
         return $menu;
     }
@@ -224,19 +239,20 @@ class MenuHelper extends Helper
      */
     protected function resolveCacheTarget(mixed $cache, string $name): array
     {
+        $locale = preg_replace('/[^A-Za-z0-9_]/', '_', I18n::getLocale());
         if (is_array($cache)) {
             return [
-                (string)($cache['key'] ?? $name),
+                (string)($cache['key'] ?? $name) . '_' . $locale,
                 (string)($cache['config'] ?? 'default'),
             ];
         }
 
         if (is_string($cache) && $cache !== '') {
-            return [$cache, 'default'];
+            return [$cache . '_' . $locale, 'default'];
         }
 
         // e.g. `cache => true`: cache under the menu name so menus never collide.
-        return [$name, 'default'];
+        return [$name . '_' . $locale, 'default'];
     }
 
     public function remove(string $name): static
@@ -359,7 +375,7 @@ class MenuHelper extends Helper
                 }
 
                 $crumbs[] = [
-                    'title' => (string)$item->getLabel(),
+                    'title' => $this->breadcrumbTitle($item, $resolvedOptions),
                     'url' => $link !== null && (!$isCurrent || $linkCurrent) ? $link->getRawUrl() : null,
                     'options' => $optionsForCrumb,
                 ];
@@ -369,6 +385,19 @@ class MenuHelper extends Helper
         } finally {
             $this->restoreItemState($menu, $state);
         }
+    }
+
+    /**
+     * @phpstan-param array<string, mixed> $options
+     */
+    protected function breadcrumbTitle(ItemInterface $item, array $options): string
+    {
+        $label = $item->getLabel() ?? '';
+        if (!empty($options['translate'])) {
+            $label = (string)__($label);
+        }
+
+        return $item->shouldEscapeLabel() ? htmlspecialchars($label, ENT_QUOTES, 'UTF-8') : $label;
     }
 
     /**

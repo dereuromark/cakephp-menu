@@ -25,8 +25,8 @@ class AuthorizationResolver implements ResolverInterface
     public function resolve(ItemInterface $item, ResolverContext $context): void
     {
         $allowed = ($this->callback)($item, $context);
-        if ($allowed !== null) {
-            $item->setRuntimeVisible($allowed);
+        if ($allowed === false) {
+            $item->setRuntimeVisible(false);
         }
     }
 }

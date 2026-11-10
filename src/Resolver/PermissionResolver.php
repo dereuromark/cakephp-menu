@@ -26,8 +26,8 @@ class PermissionResolver implements ResolverInterface
         }
 
         $allowed = $this->authorizer->{$this->method}($this->identity, $permission, $item);
-        if (is_bool($allowed)) {
-            $item->setRuntimeVisible($allowed);
+        if ($allowed === false) {
+            $item->setRuntimeVisible(false);
         }
     }
 }

@@ -2,6 +2,18 @@
 
 ## Upcoming release
 
+Login, permission, and authorization resolvers now only hide items. An allowing resolver no longer
+shows an item hidden by another resolver or built with `visible => false`.
+
+`getBreadcrumbs()` titles are now HTML-escaped (unless the item disables label escaping) and honor
+`translate`, because Cake's `BreadcrumbsHelper` prints titles unescaped. If you print the returned
+titles yourself, drop your own `h()` call to avoid double escaping.
+
+`getCurrentItem()` and breadcrumbs now return the deepest active item when a parent and a child both
+match, as documented. Before, they returned the parent unless `singleActive` was set.
+
+Menu cache keys now include the locale. Existing cache entries are rebuilt once for each locale.
+
 Bootstrap 5 now puts `active` on the link or dropdown toggle instead of the `<li>`. Set `activeOn` to `both` to keep it on both elements. `StringTemplateRenderer` now puts `aria-expanded` on the link or label that triggers the submenu instead of the `<li>`.
 
 ## 0.1 to 0.2
