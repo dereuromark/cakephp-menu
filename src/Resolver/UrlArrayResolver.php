@@ -71,8 +71,9 @@ class UrlArrayResolver implements ResolverInterface
     {
         $normalizedRequestParams = $this->extractParams($requestParams);
         $normalizedRoute = $this->normalizeRoute($linkArray);
+        $namedRoute = isset($normalizedRoute['_name']);
 
-        if (isset($normalizedRoute['_name'])) {
+        if ($namedRoute) {
             if (($normalizedRequestParams['_name'] ?? null) !== $normalizedRoute['_name']) {
                 return false;
             }
@@ -105,6 +106,13 @@ class UrlArrayResolver implements ResolverInterface
         foreach (['_host', '_method', '_name'] as $meta) {
             if (!array_key_exists($meta, $exactRoute)) {
                 unset($exactRequest[$meta]);
+            }
+        }
+        if ($namedRoute) {
+            foreach (['controller', 'action'] as $default) {
+                if (!array_key_exists($default, $exactRoute)) {
+                    unset($exactRequest[$default]);
+                }
             }
         }
 
@@ -181,7 +189,7 @@ class UrlArrayResolver implements ResolverInterface
         $params['_host'] = $this->request->getUri()->getHost();
         $route = $params['_route'] ?? null;
         if (is_object($route) && method_exists($route, 'getName')) {
-            $params['_name'] = $route->getName();
+            $params['_name'] ??= $route->getName();
         }
         $params['plugin'] ??= null;
         $params['prefix'] ??= null;

@@ -117,6 +117,33 @@ class UrlArrayResolverTest extends TestCase
         $this->assertTrue($item->isActive());
     }
 
+    #[DataProvider('namedRouteModes')]
+    public function testMatchesExplicitNamedRouteWithSlug(bool $fuzzy): void
+    {
+        $route = new Route('/article/{slug}', ['controller' => 'Articles', 'action' => 'view'], ['_name' => 'article']);
+        $this->assertNotSame('article', $route->getName());
+        $request = (new ServerRequest())->withAttribute('params', [
+            'controller' => 'Articles',
+            'action' => 'view',
+            'slug' => 'hello',
+            '_name' => 'article',
+            '_route' => $route,
+        ]);
+        $item = new Item('Article', ['_name' => 'article', 'slug' => 'hello']);
+
+        (new UrlArrayResolver($request, ['fuzzy' => $fuzzy]))->resolve($item, new ResolverContext());
+
+        $this->assertTrue($item->isActive());
+    }
+
+    /**
+     * @return array<string, array{bool}>
+     */
+    public static function namedRouteModes(): array
+    {
+        return ['fuzzy' => [true], 'exact' => [false]];
+    }
+
     public function testMatchesExactArrayRouteWhenFuzzyDisabled(): void
     {
         $item = (new Item('View Article', [

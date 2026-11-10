@@ -27,4 +27,12 @@ class AuthorizationResolverTest extends TestCase
 
         $this->assertFalse($item->isVisible());
     }
+
+    public function testDocumentationClosuresCaptureExternalVariables(): void
+    {
+        $guide = file_get_contents(dirname(__DIR__, 3) . '/docs/guide/resolvers.md');
+        $this->assertIsString($guide);
+        $this->assertStringContainsString('use ($authorization, $identity): ?bool', $guide);
+        $this->assertStringContainsString('use ($isAdmin): ?bool', $guide);
+    }
 }

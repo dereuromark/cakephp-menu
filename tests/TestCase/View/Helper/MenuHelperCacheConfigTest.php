@@ -260,6 +260,23 @@ class MenuHelperCacheConfigTest extends TestCase
         );
     }
 
+    public function testCreateOverridesConfiguredMenuAfterGet(): void
+    {
+        Configure::write('CakeMenu.menus', [
+            'main' => ['items' => [['label' => 'Configured', 'link' => '/configured']]],
+        ]);
+        $helper = $this->createHelper(new ServerRequest());
+        $configured = $helper->get('main');
+
+        $created = $helper->create('main');
+        $created->addItem('Code', '/code');
+
+        $this->assertNotSame($configured, $created);
+        $this->assertSame('<ul><li><a href="/code">Code</a></li></ul>', $helper->render('main'));
+        $this->expectExceptionMessage('Menu `main` already exists.');
+        $helper->create('main');
+    }
+
     public function testRemoveDeletesConfiguredMenu(): void
     {
         Configure::write('CakeMenu.menus', [

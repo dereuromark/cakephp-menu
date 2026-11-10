@@ -42,6 +42,11 @@ It also supports named routes:
 $menu->addItem('View', ['_name' => 'articles:view']);
 ```
 
+Explicit route names are matched against the name in the current request. Passed parameters,
+such as `['_name' => 'article', 'slug' => 'hello']`, work with fuzzy and exact matching.
+String URLs use the rendered link path, including the application's base path. Trailing slashes
+and percent-encoded path characters are normalized for matching.
+
 In apps that mix prefixed and non-prefixed routes, pass `'prefix' => false` on the non-prefixed links.
 With fuzzy matching (the default), a link without a `prefix` key matches regardless of the current
 prefix, the same way `Router::url()` inherits it from the current request:
@@ -112,6 +117,9 @@ use CakeMenu\Resolver\LoggedInResolver;
 $menu->resolve(new LoggedInResolver($identity !== null));
 ```
 
+Visibility resolved before a helper call remains in effect during that call. The helper restores
+the menu to its pre-call state after rendering.
+
 The `auth` data value accepts `AuthState` or its backed string (`'loggedIn'` or
 `'loggedOut'`), including `Menu::fromArray()` configuration. Unknown strings throw
 `InvalidArgumentException`.
@@ -127,7 +135,7 @@ use CakeMenu\Resolver\CallbackResolver;
 use CakeMenu\Resolver\ResolverContext;
 
 $menu->resolve(new AuthorizationResolver(
-    static function (ItemInterface $item, ResolverContext $context): ?bool {
+    static function (ItemInterface $item, ResolverContext $context) use ($authorization, $identity): ?bool {
         if ($item->getData('permission') === null) {
             return null;
         }
@@ -189,7 +197,7 @@ use CakeMenu\Resolver\AuthorizationResolver;
 
 echo $this->Menu->render('main', [
     'additionalResolvers' => [
-        new AuthorizationResolver(static function (ItemInterface $item): ?bool {
+        new AuthorizationResolver(static function (ItemInterface $item) use ($isAdmin): ?bool {
             return $item->getData('adminOnly') ? $isAdmin : null;
         }),
     ],
