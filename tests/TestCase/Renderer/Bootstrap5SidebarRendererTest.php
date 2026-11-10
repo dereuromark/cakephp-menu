@@ -11,6 +11,33 @@ use CakeMenu\Renderer\Bootstrap5SidebarRenderer;
 
 class Bootstrap5SidebarRendererTest extends TestCase
 {
+    public function testBranchTriggerUsesMenuitemRoleAndOmitsEmptyNestedList(): void
+    {
+        $menu = Menu::create();
+        $branch = $menu->addItem('Account', '#');
+        $branch->getSubMenu()->addItem('Profile', '/profile');
+        $empty = $menu->addItem('Empty', '#');
+        $empty->getSubMenu()->addItem('Hidden', '/hidden')->setVisible(false);
+
+        $result = (new Bootstrap5SidebarRenderer())->render($menu, ['roles' => true]);
+
+        $this->assertStringContainsString('role="menuitem"', $result);
+        $this->assertStringNotContainsString('role="button"', $result);
+        $this->assertStringNotContainsString('<ul class="nav flex-column ms-3" role="menu"></ul>', $result);
+        $this->assertStringContainsString('href="#" role="menuitem">Empty</a>', $result);
+    }
+
+    public function testNavigableBranchToggleUsesMenuitemRole(): void
+    {
+        $menu = Menu::create();
+        $branch = $menu->addItem('Account', '/account');
+        $branch->getSubMenu()->addItem('Profile', '/profile');
+
+        $result = (new Bootstrap5SidebarRenderer())->render($menu, ['roles' => true]);
+
+        $this->assertMatchesRegularExpression('/<button[^>]*role="menuitem"[^>]*aria-haspopup="true"/', $result);
+    }
+
     public function testDepthAriaLabelAndToggleLabel(): void
     {
         $menu = Menu::create();

@@ -194,4 +194,15 @@ class NavbarRendererTest extends TestCase
         // The inner list is not labelled (no aria-label on the <ul>).
         $this->assertStringContainsString('<ul class="navbar-nav">', $result);
     }
+
+    public function testConstructorAriaLabelOnlyLabelsNav(): void
+    {
+        $menu = Menu::create();
+        $menu->addItem('Home', '/');
+
+        $result = (new NavbarRenderer(['ariaLabel' => 'Primary']))->render($menu);
+
+        $this->assertSame(1, substr_count($result, 'aria-label="Primary"'));
+        $this->assertStringContainsString('<ul class="navbar-nav">', $result);
+    }
 }

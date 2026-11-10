@@ -103,6 +103,10 @@ class Bootstrap5SidebarRenderer extends StringTemplateRenderer
             }
         }
 
+        if ($level > 1 && $items === []) {
+            return '';
+        }
+
         $class = $level === 1
             ? $this->getStringOption($options, 'navClass')
             : $this->getStringOption($options, 'nestedNavClass');
@@ -158,12 +162,12 @@ class Bootstrap5SidebarRenderer extends StringTemplateRenderer
         // Mirror StringTemplateRenderer: an item with a submenu still renders as a leaf when
         // `displayChildren=false`. Without this, setDisplayChildren(false) silently failed here.
         $hasSubMenu = $this->rendersSubMenu($item, $options, $level);
-        if (
-            $hasSubMenu
-            && $this->getBooleanOption($options, 'hideEmptyBranches', false)
-            && !$this->hasRenderableChild($item, $options, $level)
-        ) {
-            return '';
+        if ($hasSubMenu) {
+            $hasChildren = $this->hasRenderableChild($item, $options, $level);
+            if ($this->getBooleanOption($options, 'hideEmptyBranches', false) && !$hasChildren) {
+                return '';
+            }
+            $hasSubMenu = $hasChildren;
         }
         if ($item->isRaw()) {
             return $this->li($item, $options, (string)$item->getRaw());
@@ -280,12 +284,15 @@ class Bootstrap5SidebarRenderer extends StringTemplateRenderer
             $attributes[$toggleAttribute] = $this->getStringOption($options, 'toggleValue');
         }
         $attributes += [
-            'role' => 'button',
+            'role' => $this->getBooleanOption($options, 'roles', false) ? 'menuitem' : 'button',
             'href' => '#' . $id,
             'aria-controls' => $id,
             'aria-expanded' => $expanded ? 'true' : 'false',
         ];
         $attributes = $this->mergeLabelAttributes($attributes, $item);
+        if ($this->getBooleanOption($options, 'roles', false)) {
+            $attributes['role'] = 'menuitem';
+        }
         $attributes = $this->applyMenuItemRole($attributes, $item, $options);
 
         return sprintf(
@@ -324,7 +331,9 @@ class Bootstrap5SidebarRenderer extends StringTemplateRenderer
         // labelAttributes describe the rendered link/label; merge onto the navigable anchor only,
         // not the separate toggle button (which is renderer chrome, not the item's link).
         $linkAttributes = $this->mergeLabelAttributes($linkAttributes, $item);
-        $linkAttributes = $this->applyMenuItemRole($linkAttributes, $item, $options);
+        if ($this->getBooleanOption($options, 'roles', false) && !isset($linkAttributes['role'])) {
+            $linkAttributes['role'] = 'menuitem';
+        }
 
         $anchor = sprintf('<a%s>%s</a>', $this->renderAttributes($linkAttributes), $label);
 
@@ -345,6 +354,10 @@ class Bootstrap5SidebarRenderer extends StringTemplateRenderer
             'aria-expanded' => $expanded ? 'true' : 'false',
             'aria-label' => sprintf($this->getStringOption($options, 'toggleLabel'), (string)$item->getLabel()),
         ];
+        if ($this->getBooleanOption($options, 'roles', false)) {
+            $buttonAttributes['role'] = 'menuitem';
+            $buttonAttributes['aria-haspopup'] = 'true';
+        }
 
         $button = sprintf('<button%s>%s</button>', $this->renderAttributes($buttonAttributes), $this->caret($options, $expanded));
 

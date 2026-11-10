@@ -46,6 +46,8 @@ echo (new StringTemplateRenderer(['currentAsLink' => false]))->render($menu);
 Adds Bootstrap 5 dropdown classes (`nav-link`, `dropdown`, `dropdown-menu`, `dropdown-item`,
 `data-bs-toggle`) so the menu drops into any Bootstrap layout. Wrap it in the [Navbar](#navbar)
 renderer for the full responsive chrome.
+With `roles => true`, dropdown triggers use `role="menuitem"`; the examples below use the
+default `roles => false`.
 
 ```php
 $menu = Menu::create(['class' => 'navbar-nav']);
@@ -163,7 +165,8 @@ echo (new Bootstrap5SidebarRenderer())->render($menu);
 ## Breadcrumb
 
 Renders only the path from the root to the active item as a Bootstrap 5 breadcrumb. The active
-(last) crumb is a `<span>`, the rest are links. Also available via the helper as
+(last) crumb is a `<span>` by default, and the rest are links. Pass `linkCurrent => true` to link
+the last crumb with `aria-current="page"`. Also available via the helper as
 `$this->Menu->renderBreadcrumbs()`.
 
 ![Bootstrap 5 breadcrumb rendered by cakephp-menu showing Articles / View](/renderers/breadcrumb.png)

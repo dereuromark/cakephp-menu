@@ -54,7 +54,8 @@ class Bootstrap5Renderer extends StringTemplateRenderer
 
         $title = $this->decorateTitle($item, $this->escapeLabel($item, $options), $options);
         $link = $item->getLink();
-        $renderChildren = $this->rendersSubMenu($item, $options, $level);
+        $renderChildren = $this->rendersSubMenu($item, $options, $level)
+            && $this->hasRenderableChild($item, $options, $level);
         $renderAsLabel = $link === null || ($item->isActive() && !$this->getBooleanOption($options, 'currentAsLink', true));
         if (!$renderChildren && $renderAsLabel) {
             $attributes = $link?->getAttributes() ?? [];
@@ -99,6 +100,9 @@ class Bootstrap5Renderer extends StringTemplateRenderer
             $attributes['aria-current'] = 'page';
         }
         $attributes = $this->mergeLabelAttributes($attributes, $item);
+        if ($renderChildren && $this->getBooleanOption($options, 'roles', false)) {
+            $attributes['role'] = 'menuitem';
+        }
         $attributes = $this->applyContentState($attributes, $item, $options, $level);
         $attributes = $this->applyMenuItemRole($attributes, $item, $options);
 

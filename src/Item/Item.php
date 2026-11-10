@@ -46,7 +46,11 @@ class Item implements ItemInterface
 
     protected ?string $icon = null;
 
+    protected bool $escapeIcon = true;
+
     protected ?string $badge = null;
+
+    protected bool $escapeBadge = true;
 
     protected ?string $badgeType = null;
 
@@ -471,10 +475,11 @@ class Item implements ItemInterface
         return $this->after;
     }
 
-    public function setIcon(?string $icon): static
+    public function setIcon(?string $icon, bool $escape = true): static
     {
         $this->assertMutable();
         $this->icon = $icon;
+        $this->escapeIcon = $escape;
 
         return $this;
     }
@@ -484,11 +489,17 @@ class Item implements ItemInterface
         return $this->icon;
     }
 
-    public function setBadge(string|int|null $badge, ?string $type = null): static
+    public function shouldEscapeIcon(): bool
+    {
+        return $this->escapeIcon;
+    }
+
+    public function setBadge(string|int|null $badge, ?string $type = null, bool $escape = true): static
     {
         $this->assertMutable();
         $this->badge = $badge === null ? null : (string)$badge;
         $this->badgeType = $type;
+        $this->escapeBadge = $escape;
 
         return $this;
     }
@@ -496,6 +507,11 @@ class Item implements ItemInterface
     public function getBadge(): ?string
     {
         return $this->badge;
+    }
+
+    public function shouldEscapeBadge(): bool
+    {
+        return $this->escapeBadge;
     }
 
     public function getBadgeType(): ?string
@@ -691,7 +707,9 @@ class Item implements ItemInterface
             'before' => $this->before,
             'after' => $this->after,
             'icon' => $this->icon,
+            'escapeIcon' => $this->escapeIcon,
             'badge' => $this->badge,
+            'escapeBadge' => $this->escapeBadge,
             'badgeType' => $this->badgeType,
             'attributes' => $this->attributes,
             'labelAttributes' => $this->labelAttributes,

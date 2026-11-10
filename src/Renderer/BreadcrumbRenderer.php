@@ -90,11 +90,26 @@ class BreadcrumbRenderer extends StringTemplateRenderer
             $attributes = $this->appendClass($attributes, (string)($options['activeClass'] ?? $this->getConfig('activeClass')));
         }
 
-        $content = $this->renderContent($item, ['currentAsLink' => !$isCurrent, 'addAriaExpanded' => false] + $options);
+        $content = $this->renderContent($item, [
+            'currentAsLink' => !$isCurrent || $this->getBooleanOption($options, 'linkCurrent', false),
+            'addAriaCurrent' => $isCurrent && $this->getBooleanOption($options, 'addAriaCurrent', true),
+            'addAriaExpanded' => false,
+            'currentCrumb' => $isCurrent,
+        ] + $options);
 
         return $this->templater()->format('item', [
             'attributes' => $this->renderAttributes($attributes),
             'content' => $content,
         ]);
+    }
+
+    /**
+     * The current crumb is defined by its position in the path, not by the item's active flag.
+     *
+     * @phpstan-param array<string, mixed> $options
+     */
+    protected function isCurrentItem(ItemInterface $item, array $options): bool
+    {
+        return (bool)($options['currentCrumb'] ?? $item->isActive());
     }
 }

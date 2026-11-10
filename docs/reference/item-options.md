@@ -29,8 +29,10 @@ $menu->addItem('Inbox', ['controller' => 'Messages', 'action' => 'index'], [
 | `external` | `bool` | `false` | Mark the link external (skips routing). |
 | `before` | `string` | `''` | Trusted markup before the label. |
 | `after` | `string` | `''` | Trusted markup after the label. |
-| `icon` | `string\|null` | `null` | Icon class or markup. |
-| `badge` | `string\|int\|null` | `null` | Badge text. |
+| `icon` | `string\|null` | `null` | Icon class, escaped before insertion into `iconTemplate`. |
+| `escapeIcon` | `bool` | `true` | Set `false` to insert trusted icon markup as-is, e.g. `'<i class="bi bi-house"></i>'`. Same as `setIcon($icon, false)`. |
+| `badge` | `string\|int\|null` | `null` | Badge text, HTML-escaped by default. |
+| `escapeBadge` | `bool` | `true` | Set `false` to insert trusted badge markup as-is. Same as `setBadge($badge, $type, false)`. |
 | `badgeType` | `string\|null` | `null` | Badge CSS class/type. |
 | `attributes` | `array` | `[]` | HTML attributes on the `<li>`. |
 | `data` | `array` | `[]` | Arbitrary metadata (read by resolvers, e.g. `section`, `permission`, `roles`). |
@@ -42,15 +44,15 @@ $menu->addItem('Inbox', ['controller' => 'Messages', 'action' => 'index'], [
 | `submenuAttributes` | `array` | `[]` | HTML attributes on the submenu `<ul>`. |
 | `matchRoutes` | `array` | `[]` | Extra route patterns that mark the item active. |
 | `ignoreQueryString` | `bool\|null` | `null` | Ignore the query string when matching (overrides the resolver default). |
-| `fuzzy` | `bool` | `false` | Enable fuzzy (prefix) route matching for this item. |
+| `fuzzy` | `bool\|null` | `null` | Fuzzy (prefix) route matching for this item. `null` inherits the resolver's setting, which defaults to `true`; `true` or `false` overrides it. |
 | `expanded` | `bool` | `false` | Show the submenu expanded by default. |
 | `displayChildren` | `bool` | `true` | When `false`, render the item but not its submenu (treated as a leaf). |
 | `labelAttributes` | `array` | `[]` | HTML attributes on the rendered link/label element (classes merge). |
 
 ::: warning Trusted markup
-`before`, `after`, `raw`, and the icon/badge markup are emitted **as-is**; they are not escaped.
-Cast or escape any dynamic value you put there yourself (e.g. `(int)$count`). The `label` is escaped
-unless `escape` is `false`.
+`before`, `after`, and `raw` are emitted **as-is**. Icon and badge values are escaped by default;
+their `Item` setters can opt out for trusted markup. Cast or escape dynamic values in raw fields
+yourself (e.g. `(int)$count`). The label is escaped unless `escape` is `false`.
 :::
 
 ## Fluent equivalents
@@ -73,8 +75,8 @@ $item = $menu->addItem('Profile', '/profile')
 | `label` / `escape` | `setLabel($label, $escape)` |
 | `link` / `external` | `setLink()` (external via `Link::create($url, [], true)`) |
 | `before` / `after` | `setBefore()` / `setAfter()` |
-| `icon` | `setIcon()` |
-| `badge` / `badgeType` | `setBadge($badge, $type)` |
+| `icon` | `setIcon($icon, $escape)` |
+| `badge` / `badgeType` | `setBadge($badge, $type, $escape)` |
 | `attributes` | `setAttribute()` / `setAttributes()` |
 | `data` | `setData($name, $value)` |
 | `visible` | `setVisible()` |

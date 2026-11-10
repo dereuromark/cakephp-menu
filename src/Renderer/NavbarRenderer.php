@@ -52,7 +52,7 @@ class NavbarRenderer extends Bootstrap5Renderer
         // The <nav> is the navigation landmark, so the aria-label belongs there, not on the
         // inner <ul>. Capture it, then suppress it for the inner render.
         $ariaLabel = $this->getStringOption($options, 'ariaLabel');
-        $options['ariaLabel'] = null;
+        $options['ariaLabel'] = '';
 
         $nav = parent::render($menu, $options);
 

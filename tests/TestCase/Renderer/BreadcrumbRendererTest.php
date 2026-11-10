@@ -47,6 +47,19 @@ class BreadcrumbRendererTest extends TestCase
         $this->assertStringContainsString('<i class="fa fa-home" aria-hidden="true"></i> ', $result);
     }
 
+    public function testOnlyCurrentCrumbHasAriaCurrentAndCanBeLinked(): void
+    {
+        $menu = Menu::create();
+        $parent = $menu->addItem('Articles', '/articles', ['active' => true]);
+        $parent->getSubMenu()->addItem('View', '/articles/view', ['active' => true]);
+
+        $result = (new BreadcrumbRenderer())->render($menu, ['linkCurrent' => true]);
+
+        $this->assertSame(1, substr_count($result, 'aria-current="page"'));
+        $this->assertStringContainsString('<a href="/articles">Articles</a>', $result);
+        $this->assertStringContainsString('<a href="/articles/view" aria-current="page">View</a>', $result);
+    }
+
     public function testRenderItemHonorsPerCallTemplateOverrides(): void
     {
         $item = Menu::create()->newItem('Home', '/');
@@ -58,5 +71,21 @@ class BreadcrumbRendererTest extends TestCase
         ]);
 
         $this->assertSame('<li class="breadcrumb-item"><a data-test="custom" href="/">Home</a></li>', $result);
+    }
+
+    public function testExplicitPathMarksLastCrumbCurrentRegardlessOfActiveFlag(): void
+    {
+        $menu = new Menu();
+        $home = $menu->addItem('Home', '/');
+        $page = $menu->addItem('Page', '/page');
+        $renderer = new BreadcrumbRenderer();
+
+        $span = $renderer->render($menu, ['path' => [$home, $page]]);
+        $link = $renderer->render($menu, ['path' => [$home, $page], 'linkCurrent' => true]);
+
+        $this->assertStringContainsString('<span aria-current="page">Page</span>', $span);
+        $this->assertStringContainsString('aria-current="page"', $link);
+        $this->assertStringContainsString('href="/page"', $link);
+        $this->assertSame(1, substr_count($link, 'aria-current'));
     }
 }
