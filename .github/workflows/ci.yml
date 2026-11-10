@@ -16,6 +16,8 @@ jobs:
         include:
           - php-version: '8.2'
             prefer-lowest: 'prefer-lowest'
+          - php-version: '8.3'
+            prefer-lowest: ''
 
     name: PHP ${{ matrix.php-version }} Test ${{ matrix.prefer-lowest }}
     steps:
