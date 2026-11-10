@@ -32,8 +32,8 @@ echo (new StringTemplateRenderer(['currentAsLink' => false]))->render($menu);
 
 ```html
 <ul>
-  <li class="active-ancestor has-children" aria-expanded="true">
-    <a href="/articles">Articles</a>
+  <li class="active-ancestor has-children">
+    <a href="/articles" aria-expanded="true">Articles</a>
     <ul class="submenu">
       <li class="active"><span aria-current="page">View</span></li>
     </ul>
@@ -59,14 +59,14 @@ echo (new Bootstrap5Renderer())->render($menu);
 
 ```html
 <ul class="navbar-nav">
-  <li><a href="/" class="nav-link">Home</a></li>
-  <li class="active dropdown">
-    <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="true">Account</a>
+  <li class="nav-item"><a href="/" class="nav-link">Home</a></li>
+  <li class="dropdown nav-item">
+    <a href="#" class="nav-link dropdown-toggle active" data-bs-toggle="dropdown" role="button" aria-expanded="true">Account</a>
     <ul class="dropdown-menu">
-      <li class="active dropdown">
-        <a href="#" class="dropdown-item dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="true">Settings</a>
+      <li class="dropdown">
+        <a href="#" class="dropdown-item dropdown-toggle active" data-bs-toggle="dropdown" role="button" aria-expanded="true">Settings</a>
         <ul class="dropdown-menu">
-          <li class="active"><a href="/profile" class="dropdown-item" aria-current="page">Profile</a></li>
+          <li><a href="/profile" class="dropdown-item active" aria-current="page">Profile</a></li>
         </ul>
       </li>
     </ul>

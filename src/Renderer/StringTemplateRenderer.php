@@ -9,6 +9,7 @@ use Cake\View\StringTemplateTrait;
 use CakeMenu\Item\ItemInterface;
 use CakeMenu\Item\SelfRendererInterface;
 use CakeMenu\MenuInterface;
+use InvalidArgumentException;
 use function array_filter;
 use function array_map;
 use function array_unique;
@@ -33,6 +34,7 @@ class StringTemplateRenderer implements RendererInterface
     protected array $_defaultConfig = [
         'activeClass' => 'active',
         'ancestorClass' => 'active-ancestor',
+        'activeOn' => 'item',
         'dividerClass' => 'divider',
         'headerClass' => 'menu-header',
         'branchClass' => 'has-children',
@@ -231,15 +233,19 @@ class StringTemplateRenderer implements RendererInterface
         ) {
             return '';
         }
-        if ($item->isActive()) {
-            $attributes = $this->appendConfiguredClass($attributes, $options, 'activeClass');
-        } elseif ($this->hasActiveDescendant($item)) {
-            $attributes = $this->appendConfiguredClass($attributes, $options, 'ancestorClass');
+        // Raw content is emitted as-is, so its state can only live on the <li>.
+        $activeOn = $item->isRaw() ? 'item' : $this->getActiveOn($options);
+        if ($activeOn !== 'link') {
+            if ($item->isActive()) {
+                $attributes = $this->appendConfiguredClass($attributes, $options, 'activeClass');
+            } elseif ($this->hasActiveDescendant($item)) {
+                $attributes = $this->appendConfiguredClass($attributes, $options, 'ancestorClass');
+            }
         }
         if ($renderChildren) {
             $attributes = $this->appendConfiguredClass($attributes, $options, 'branchClass');
             $attributes = $this->appendConfiguredClass($attributes, $options, 'submenuClass');
-            if ($this->getBooleanOption($options, 'addAriaExpanded', true)) {
+            if ($item->isRaw() && $this->getBooleanOption($options, 'addAriaExpanded', true)) {
                 $attributes['aria-expanded'] = $item->isExpanded() || $item->isActive() || $this->hasActiveDescendant($item)
                     ? 'true'
                     : 'false';
@@ -290,6 +296,7 @@ class StringTemplateRenderer implements RendererInterface
                 $attributes['aria-current'] = 'page';
             }
             $attributes = $this->mergeLabelAttributes($attributes, $item);
+            $attributes = $this->applyContentState($attributes, $item, $options, $level);
             $attributes = $this->applyMenuItemRole($attributes, $item, $options);
 
             return $this->templater()->format('label', [
@@ -304,6 +311,7 @@ class StringTemplateRenderer implements RendererInterface
             $attributes['aria-current'] = 'page';
         }
         $attributes = $this->mergeLabelAttributes($attributes, $item);
+        $attributes = $this->applyContentState($attributes, $item, $options, $level);
         $attributes = $this->applyMenuItemRole($attributes, $item, $options);
 
         return $this->templater()->format('link', [
@@ -320,6 +328,45 @@ class StringTemplateRenderer implements RendererInterface
         $depth = $this->getIntegerOption($options, 'depth');
 
         return $item->hasSubMenu() && $item->displaysChildren() && ($depth === null || $level < $depth);
+    }
+
+    /**
+     * @phpstan-param array<string, mixed> $options
+     *
+     * @throws \InvalidArgumentException
+     */
+    protected function getActiveOn(array $options): string
+    {
+        $value = $options['activeOn'] ?? $this->getConfig('activeOn') ?? 'item';
+        if (!in_array($value, ['item', 'link', 'both'], true)) {
+            throw new InvalidArgumentException('activeOn must be item, link, or both');
+        }
+
+        return $value;
+    }
+
+    /**
+     * @phpstan-param array<string, mixed> $attributes
+     * @phpstan-param array<string, mixed> $options
+     *
+     * @phpstan-return array<string, mixed>
+     */
+    protected function applyContentState(array $attributes, ItemInterface $item, array $options, int $level): array
+    {
+        if ($this->getActiveOn($options) !== 'item') {
+            if ($item->isActive()) {
+                $attributes = $this->appendConfiguredClass($attributes, $options, 'activeClass');
+            } elseif ($this->hasActiveDescendant($item)) {
+                $attributes = $this->appendConfiguredClass($attributes, $options, 'ancestorClass');
+            }
+        }
+        if ($this->rendersSubMenu($item, $options, $level) && $this->getBooleanOption($options, 'addAriaExpanded', true)) {
+            $attributes['aria-expanded'] = $item->isExpanded() || $item->isActive() || $this->hasActiveDescendant($item)
+                ? 'true'
+                : 'false';
+        }
+
+        return $attributes;
     }
 
     protected function getHeaderTemplate(int $level): string
