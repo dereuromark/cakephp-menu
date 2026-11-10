@@ -1,20 +1,45 @@
 # Upgrading
 
-## Upcoming release
+## 0.2 to 0.3
 
-Login, permission, and authorization resolvers now only hide items. An allowing resolver no longer
-shows an item hidden by another resolver or built with `visible => false`.
+0.3 fixes several cases where the plugin did something other than documented. Most apps need no
+code changes, but check the points below.
 
-`getBreadcrumbs()` titles are now HTML-escaped (unless the item disables label escaping) and honor
-`translate`, because Cake's `BreadcrumbsHelper` prints titles unescaped. If you print the returned
-titles yourself, drop your own `h()` call to avoid double escaping.
+### May need a change
 
-`getCurrentItem()` and breadcrumbs now return the deepest active item when a parent and a child both
-match, as documented. Before, they returned the parent unless `singleActive` was set.
+- `getBreadcrumbs()` titles are HTML-escaped (unless the item disables label escaping) and honor
+  `translate`, because Cake's `BreadcrumbsHelper` prints titles unescaped. If you print the returned
+  titles yourself, drop your own `h()` call to avoid double escaping.
+- Login, permission and authorization resolvers only hide items. A later resolver no longer shows an
+  item hidden by another resolver, and an item built with `visible => false` stays hidden.
+- Duplicate ids and explicit keys are rejected across the whole tree, not only within one submenu.
+  `fromFlat()` rejects duplicate keys before importing anything.
+- `getCurrentItem()` returns a detached clone that carries the resolved state, not the menu's own
+  item instance.
+- Bootstrap 5 puts `active` on the link or dropdown toggle instead of the `<li>`. Set
+  `activeOn => 'both'` to keep it on both.
+- `aria-expanded` moves from the `<li>` to the link or label that toggles the submenu. With
+  `roles => true`, Bootstrap 5 and sidebar toggles use `role="menuitem"` instead of `button`.
 
-Menu cache keys now include the locale. Existing cache entries are rebuilt once for each locale.
+### Behaves as documented now
 
-Bootstrap 5 now puts `active` on the link or dropdown toggle instead of the `<li>`. Set `activeOn` to `both` to keep it on both elements. `StringTemplateRenderer` now puts `aria-expanded` on the link or label that triggers the submenu instead of the `<li>`.
+- `getCurrentItem()` and breadcrumbs return the deepest active item, and skip hidden items and
+  everything below them.
+- Visibility you resolve on a menu before calling the helper survives `render()`.
+- Links with a custom route `_name` become active. String URLs match under a base path and ignore a
+  trailing slash or percent-encoding.
+- `newItem()`/`addItem()` apply `linkAttributes`, `external` and `expanded`, and key lookup falls back
+  to the label slug.
+- `linkCurrent => true` links the last crumb in `renderBreadcrumbs()`, and only that crumb gets
+  `aria-current="page"`.
+- Empty nested lists are no longer rendered, and `firstClass`/`lastClass` count only rendered items.
+
+### Other changes
+
+- Menu cache keys include the locale; existing entries are rebuilt once per locale.
+- Icons and badges stay escaped by default. Pass `escapeIcon => false` / `escapeBadge => false`
+  (or `setIcon($icon, false)`) for trusted markup such as icon font tags.
+- `freeze()` also freezes the item's link, and `toArray()`/`fromArray()` round trips are lossless.
 
 ## 0.1 to 0.2
 

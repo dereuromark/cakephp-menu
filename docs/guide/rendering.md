@@ -20,9 +20,9 @@ $crumbs = $this->Menu->getBreadcrumbs('main');
 
 ### Hiding Empty Branches
 
-When a resolver hides all of a branch's children (for example access filtering), the parent would
-otherwise render as an empty dropdown. Enable `hideEmptyBranches` to skip any branch with no
-visible, renderable descendants:
+When a resolver hides all of a branch's children (for example access filtering), the parent stays
+visible by default as a plain item, without a dropdown or nested list. Enable `hideEmptyBranches`
+to skip the parent too:
 
 ```php
 echo $this->Menu->render('main', [
@@ -68,6 +68,7 @@ the helper returns no crumbs for that path.
 `renderBreadcrumbs()` always uses `BreadcrumbRenderer`. Pass a subclass name or instance
 as `renderer` to customize it. Cake's attributes and separator belong in your separate
 `$this->Breadcrumbs->render(...)` call after `populateBreadcrumbs()`.
+Pass `linkCurrent => true` to link the last crumb; only that crumb gets `aria-current="page"`.
 
 ### Alternate Renderers
 
@@ -169,6 +170,23 @@ echo $this->Menu->render('main', ['roles' => true]);
 This adds `role="menubar"` (root) / `role="menu"` (nested) on the lists, `role="none"` on items,
 `role="menuitem"` (plus `aria-haspopup="true"` on branches) on links, and `role="separator"` /
 `role="presentation"` on dividers / headers. It is off by default so existing markup is unchanged.
+Bootstrap dropdown and sidebar collapse triggers use `role="menuitem"` when roles are enabled;
+without roles they keep `role="button"`.
+
+### Icons and badges
+
+Icon classes and badge text are escaped by default. To insert trusted Bootstrap icon markup,
+set the icon on the item and place `{{icon}}` in a text position:
+
+```php
+$item = new \CakeMenu\Item\Item('Inbox', '/inbox');
+$item->setIcon('<i class="bi bi-inbox" aria-hidden="true"></i>', false);
+$menu->add($item);
+
+echo $this->Menu->render($menu, ['iconTemplate' => '{{icon}} ']);
+```
+
+Use `setBadge($text, $type, false)` only when the badge text is trusted HTML.
 
 ### Auto-translation
 

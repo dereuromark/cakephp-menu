@@ -268,6 +268,49 @@ class StringTemplateRendererTest extends TestCase
         $this->assertStringNotContainsString('<b>', $result);
     }
 
+    public function testIconAndBadgeCanOptOutOfEscapingIndependently(): void
+    {
+        $menu = Menu::create();
+        $item = new Item('Inbox', '/inbox');
+        $menu->add($item);
+        $item->setIcon('<i class="bi bi-inbox" aria-hidden="true"></i>', false)
+            ->setBadge('<strong>3</strong>', 'bg-danger', false);
+
+        $result = (new StringTemplateRenderer())->render($menu, [
+            'iconTemplate' => '{{icon}} ',
+        ]);
+
+        $this->assertStringContainsString('<i class="bi bi-inbox" aria-hidden="true"></i> ', $result);
+        $this->assertStringContainsString('<span class="badge bg-danger"><strong>3</strong></span>', $result);
+    }
+
+    public function testEmptyNestedListsAreOmittedAndPositionClassesUseRenderedItems(): void
+    {
+        $menu = Menu::create();
+        $empty = $menu->addItem('Empty', '#');
+        $empty->getSubMenu()->addItem('Hidden', '/hidden')->setVisible(false);
+        $menu->addItem('Home', '/');
+        $tail = $menu->addItem('Tail', '#');
+        $tail->getSubMenu()->addItem('Hidden tail', '/hidden-tail')->setVisible(false);
+
+        $renderer = new StringTemplateRenderer();
+        $kept = $renderer->render($menu, ['roles' => true]);
+        $hidden = $renderer->render($menu, [
+            'roles' => true,
+            'hideEmptyBranches' => true,
+            'firstClass' => 'first',
+            'lastClass' => 'last',
+        ]);
+
+        $this->assertStringContainsString('Empty', $kept);
+        $this->assertStringContainsString('Tail', $kept);
+        $this->assertStringNotContainsString('<ul class="submenu" role="menu"></ul>', $kept);
+        $this->assertStringContainsString('href="#" role="menuitem">Empty</a>', $kept);
+        $this->assertStringNotContainsString('Empty', $hidden);
+        $this->assertStringNotContainsString('Tail', $hidden);
+        $this->assertStringContainsString('<li class="first last" role="none">', $hidden);
+    }
+
     public function testRootClassAppliesToTheRootListOnly(): void
     {
         $menu = Menu::create();
@@ -304,5 +347,24 @@ class StringTemplateRendererTest extends TestCase
 
         $this->assertMatchesRegularExpression('/<li[^>]*class="[^"]*\\bactive\\b[^"]*"[^>]*aria-expanded="true"|<li[^>]*aria-expanded="true"[^>]*class="[^"]*\\bactive\\b/', $html);
         $this->assertStringContainsString('<span>raw</span>', $html);
+    }
+
+    public function testTrustedIconAndBadgeOptionsSurviveArrayRoundTrip(): void
+    {
+        $menu = new Menu();
+        $menu->addItem('Home', '/', [
+            'icon' => '<i class="bi bi-house"></i>',
+            'escapeIcon' => false,
+            'badge' => '<b>3</b>',
+            'escapeBadge' => false,
+        ]);
+        $menu->addItem('Plain', '/plain', ['icon' => '<i>x</i>', 'badge' => '<b>1</b>']);
+
+        $html = (new StringTemplateRenderer())->render(Menu::fromArray($menu->toArray()));
+
+        $this->assertStringContainsString('<i class="bi bi-house"></i>', $html);
+        $this->assertStringContainsString('<b>3</b>', $html);
+        $this->assertStringContainsString('&lt;i&gt;x&lt;/i&gt;', $html);
+        $this->assertStringContainsString('&lt;b&gt;1&lt;/b&gt;', $html);
     }
 }

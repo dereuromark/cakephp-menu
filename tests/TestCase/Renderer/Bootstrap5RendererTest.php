@@ -12,6 +12,21 @@ use CakeMenu\Renderer\StringTemplateRenderer;
 
 class Bootstrap5RendererTest extends TestCase
 {
+    public function testBranchTriggerUsesMenuitemRoleWhenRolesEnabled(): void
+    {
+        $menu = Menu::create();
+        $branch = $menu->addItem('Account', '#');
+        $branch->getSubMenu()->addItem('Profile', '/profile');
+        $empty = $menu->addItem('Empty', '#');
+        $empty->getSubMenu()->addItem('Hidden', '/hidden')->setVisible(false);
+
+        $result = (new Bootstrap5Renderer())->render($menu, ['roles' => true]);
+
+        $this->assertStringContainsString('role="menuitem" aria-expanded="false" aria-haspopup="true"', $result);
+        $this->assertStringNotContainsString('role="button"', $result);
+        $this->assertStringContainsString('href="#" class="nav-link" role="menuitem">Empty</a>', $result);
+    }
+
     public function testActiveClassesOnLinksAndBothOverride(): void
     {
         $menu = Menu::create();

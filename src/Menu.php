@@ -91,7 +91,9 @@ class Menu implements MenuInterface
                     'before' => $itemConfig['before'] ?? null,
                     'after' => $itemConfig['after'] ?? null,
                     'icon' => $itemConfig['icon'] ?? null,
+                    'escapeIcon' => $itemConfig['escapeIcon'] ?? true,
                     'badge' => $itemConfig['badge'] ?? null,
+                    'escapeBadge' => $itemConfig['escapeBadge'] ?? true,
                     'badgeType' => $itemConfig['badgeType'] ?? null,
                     'attributes' => $itemConfig['attributes'] ?? [],
                     'data' => $itemConfig['data'] ?? [],
@@ -343,10 +345,19 @@ class Menu implements MenuInterface
             $item->setAfter((string)$options['after']);
         }
         if (isset($options['icon'])) {
-            $item->setIcon((string)$options['icon']);
+            if ($item instanceof Item) {
+                $item->setIcon((string)$options['icon'], (bool)($options['escapeIcon'] ?? true));
+            } else {
+                $item->setIcon((string)$options['icon']);
+            }
         }
         if (isset($options['badge'])) {
-            $item->setBadge((string)$options['badge'], isset($options['badgeType']) ? (string)$options['badgeType'] : null);
+            $badgeType = isset($options['badgeType']) ? (string)$options['badgeType'] : null;
+            if ($item instanceof Item) {
+                $item->setBadge((string)$options['badge'], $badgeType, (bool)($options['escapeBadge'] ?? true));
+            } else {
+                $item->setBadge((string)$options['badge'], $badgeType);
+            }
         }
         if (isset($options['attributes']) && is_array($options['attributes'])) {
             $item->setAttributes($options['attributes']);

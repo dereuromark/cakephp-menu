@@ -6,6 +6,7 @@ namespace CakeMenu\Renderer;
 
 use Cake\Core\InstanceConfigTrait;
 use Cake\View\StringTemplateTrait;
+use CakeMenu\Item\Item;
 use CakeMenu\Item\ItemInterface;
 use CakeMenu\Item\SelfRendererInterface;
 use CakeMenu\MenuInterface;
@@ -135,7 +136,7 @@ class StringTemplateRenderer implements RendererInterface
 
         $visibleItems = array_values(array_filter(
             $menu->getItems(),
-            static fn (ItemInterface $item): bool => $item->isVisible(),
+            fn (ItemInterface $item): bool => $this->rendersItem($item, $options, $level),
         ));
         $count = count($visibleItems);
 
@@ -145,6 +146,10 @@ class StringTemplateRenderer implements RendererInterface
             if ($html !== '') {
                 $items[] = $html;
             }
+        }
+
+        if ($level > 1 && $items === []) {
+            return '';
         }
 
         $attributes = $menu->getAttributes();
@@ -189,7 +194,7 @@ class StringTemplateRenderer implements RendererInterface
         int $count,
         int $level,
     ): string {
-        if (!$item->isVisible()) {
+        if (!$this->rendersItem($item, $options, $level)) {
             return '';
         }
 
@@ -225,14 +230,8 @@ class StringTemplateRenderer implements RendererInterface
         }
 
         $attributes = $item->getAttributes();
-        $renderChildren = $this->rendersSubMenu($item, $options, $level);
-        if (
-            $renderChildren
-            && $this->getBooleanOption($options, 'hideEmptyBranches', false)
-            && !$this->hasRenderableChild($item, $options, $level)
-        ) {
-            return '';
-        }
+        $renderChildren = $this->rendersSubMenu($item, $options, $level)
+            && $this->hasRenderableChild($item, $options, $level);
         // Raw content is emitted as-is, so its state can only live on the <li>.
         $activeOn = $item->isRaw() ? 'item' : $this->getActiveOn($options);
         if ($activeOn !== 'link') {
@@ -281,6 +280,23 @@ class StringTemplateRenderer implements RendererInterface
     /**
      * @phpstan-param array<string, mixed> $options
      */
+    protected function rendersItem(ItemInterface $item, array $options, int $level): bool
+    {
+        if (!$item->isVisible()) {
+            return false;
+        }
+        if ($item instanceof SelfRendererInterface || $item->isDivider() || $item->isHeader()) {
+            return true;
+        }
+
+        return !$this->rendersSubMenu($item, $options, $level)
+            || !$this->getBooleanOption($options, 'hideEmptyBranches', false)
+            || $this->hasRenderableChild($item, $options, $level);
+    }
+
+    /**
+     * @phpstan-param array<string, mixed> $options
+     */
     protected function renderContent(ItemInterface $item, array $options, int $level = 1): string
     {
         if ($item->isRaw()) {
@@ -289,10 +305,11 @@ class StringTemplateRenderer implements RendererInterface
 
         $title = $this->decorateTitle($item, $this->escapeLabel($item, $options), $options);
         $link = $item->getLink();
-        if ($link === null || ($item->isActive() && !$this->getBooleanOption($options, 'currentAsLink', true))) {
+        $isCurrent = $this->isCurrentItem($item, $options);
+        if ($link === null || ($isCurrent && !$this->getBooleanOption($options, 'currentAsLink', true))) {
             $attributes = $link?->getAttributes() ?? [];
             unset($attributes['href']);
-            if ($item->isActive() && $this->getBooleanOption($options, 'addAriaCurrent', true)) {
+            if ($isCurrent && $this->getBooleanOption($options, 'addAriaCurrent', true)) {
                 $attributes['aria-current'] = 'page';
             }
             $attributes = $this->mergeLabelAttributes($attributes, $item);
@@ -307,7 +324,7 @@ class StringTemplateRenderer implements RendererInterface
 
         $attributes = $link->getAttributes();
         $attributes['href'] = $link->getUrl() ?? '#';
-        if ($item->isActive() && $this->getBooleanOption($options, 'addAriaCurrent', true)) {
+        if ($isCurrent && $this->getBooleanOption($options, 'addAriaCurrent', true)) {
             $attributes['aria-current'] = 'page';
         }
         $attributes = $this->mergeLabelAttributes($attributes, $item);
@@ -360,13 +377,25 @@ class StringTemplateRenderer implements RendererInterface
                 $attributes = $this->appendConfiguredClass($attributes, $options, 'ancestorClass');
             }
         }
-        if ($this->rendersSubMenu($item, $options, $level) && $this->getBooleanOption($options, 'addAriaExpanded', true)) {
+        if (
+            $this->rendersSubMenu($item, $options, $level)
+            && $this->hasRenderableChild($item, $options, $level)
+            && $this->getBooleanOption($options, 'addAriaExpanded', true)
+        ) {
             $attributes['aria-expanded'] = $item->isExpanded() || $item->isActive() || $this->hasActiveDescendant($item)
                 ? 'true'
                 : 'false';
         }
 
         return $attributes;
+    }
+
+    /**
+     * @phpstan-param array<string, mixed> $options
+     */
+    protected function isCurrentItem(ItemInterface $item, array $options): bool
+    {
+        return $item->isActive();
     }
 
     protected function getHeaderTemplate(int $level): string
@@ -391,7 +420,7 @@ class StringTemplateRenderer implements RendererInterface
         if (!isset($attributes['role'])) {
             $attributes['role'] = 'menuitem';
         }
-        if ($item->hasSubMenu() && $item->displaysChildren() && !isset($attributes['aria-haspopup'])) {
+        if ($item->hasSubMenu() && $item->displaysChildren() && $this->hasRenderableChild($item, $options) && !isset($attributes['aria-haspopup'])) {
             $attributes['aria-haspopup'] = 'true';
         }
 
@@ -462,7 +491,11 @@ class StringTemplateRenderer implements RendererInterface
 
         $template = $this->getStringOption($options, 'iconTemplate') ?: '<i class="{{icon}}" aria-hidden="true"></i> ';
 
-        return str_replace('{{icon}}', htmlspecialchars($icon, ENT_QUOTES, 'UTF-8'), $template);
+        $content = $item instanceof Item && !$item->shouldEscapeIcon()
+            ? $icon
+            : htmlspecialchars($icon, ENT_QUOTES, 'UTF-8');
+
+        return str_replace('{{icon}}', $content, $template);
     }
 
     /**
@@ -480,7 +513,12 @@ class StringTemplateRenderer implements RendererInterface
 
         return str_replace(
             ['{{class}}', '{{text}}'],
-            [htmlspecialchars($class, ENT_QUOTES, 'UTF-8'), htmlspecialchars($badge, ENT_QUOTES, 'UTF-8')],
+            [
+                htmlspecialchars($class, ENT_QUOTES, 'UTF-8'),
+                $item instanceof Item && !$item->shouldEscapeBadge()
+                    ? $badge
+                    : htmlspecialchars($badge, ENT_QUOTES, 'UTF-8'),
+            ],
             $template,
         );
     }

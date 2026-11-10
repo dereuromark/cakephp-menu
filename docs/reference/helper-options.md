@@ -39,7 +39,7 @@ straight through to the renderer as [renderer options](/reference/renderer-optio
 | `resolver` | (built-in URL resolvers) | A `ResolverInterface` that **replaces** the defaults. |
 | `additionalResolvers` | `[]` | Extra `ResolverInterface`s appended **after** the defaults (keeps active-state matching). |
 | `singleActive` | `false` | Keep only the deepest active item active (best-match arbitration). |
-| `fuzzy` | `true` | Fuzzy (prefix) matching for the default `UrlArrayResolver`. |
+| `fuzzy` | `true` | Fuzzy (prefix) matching for the default `UrlArrayResolver`. An item's `null` fuzzy setting inherits this value. |
 | `ignoreQueryString` | `true` | Ignore the query string in the default `Psr7UrlResolver`. |
 | `resolveDepth` | `null` | Max depth the default URL resolvers scan (`null` = unlimited). |
 | `currentAsLink` | `true` | Passed through: render the active item as a link. |

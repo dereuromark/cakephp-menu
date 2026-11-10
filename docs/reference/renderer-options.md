@@ -38,12 +38,12 @@ The dependency-free default.
 | `branchClass` | `'has-children'` | Class on items that have a submenu. |
 | `leafClass` | `null` | Optional class on items without a submenu. |
 | `submenuClass` | `null` | Extra class on branch `<li>`s (in addition to `branchClass`). |
-| `hideEmptyBranches` | `false` | Hide branches whose children are all hidden. |
+| `hideEmptyBranches` | `false` | Hide branches with no rendered children. When `false`, render the parent as a plain item without a nested list. |
 | `nestedMenuClass` | `'submenu'` | Class on nested (level 2+) `<ul>`s. |
 | `rootClass` | `null` | Optional class on the root (level 1) `<ul>` only. |
 | `menuLevelClass` | `null` | Prefix for a per-level class (level number appended). |
-| `firstClass` | `null` | Optional class on the first item of each level. |
-| `lastClass` | `null` | Optional class on the last item of each level. |
+| `firstClass` | `null` | Optional class on the first rendered item of each level. |
+| `lastClass` | `null` | Optional class on the last rendered item of each level. |
 | `depth` | `null` | Maximum nesting depth to render (`null` = unlimited). |
 | `currentAsLink` | `true` | Render the active item as a link (`false` = `<span>` label). |
 | `ariaLabel` | `null` | Optional `aria-label` on the root menu. |
@@ -73,6 +73,10 @@ Per-render overrides for the icon/badge markup (see [Building Menus](/guide/buil
 |--------|---------|
 | `iconTemplate` | `<i class="{{icon}}" aria-hidden="true"></i> ` |
 | `badgeTemplate` | ` <span class="{{class}}">{{text}}</span>` |
+
+Icon and badge values are escaped before insertion into these templates. For trusted icon markup,
+set the item's icon with `setIcon($html, false)` and use an `iconTemplate` with `{{icon}}` outside
+an HTML attribute. Badge text can opt out through `setBadge($text, $type, false)`.
 
 ## Bootstrap5Renderer
 
@@ -147,6 +151,7 @@ Extends `StringTemplateRenderer`. Renders the active path as a Bootstrap breadcr
 | `menuClass` | `'breadcrumb'` | Class on the `<ol>` wrapper. |
 | `ariaLabel` | `'breadcrumb'` | `aria-label` on the `<nav>`. |
 | `path` | (auto) | Explicit array of `ItemInterface` to render; defaults to the active item's ancestors. |
+| `linkCurrent` | `false` | Render the current crumb as a link when it has a URL. `aria-current="page"` stays on that link. |
 
 The wrapper template is `<nav aria-label="{{ariaLabel}}"><ol{{attributes}}>{{items}}</ol></nav>`.
 
