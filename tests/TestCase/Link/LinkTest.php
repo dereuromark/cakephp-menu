@@ -8,6 +8,8 @@ use Cake\Routing\Route\DashedRoute;
 use Cake\Routing\Router;
 use Cake\TestSuite\TestCase;
 use CakeMenu\Link\Link;
+use CakeMenu\Menu;
+use LogicException;
 
 class LinkTest extends TestCase
 {
@@ -39,5 +41,28 @@ class LinkTest extends TestCase
         ]);
 
         $this->assertSame('/articles/view/42', $link->getUrl());
+    }
+
+    public function testFrozenItemAlsoFreezesItsLink(): void
+    {
+        $item = Menu::create()->addItem('Docs', '/docs');
+        $item->freeze();
+        $link = $item->getLink();
+        $this->assertNotNull($link);
+
+        foreach (
+            [
+                static fn () => $link->setUrl('/changed'),
+                static fn () => $link->setAttribute('target', '_blank'),
+                static fn () => $link->setAttributes(['rel' => 'noopener']),
+            ] as $mutate
+        ) {
+            try {
+                $mutate();
+                $this->fail('Expected frozen link error.');
+            } catch (LogicException $exception) {
+                $this->assertStringContainsString('frozen menu link', $exception->getMessage());
+            }
+        }
     }
 }

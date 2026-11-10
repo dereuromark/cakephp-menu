@@ -21,11 +21,14 @@ class Link implements LinkInterface
 
     protected bool $external = false;
 
+    protected bool $frozen = false;
+
     /**
      * Clone hook for symmetry with Item and Menu.
      */
     public function __clone(): void
     {
+        $this->frozen = false;
     }
 
     /**
@@ -53,6 +56,7 @@ class Link implements LinkInterface
      */
     public function setUrl(array|string|null $url, bool $external = false): static
     {
+        $this->assertMutable();
         if ($external && is_array($url)) {
             throw new LogicException('External links must use a string URL.');
         }
@@ -65,6 +69,7 @@ class Link implements LinkInterface
 
     public function setAttribute(string $name, mixed $value): static
     {
+        $this->assertMutable();
         $this->attributes[$name] = $value;
 
         return $this;
@@ -75,6 +80,7 @@ class Link implements LinkInterface
      */
     public function setAttributes(array $attributes, bool $merge = false): static
     {
+        $this->assertMutable();
         $this->attributes = $merge ? $attributes + $this->attributes : $attributes;
 
         return $this;
@@ -116,5 +122,19 @@ class Link implements LinkInterface
     public function isExternal(): bool
     {
         return $this->external;
+    }
+
+    public function freeze(): static
+    {
+        $this->frozen = true;
+
+        return $this;
+    }
+
+    protected function assertMutable(): void
+    {
+        if ($this->frozen) {
+            throw new LogicException('Cannot mutate a frozen menu link.');
+        }
     }
 }

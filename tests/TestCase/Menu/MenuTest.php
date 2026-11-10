@@ -9,7 +9,10 @@ use Cake\TestSuite\TestCase;
 use CakeMenu\Item\Item;
 use CakeMenu\Item\ItemInterface;
 use CakeMenu\ItemCollection;
+use CakeMenu\Link\LinkInterface;
 use CakeMenu\Menu;
+use CakeMenu\MenuInterface;
+use CakeMenu\Renderer\StringTemplateRenderer;
 use CakeMenu\Resolver\CallbackResolver;
 use CakeMenu\Resolver\UrlArrayResolver;
 use CakeMenu\SortDirection;
@@ -20,6 +23,151 @@ use stdClass;
 
 class MenuTest extends TestCase
 {
+    public function testRejectedAddDoesNotAttachOrRemoveExistingItem(): void
+    {
+        $menu = Menu::create();
+        $owner = $menu->addItem('Owner', options: ['id' => 'owner']);
+        $original = $owner->getSubMenu()->addItem('Original', options: ['id' => 'shared']);
+        $rejected = $menu->newItem('Rejected', options: ['id' => 'shared']);
+
+        try {
+            $owner->getSubMenu()->add($rejected);
+            $this->fail('Expected duplicate id.');
+        } catch (InvalidArgumentException $exception) {
+            $this->assertStringContainsString('shared', $exception->getMessage());
+        }
+
+        $this->assertNull($rejected->getOwnerMenu());
+        $this->assertNull($rejected->getParent());
+        $rejected->detach();
+        $this->assertSame($original, $menu->get('shared'));
+    }
+
+    public function testIdsAreUniqueAcrossSubmenusAndReusableAfterRemoval(): void
+    {
+        $menu = Menu::create();
+        $first = $menu->addItem('First');
+        $second = $menu->addItem('Second');
+        $first->getSubMenu()->addItem('Child', options: ['id' => 'shared']);
+        try {
+            $second->getSubMenu()->addItem('Duplicate', options: ['id' => 'shared']);
+            $this->fail('Expected duplicate id.');
+        } catch (InvalidArgumentException $exception) {
+            $this->assertStringContainsString('shared', $exception->getMessage());
+        }
+        $first->getSubMenu()->remove('shared');
+        $second->getSubMenu()->addItem('Replacement', options: ['id' => 'shared']);
+        $this->assertSame('Replacement', $menu->get('shared')?->getLabel());
+    }
+
+    public function testIndexTracksIdentifierChangesAndDetachedSubtrees(): void
+    {
+        $menu = Menu::create();
+        $parent = $menu->addItem('Parent', options: ['id' => 'parent']);
+        $child = $parent->getSubMenu()->addItem('Child', options: ['id' => 'old', 'key' => 'old-key']);
+        $child->setId('new')->setKey('new-key');
+        $menu->addItem('Old', options: ['id' => 'old', 'key' => 'old-key']);
+
+        try {
+            $child->setId('parent');
+            $this->fail('Expected duplicate id.');
+        } catch (InvalidArgumentException) {
+            $this->assertSame('new', $child->getId());
+        }
+
+        $parent->detach();
+        $menu->addItem('New', options: ['id' => 'new', 'key' => 'new-key']);
+        try {
+            $parent->getSubMenu()->addItem('Duplicate', options: ['id' => 'new']);
+            $this->fail('Expected duplicate id in detached submenu.');
+        } catch (InvalidArgumentException) {
+            $this->assertCount(1, $parent->getSubMenu()->getItems());
+        }
+        Menu::create()->add($parent);
+        $this->assertSame($child, $parent->getSubMenu()->get('new'));
+        $this->assertSame($parent, $child->getParent());
+    }
+
+    public function testIndexTracksSetItemsFilterAndSplit(): void
+    {
+        $menu = Menu::create();
+        $menu->addItem('First', options: ['id' => 'first']);
+        $menu->addItem('Second', options: ['id' => 'second']);
+        $menu->filter(static fn (ItemInterface $item): bool => $item->getId() !== 'first');
+        $menu->addItem('Replacement', options: ['id' => 'first']);
+        $parts = $menu->split(1);
+        $parts['primary']->addItem('Other', options: ['id' => 'first']);
+        $menu->setItems([$menu->get('first')]);
+        $menu->addItem('Second again', options: ['id' => 'second']);
+        $this->assertCount(2, $menu->getItems());
+    }
+
+    public function testBuildingFourThousandItemsIsFast(): void
+    {
+        $menu = Menu::create();
+        $start = microtime(true);
+        for ($i = 0; $i < 4000; $i++) {
+            $menu->addItem('Item ' . $i, options: ['id' => 'item-' . $i]);
+        }
+        $this->assertLessThan(1.5, microtime(true) - $start);
+        $this->assertCount(4000, $menu->getItems());
+    }
+
+    public function testRoundTripPreservesEveryItemOptionAndAbsentSubmenu(): void
+    {
+        $menu = Menu::create(['class' => 'nav']);
+        $menu->setData('section', 'main');
+        $menu->addDivider(['id' => 'divider']);
+        $menu->addRaw('<b>Raw</b>', ['id' => 'raw']);
+        $menu->addHeader('Section', ['id' => 'header']);
+        $item = $menu->addItem('Docs', 'https://example.com', [
+            'id' => 'docs',
+            'key' => 'docs',
+            'escape' => false,
+            'before' => '<b>',
+            'after' => '</b>',
+            'icon' => 'icon',
+            'badge' => '2',
+            'badgeType' => 'count',
+            'attributes' => ['class' => 'entry'],
+            'data' => ['section' => 'docs'],
+            'visible' => false,
+            'active' => true,
+            'expanded' => true,
+            'matchRoutes' => ['/docs'],
+            'ignoreQueryString' => true,
+            'fuzzy' => false,
+            'displayChildren' => false,
+            'labelAttributes' => ['class' => 'label'],
+            'linkAttributes' => ['target' => '_blank'],
+            'external' => true,
+            'submenuAttributes' => ['class' => 'children'],
+        ]);
+        $item->getSubMenu()->addItem('Child', '/child', ['id' => 'child']);
+
+        $export = $menu->toArray();
+        $rebuilt = Menu::fromArray($export);
+        $this->assertSame($export, $rebuilt->toArray());
+        $this->assertNull($rebuilt->get('divider')?->getLabel());
+        $this->assertNull($rebuilt->get('raw')?->toArray()['submenu']);
+    }
+
+    public function testNewItemOptionsRenderOnExternalLink(): void
+    {
+        $menu = Menu::create();
+        $item = $menu->addItem('Docs', 'https://book.cakephp.org', [
+            'linkAttributes' => ['target' => '_blank', 'rel' => 'noopener'],
+            'external' => true,
+            'expanded' => true,
+        ]);
+        $html = (new StringTemplateRenderer())->render($menu);
+
+        $this->assertTrue($item->getLink()?->isExternal());
+        $this->assertTrue($item->isExpanded());
+        $this->assertStringContainsString('<a target="_blank" rel="noopener" href="https://book.cakephp.org">Docs</a>', $html);
+        $this->assertStringNotContainsString('<li target=', $html);
+    }
+
     public function testGetActiveItemPrefersDeepestDescendantInFirstMatchingBranch(): void
     {
         $menu = Menu::create();
@@ -629,6 +777,53 @@ class MenuTest extends TestCase
         ]);
     }
 
+    public function testFromFlatRejectsDuplicateKeysBeforeCreatingItems(): void
+    {
+        $itemClass = new class extends Item {
+            public static int $created = 0;
+
+            public function __construct(?string $label = null, LinkInterface|array|string|null $link = null)
+            {
+                self::$created++;
+                parent::__construct($label, $link);
+            }
+        };
+        $itemClass::$created = 0;
+
+        try {
+            Menu::fromFlat([
+                ['key' => 'same', 'parent' => null],
+                ['key' => 'other', 'parent' => 'same'],
+                ['key' => 'same', 'parent' => 'other'],
+            ], static fn (array $row): array => $row, $itemClass::class);
+            $this->fail('Expected duplicate key.');
+        } catch (InvalidArgumentException $exception) {
+            $this->assertStringContainsString('same', $exception->getMessage());
+        }
+        $this->assertSame(0, $itemClass::$created);
+    }
+
+    public function testImportFactoriesAcceptCustomItemClass(): void
+    {
+        $custom = new class extends Item {
+        };
+        $fromArray = Menu::fromArray([
+
+            'items' => [
+                ['label' => 'Parent', 'submenu' => ['items' => [['label' => 'Child']]]],
+            ],
+        ], $custom::class);
+        $fromFlat = Menu::fromFlat([
+            ['key' => 'parent', 'parent' => null],
+            ['key' => 'child', 'parent' => 'parent'],
+        ], static fn (array $row): array => $row, $custom::class);
+
+        foreach ([$fromArray, $fromFlat] as $menu) {
+            $this->assertInstanceOf($custom::class, $menu->getItems()[0]);
+            $this->assertInstanceOf($custom::class, $menu->getItems()[0]->getSubMenu()->getItems()[0]);
+        }
+    }
+
     public function testFromFlatTreatsUnknownParentAsRoot(): void
     {
         $menu = Menu::fromFlat(
@@ -704,5 +899,34 @@ class MenuTest extends TestCase
         $menu = Menu::create();
         $method = new ReflectionMethod($menu, 'setItemClass');
         $method->invoke($menu, stdClass::class);
+    }
+
+    public function testFreezeDoesNotFreezeLinkSharedWithAnotherItem(): void
+    {
+        $menu = new Menu();
+        $first = $menu->addItem('First', '/shared');
+        $second = $menu->addItem('Second', '/other');
+        $shared = $first->getLink();
+        $this->assertNotNull($shared);
+        $second->setLink($shared);
+
+        $first->freeze();
+        $shared->setUrl('/changed');
+
+        $this->assertSame('/changed', $second->getLink()?->getRawUrl());
+        $this->assertSame('/shared', $first->getLink()?->getRawUrl());
+    }
+
+    public function testKeyLookupDescendsIntoCustomSubMenu(): void
+    {
+        $target = (new Item('Target'))->setKey('explicit-target');
+        $custom = $this->createStub(MenuInterface::class);
+        $custom->method('getByKey')->willReturnCallback(static fn (string $key) => $key === 'explicit-target' ? $target : null);
+        $custom->method('getItems')->willReturn([$target]);
+
+        $menu = new Menu();
+        $menu->addItem('Parent')->setSubMenu($custom);
+
+        $this->assertSame($target, $menu->getByKey('explicit-target'));
     }
 }

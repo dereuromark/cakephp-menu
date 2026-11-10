@@ -79,6 +79,12 @@ class ItemCollection implements Countable, IteratorAggregate
             }
         }
 
+        foreach ($this->items as $item) {
+            if (!$item->hasExplicitKey() && $item->getKey() === $key) {
+                return $item;
+            }
+        }
+
         return null;
     }
 

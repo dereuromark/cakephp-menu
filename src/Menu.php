@@ -41,6 +41,16 @@ class Menu implements MenuInterface
     protected bool $frozen = false;
 
     /**
+     * @var array<string, \CakeMenu\Item\ItemInterface>
+     */
+    protected array $idIndex = [];
+
+    /**
+     * @var array<string, \CakeMenu\Item\ItemInterface>
+     */
+    protected array $keyIndex = [];
+
+    /**
      * @phpstan-param array<string, mixed> $attributes
      */
     public static function create(array $attributes = []): static
@@ -53,9 +63,15 @@ class Menu implements MenuInterface
         return $menu;
     }
 
-    public static function fromArray(array $config): static
+    /**
+     * @phpstan-param class-string<\CakeMenu\Item\ItemInterface>|null $itemClass
+     */
+    public static function fromArray(array $config, ?string $itemClass = null): static
     {
         $menu = static::create((array)($config['attributes'] ?? []));
+        if ($itemClass !== null) {
+            $menu->setItemClass($itemClass);
+        }
         foreach ((array)($config['data'] ?? []) as $name => $value) {
             $menu->setData((string)$name, $value);
         }
@@ -84,30 +100,19 @@ class Menu implements MenuInterface
                     'raw' => $itemConfig['raw'] ?? null,
                     'divider' => $itemConfig['divider'] ?? false,
                     'header' => $itemConfig['header'] ?? false,
-                    'submenuAttributes' => $itemConfig['submenu']['attributes'] ?? [],
+                    'submenuAttributes' => $itemConfig['submenu']['attributes'] ?? null,
                     'matchRoutes' => $itemConfig['matchRoutes'] ?? [],
                     'ignoreQueryString' => $itemConfig['ignoreQueryString'] ?? null,
                     'fuzzy' => $itemConfig['fuzzy'] ?? null,
                     'displayChildren' => $itemConfig['displayChildren'] ?? true,
                     'labelAttributes' => $itemConfig['labelAttributes'] ?? [],
+                    'linkAttributes' => $itemConfig['linkAttributes'] ?? [],
+                    'external' => $itemConfig['external'] ?? false,
+                    'expanded' => $itemConfig['expanded'] ?? false,
                 ],
             );
-
-            if (!empty($itemConfig['linkAttributes']) && $item->getLink() !== null) {
-                $item->getLink()->setAttributes((array)$itemConfig['linkAttributes']);
-            }
-            if (!empty($itemConfig['external']) && $item->getLink() !== null) {
-                $item->setLink(Link::create(
-                    $item->getLink()->getRawUrl(),
-                    (array)($itemConfig['linkAttributes'] ?? []),
-                    true,
-                ));
-            }
-            if (!empty($itemConfig['expanded'])) {
-                $item->setExpanded();
-            }
-            if (!empty($itemConfig['submenu']) && is_array($itemConfig['submenu'])) {
-                $item->setSubMenu(static::fromArray((array)$itemConfig['submenu']));
+            if (isset($itemConfig['submenu']) && is_array($itemConfig['submenu'])) {
+                $item->setSubMenu(static::fromArray($itemConfig['submenu'], $itemClass));
             }
 
             $menu->add($item);
@@ -126,18 +131,34 @@ class Menu implements MenuInterface
      *
      * @phpstan-param iterable<mixed> $rows
      * @phpstan-param \Closure(mixed): array<string, mixed> $mapper
+     * @phpstan-param class-string<\CakeMenu\Item\ItemInterface>|null $itemClass
+     *
+     * @throws \InvalidArgumentException
      */
-    public static function fromFlat(iterable $rows, Closure $mapper): static
+    public static function fromFlat(iterable $rows, Closure $mapper, ?string $itemClass = null): static
     {
         $menu = static::create();
+        if ($itemClass !== null) {
+            $menu->setItemClass($itemClass);
+        }
         /** @var array<string, \CakeMenu\Item\ItemInterface> $byKey */
         $byKey = [];
         /** @var list<array{item: \CakeMenu\Item\ItemInterface, parent: string|null}> $pending */
         $pending = [];
 
+        $specs = [];
+        $seenKeys = [];
         foreach ($rows as $row) {
             $spec = $mapper($row);
+            $key = isset($spec['key']) ? (string)$spec['key'] : '';
+            if ($key !== '' && isset($seenKeys[$key])) {
+                throw new InvalidArgumentException(sprintf('Duplicate flat menu key `%s` detected.', $key));
+            }
+            $seenKeys[$key] = true;
+            $specs[] = $spec;
+        }
 
+        foreach ($specs as $spec) {
             $link = $spec['link'] ?? null;
             if ($link !== null && !is_string($link) && !is_array($link) && !$link instanceof LinkInterface) {
                 $link = null;
@@ -198,10 +219,11 @@ class Menu implements MenuInterface
     public function add(ItemInterface $item): static
     {
         $this->assertMutable();
-        $this->synchronizeItemParent($item);
-
+        $this->assertAttachableItem($item);
         $this->assertUniqueItemTree($item);
+        $this->synchronizeItemParent($item);
         $this->items[] = $item;
+        $this->rootMenu()->registerItemTree($item);
 
         return $this;
     }
@@ -222,12 +244,11 @@ class Menu implements MenuInterface
         }
         // Pre-check id/key uniqueness against the current tree and within the batch itself, so a
         // duplicate fails before any mutation (avoiding partial parent-pointer rewriting from add()).
-        $ids = [];
-        foreach ($this->items as $existing) {
-            $this->collectIdentifiers($existing, $ids);
-        }
+        $root = $this->rootMenu();
+        $ids = $root->idIndex;
+        $keys = $root->keyIndex;
         foreach ($items as $item) {
-            $this->collectIdentifiers($item, $ids);
+            $this->collectIdentifiers($item, $ids, $keys);
         }
         foreach ($items as $item) {
             $this->assertAttachableItem($item);
@@ -311,7 +332,9 @@ class Menu implements MenuInterface
             $item->setKey((string)$options['key']);
         }
         if (isset($options['escape'])) {
-            $item->setLabel($item->getLabel() ?? '', (bool)$options['escape']);
+            if ($item->getLabel() !== null) {
+                $item->setLabel($item->getLabel(), (bool)$options['escape']);
+            }
         }
         if (isset($options['before'])) {
             $item->setBefore((string)$options['before']);
@@ -367,6 +390,17 @@ class Menu implements MenuInterface
         if (isset($options['labelAttributes']) && is_array($options['labelAttributes'])) {
             $item->setLabelAttributes($options['labelAttributes']);
         }
+        if ($item->getLink() !== null) {
+            $attributes = (array)($options['linkAttributes'] ?? []);
+            if (!empty($options['external'])) {
+                $item->setLink(Link::create($item->getLink()->getRawUrl(), $attributes, true));
+            } elseif ($attributes !== []) {
+                $item->getLink()->setAttributes($attributes, true);
+            }
+        }
+        if (!empty($options['expanded'])) {
+            $item->setExpanded();
+        }
 
         return $item;
     }
@@ -399,6 +433,7 @@ class Menu implements MenuInterface
         foreach ($this->items as $item) {
             $item->setOwnerMenu($this);
         }
+        $this->refreshIndex();
     }
 
     /**
@@ -431,10 +466,10 @@ class Menu implements MenuInterface
             $validatedItems[] = $item;
         }
 
-        $this->assertUniqueItems($validatedItems);
         foreach ($validatedItems as $item) {
             $this->assertAttachableItem($item);
         }
+        $this->assertUniqueItems($validatedItems);
         $preserved = [];
         foreach ($validatedItems as $item) {
             $preserved[spl_object_id($item)] = true;
@@ -448,6 +483,7 @@ class Menu implements MenuInterface
         foreach ($this->items as $item) {
             $this->synchronizeItemParent($item);
         }
+        $this->rootMenu()->refreshIndex();
 
         return $this;
     }
@@ -494,6 +530,7 @@ class Menu implements MenuInterface
             if ($item->getId() === $id) {
                 $this->clearItemOwnership($item);
                 array_splice($this->items, $index, 1);
+                $this->rootMenu()->refreshIndex();
 
                 return true;
             }
@@ -511,19 +548,7 @@ class Menu implements MenuInterface
 
     public function getByKey(string $key): ?ItemInterface
     {
-        foreach ($this->items as $item) {
-            if ($item->hasExplicitKey() && $item->getKey() === $key) {
-                return $item;
-            }
-            if ($item->hasSubMenu()) {
-                $found = $item->getSubMenu()->getByKey($key);
-                if ($found !== null) {
-                    return $found;
-                }
-            }
-        }
-
-        return null;
+        return $this->findKey($key, true) ?? $this->findKey($key, false);
     }
 
     public function hasKey(string $key): bool
@@ -547,23 +572,9 @@ class Menu implements MenuInterface
      */
     protected function removeFirstByKey(string $key): bool
     {
-        foreach ($this->items as $index => $item) {
-            if ($item->hasExplicitKey() && $item->getKey() === $key) {
-                $this->clearItemOwnership($item);
-                array_splice($this->items, $index, 1);
+        $item = $this->getByKey($key);
 
-                return true;
-            }
-        }
-        foreach ($this->items as $item) {
-            if ($item->hasSubMenu() && $item->getSubMenu()->getByKey($key) !== null) {
-                $item->getSubMenu()->removeByKey($key);
-
-                return true;
-            }
-        }
-
-        return false;
+        return $item !== null && $this->removeFirstById($item->getId());
     }
 
     public function insertBefore(ItemInterface $item, string $idOrKey): static
@@ -645,7 +656,14 @@ class Menu implements MenuInterface
     public function merge(MenuInterface $menu, bool $mergeAttributes = false): static
     {
         $this->assertMutable();
-        foreach ($this->cloneItems($menu->getItems()) as $item) {
+        $incoming = $this->cloneItems($menu->getItems());
+        $ids = $this->rootMenu()->idIndex;
+        $keys = $this->rootMenu()->keyIndex;
+        foreach ($incoming as $item) {
+            $this->collectIdentifiers($item, $ids, $keys);
+            $this->assertAttachableItem($item);
+        }
+        foreach ($incoming as $item) {
             $this->add($item);
         }
 
@@ -675,6 +693,7 @@ class Menu implements MenuInterface
         $slice = array_slice($this->items, $start, max(0, $end - $start));
 
         $new = static::create($this->attributes);
+        $new->setItemClass($this->itemClass);
         foreach ($this->data as $name => $value) {
             $new->setData((string)$name, $value);
         }
@@ -712,6 +731,11 @@ class Menu implements MenuInterface
                 return $index;
             }
         }
+        foreach ($this->items as $index => $item) {
+            if (!$item->hasExplicitKey() && $item->getKey() === $idOrKey) {
+                return $index;
+            }
+        }
 
         return null;
     }
@@ -737,10 +761,11 @@ class Menu implements MenuInterface
 
     protected function insertItemAt(ItemInterface $item, int $position): void
     {
-        $this->synchronizeItemParent($item);
         $this->assertUniqueItemTree($item);
+        $this->synchronizeItemParent($item);
         $position = max(0, min($position, count($this->items)));
         array_splice($this->items, $position, 0, [$item]);
+        $this->rootMenu()->registerItemTree($item);
     }
 
     /**
@@ -875,6 +900,7 @@ class Menu implements MenuInterface
         }
 
         $this->items = $items;
+        $this->rootMenu()->refreshIndex();
 
         return $this;
     }
@@ -946,18 +972,26 @@ class Menu implements MenuInterface
      */
     protected function assertUniqueItems(array $items): void
     {
-        $ids = [];
+        $root = $this->rootMenu();
+        $ids = $root->idIndex;
+        $keys = $root->keyIndex;
+        foreach ($this->items as $existing) {
+            $this->removeIdentifiers($existing, $ids, $keys);
+        }
         foreach ($items as $item) {
-            $this->collectIdentifiers($item, $ids);
+            $this->collectIdentifiers($item, $ids, $keys);
         }
     }
 
-    public function setOwnerItem(ItemInterface $ownerItem): static
+    public function setOwnerItem(?ItemInterface $ownerItem): static
     {
         $this->assertMutable();
         $this->ownerItem = $ownerItem;
         foreach ($this->items as $item) {
             $this->synchronizeItemParent($item);
+        }
+        if ($ownerItem === null) {
+            $this->refreshIndex();
         }
 
         return $this;
@@ -973,6 +1007,9 @@ class Menu implements MenuInterface
         $this->assertAttachableItem($item);
         $item->setParent($this->ownerItem);
         $item->setOwnerMenu($this);
+        if ($item->hasSubMenu() && $item->getSubMenu() instanceof self) {
+            $item->getSubMenu()->setOwnerItem($item);
+        }
     }
 
     protected function assertAttachableItem(ItemInterface $item): void
@@ -980,7 +1017,7 @@ class Menu implements MenuInterface
         $currentOwnerMenu = $item->getOwnerMenu();
         $currentParent = $item->getParent();
         $desiredParent = $this->ownerItem;
-        if ($currentOwnerMenu === $this && ($currentParent === null || $currentParent === $desiredParent)) {
+        if ($currentOwnerMenu === $this) {
             return;
         }
         if ($item->isFrozen()) {
@@ -1006,6 +1043,9 @@ class Menu implements MenuInterface
         if ($item->hasSubMenu()) {
             foreach ($item->getSubMenu()->getItems() as $child) {
                 $this->clearItemOwnership($child);
+            }
+            if ($item->getSubMenu() instanceof self) {
+                $item->getSubMenu()->refreshIndex();
             }
         }
         $this->clearItemParent($item);
@@ -1085,41 +1125,165 @@ class Menu implements MenuInterface
 
     protected function assertUniqueItemTree(ItemInterface $candidate): void
     {
+        $root = $this->rootMenu();
         $ids = [];
-        foreach ($this->items as $item) {
-            $this->collectIdentifiers($item, $ids);
+        $keys = [];
+        $this->collectIdentifiers($candidate, $ids, $keys);
+        foreach (array_keys($ids) as $id) {
+            if (isset($root->idIndex[$id])) {
+                throw new InvalidArgumentException(sprintf('Duplicate menu item id `%s` detected.', $id));
+            }
         }
-
-        $this->collectIdentifiers($candidate, $ids);
+        foreach (array_keys($keys) as $key) {
+            if (isset($root->keyIndex[$key])) {
+                throw new InvalidArgumentException(sprintf('Duplicate explicit menu item key `%s` detected.', $key));
+            }
+        }
     }
 
     /**
      * @param \CakeMenu\Item\ItemInterface $item
-     * @param array<string, true> $ids
+     * @param array<string, \CakeMenu\Item\ItemInterface> $ids
+     * @param array<string, \CakeMenu\Item\ItemInterface> $keys
      *
      * @throws \InvalidArgumentException
      */
-    protected function collectIdentifiers(ItemInterface $item, array &$ids): void
+    protected function collectIdentifiers(ItemInterface $item, array &$ids, array &$keys): void
     {
         $id = $item->getId();
         if (isset($ids[$id])) {
             throw new InvalidArgumentException(sprintf('Duplicate menu item id `%s` detected.', $id));
         }
-        $ids[$id] = true;
+        $ids[$id] = $item;
 
         if ($item->hasExplicitKey()) {
-            $keyId = '__key__' . $item->getKey();
-            if (isset($ids[$keyId])) {
+            $key = $item->getKey();
+            if (isset($keys[$key])) {
                 throw new InvalidArgumentException(sprintf('Duplicate explicit menu item key `%s` detected.', $item->getKey()));
             }
-            $ids[$keyId] = true;
+            $keys[$key] = $item;
         }
 
         if ($item->hasSubMenu()) {
             foreach ($item->getSubMenu()->getItems() as $child) {
-                $this->collectIdentifiers($child, $ids);
+                $this->collectIdentifiers($child, $ids, $keys);
             }
         }
+    }
+
+    /**
+     * @param \CakeMenu\Item\ItemInterface $item
+     * @param array<string, \CakeMenu\Item\ItemInterface> $ids
+     * @param array<string, \CakeMenu\Item\ItemInterface> $keys
+     */
+    protected function removeIdentifiers(ItemInterface $item, array &$ids, array &$keys): void
+    {
+        unset($ids[$item->getId()]);
+        if ($item->hasExplicitKey()) {
+            unset($keys[$item->getKey()]);
+        }
+        if ($item->hasSubMenu()) {
+            foreach ($item->getSubMenu()->getItems() as $child) {
+                $this->removeIdentifiers($child, $ids, $keys);
+            }
+        }
+    }
+
+    protected function rootMenu(): self
+    {
+        $menu = $this;
+        while ($menu->ownerItem?->getOwnerMenu() instanceof self) {
+            $menu = $menu->ownerItem->getOwnerMenu();
+        }
+
+        return $menu;
+    }
+
+    protected function registerItemTree(ItemInterface $item): void
+    {
+        $this->collectIdentifiers($item, $this->idIndex, $this->keyIndex);
+    }
+
+    /**
+     * @internal Keeps the tree index in sync for Item; not part of the public API.
+     */
+    public function refreshTreeIndex(): void
+    {
+        $this->rootMenu()->refreshIndex();
+    }
+
+    protected function refreshIndex(): void
+    {
+        $ids = [];
+        $keys = [];
+        foreach ($this->items as $item) {
+            $this->collectIdentifiers($item, $ids, $keys);
+        }
+        $this->idIndex = $ids;
+        $this->keyIndex = $keys;
+    }
+
+    /**
+     * @internal Keeps the tree index in sync for Item; not part of the public API.
+     *
+     * @throws \InvalidArgumentException
+     */
+    public function assertItemIdAvailable(ItemInterface $item, string $id): void
+    {
+        $existing = $this->rootMenu()->idIndex[$id] ?? null;
+        if ($existing !== null && $existing !== $item) {
+            throw new InvalidArgumentException(sprintf('Duplicate menu item id `%s` detected.', $id));
+        }
+    }
+
+    /**
+     * @internal Keeps the tree index in sync for Item; not part of the public API.
+     *
+     * @throws \InvalidArgumentException
+     */
+    public function assertItemKeyAvailable(ItemInterface $item, string $key): void
+    {
+        $existing = $this->rootMenu()->keyIndex[$key] ?? null;
+        if ($existing !== null && $existing !== $item) {
+            throw new InvalidArgumentException(sprintf('Duplicate explicit menu item key `%s` detected.', $key));
+        }
+    }
+
+    /**
+     * @internal Keeps the tree index in sync for Item; not part of the public API.
+     */
+    public function assertSubMenuReplacement(ItemInterface $owner, MenuInterface $next): void
+    {
+        $root = $this->rootMenu();
+        $ids = $root->idIndex;
+        $keys = $root->keyIndex;
+        if ($owner->hasSubMenu()) {
+            foreach ($owner->getSubMenu()->getItems() as $child) {
+                $this->removeIdentifiers($child, $ids, $keys);
+            }
+        }
+        foreach ($next->getItems() as $child) {
+            $this->collectIdentifiers($child, $ids, $keys);
+        }
+    }
+
+    protected function findKey(string $key, bool $explicit): ?ItemInterface
+    {
+        foreach ($this->items as $item) {
+            if ($item->hasExplicitKey() === $explicit && $item->getKey() === $key) {
+                return $item;
+            }
+            if (!$item->hasSubMenu()) {
+                continue;
+            }
+            $subMenu = $item->getSubMenu();
+            $found = $subMenu instanceof self ? $subMenu->findKey($key, $explicit) : $subMenu->getByKey($key);
+            if ($found !== null && $found->hasExplicitKey() === $explicit) {
+                return $found;
+            }
+        }
+
+        return null;
     }
 
     protected function assertMutable(): void

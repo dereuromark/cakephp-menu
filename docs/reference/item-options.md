@@ -21,7 +21,7 @@ $menu->addItem('Inbox', ['controller' => 'Messages', 'action' => 'index'], [
 | Key | Type | Default | Meaning |
 |-----|------|---------|---------|
 | `id` | `string` | auto UUID | Unique item identifier. |
-| `key` | `string` | slug of label | Lookup key (auto-slugified from the label if unset). |
+| `key` | `string` | slug of label | Explicit keys take precedence in lookup; an unset key falls back to the label slug. |
 | `label` | `string` | (from arg) | Item text. |
 | `escape` | `bool` | `true` | HTML-escape the label. |
 | `link` | `string\|array\|LinkInterface\|null` | `null` | URL; string, CakePHP route array, or `LinkInterface`. |

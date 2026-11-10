@@ -25,6 +25,9 @@ URL, the logged-in user, or the eventual markup. You can build in code, or impor
 [`Menu::fromArray()`](/reference/cheatsheet#menu) (config) or
 [`Menu::fromFlat()`](/reference/cheatsheet#menu) (database rows).
 
+Item IDs must be unique throughout a menu tree. Imports and merges reject duplicate IDs before
+attaching items. Both import methods accept an optional item class for custom item types.
+
 ## 2. Resolve
 
 [Resolvers](/guide/resolvers) apply *per-request state* onto the built tree; which item is active,
@@ -45,7 +48,7 @@ never decides active state or visibility; it only reflects what resolution alrea
 |------|------|
 | `Menu` | The root container and a submenu node. Holds items and HTML attributes; the entry point for building, resolving, and serializing. |
 | `Item` | A single entry: label, link, metadata (icon, badge, `data`), and an optional submenu. Carries `active`/`visible`/`expanded` runtime state. |
-| `Link` | The URL of an item; a string, a CakePHP route array, or external; plus link attributes. Resolved to a string via the Router at render time. |
+| `Link` | The URL of an item; a string, a CakePHP route array, or external; plus link attributes. Resolved to a string via the Router at render time. Frozen item links cannot be changed. |
 | `Resolver` | A strategy that sets active state and/or visibility on items. Compose several with `ResolverCollection`. |
 | `Renderer` | A strategy that converts a (resolved) menu to a string. Swap it per `render()` call. |
 
