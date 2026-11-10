@@ -1,5 +1,9 @@
 # Upgrading
 
+## Upcoming release
+
+Bootstrap 5 now puts `active` on the link or dropdown toggle instead of the `<li>`. Set `activeOn` to `both` to keep it on both elements. `StringTemplateRenderer` now puts `aria-expanded` on the link or label that triggers the submenu instead of the `<li>`.
+
 ## 0.1 to 0.2
 
 0.2 renames the PHP namespace and the plugin from `Menu` to `CakeMenu`. A bare `Menu` namespace

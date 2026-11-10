@@ -15,6 +15,7 @@ class Bootstrap5Renderer extends StringTemplateRenderer
     {
         $this->_defaultConfig = array_replace_recursive($this->_defaultConfig, [
             'ancestorClass' => 'active',
+            'activeOn' => 'link',
             'branchClass' => 'dropdown',
             'headerClass' => null,
             'itemClass' => 'nav-item',
@@ -62,6 +63,7 @@ class Bootstrap5Renderer extends StringTemplateRenderer
                 $attributes['aria-current'] = 'page';
             }
             $attributes = $this->mergeLabelAttributes($attributes, $item);
+            $attributes = $this->applyContentState($attributes, $item, $options, $level);
             $attributes = $this->applyMenuItemRole($attributes, $item, $options);
 
             return $this->templater()->format('label', [
@@ -97,6 +99,7 @@ class Bootstrap5Renderer extends StringTemplateRenderer
             $attributes['aria-current'] = 'page';
         }
         $attributes = $this->mergeLabelAttributes($attributes, $item);
+        $attributes = $this->applyContentState($attributes, $item, $options, $level);
         $attributes = $this->applyMenuItemRole($attributes, $item, $options);
 
         return $this->templater()->format('link', [

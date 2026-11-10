@@ -11,6 +11,24 @@ use CakeMenu\Renderer\Bootstrap5SidebarRenderer;
 
 class Bootstrap5SidebarRendererTest extends TestCase
 {
+    public function testDepthAriaLabelAndToggleLabel(): void
+    {
+        $menu = Menu::create();
+        $branch = $menu->addItem('Products', '/products');
+        $branch->getSubMenu()->addItem('Child', '/child');
+        $renderer = new Bootstrap5SidebarRenderer();
+
+        $shallow = $renderer->render($menu, ['depth' => 1, 'ariaLabel' => 'Sections']);
+        $this->assertStringContainsString('aria-label="Sections"', $shallow);
+        $this->assertStringContainsString('href="/products"', $shallow);
+        $this->assertStringNotContainsString('class="collapse', $shallow);
+        $this->assertStringNotContainsString('data-bs-toggle', $shallow);
+        $this->assertStringNotContainsString('Child', $shallow);
+
+        $html = $renderer->render($menu, ['toggleLabel' => 'Expand %s']);
+        $this->assertStringContainsString('aria-label="Expand Products"', $html);
+    }
+
     public function testRendersCollapsibleSidebarWithActiveBranchOpen(): void
     {
         $menu = Menu::create();

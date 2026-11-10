@@ -41,6 +41,7 @@ class Bootstrap5SidebarRenderer extends StringTemplateRenderer
         'hideEmptyBranches' => false,
         'currentAsLink' => true,
         'addAriaCurrent' => true,
+        'toggleLabel' => 'Toggle %s',
         // Wires each branch toggle to its collapse element; make it unique per sidebar on a page.
         'idPrefix' => 'menu-collapse-',
         'navClass' => 'nav flex-column',
@@ -82,6 +83,10 @@ class Bootstrap5SidebarRenderer extends StringTemplateRenderer
      */
     protected function renderMenu(MenuInterface $menu, array $options, int $level): string
     {
+        $depth = $this->getIntegerOption($options, 'depth');
+        if ($depth !== null && $level > $depth) {
+            return '';
+        }
         if ($level === 1) {
             $this->autoId = 0;
             $this->usedIds = [];
@@ -102,6 +107,10 @@ class Bootstrap5SidebarRenderer extends StringTemplateRenderer
             ? $this->getStringOption($options, 'navClass')
             : $this->getStringOption($options, 'nestedNavClass');
         $attributes = $this->appendClass($menu->getAttributes(), $class);
+        $ariaLabel = $this->getStringOption($options, 'ariaLabel');
+        if ($level === 1 && $ariaLabel !== '' && !isset($attributes['aria-label'])) {
+            $attributes['aria-label'] = $ariaLabel;
+        }
         // Mirror StringTemplateRenderer: when `roles` is enabled, the root <ul> is `menubar` and
         // nested <ul>s are `menu`. Sidebar previously skipped this, leaving the ARIA tree partial.
         if ($this->getBooleanOption($options, 'roles', false) && !isset($attributes['role'])) {
@@ -148,11 +157,11 @@ class Bootstrap5SidebarRenderer extends StringTemplateRenderer
 
         // Mirror StringTemplateRenderer: an item with a submenu still renders as a leaf when
         // `displayChildren=false`. Without this, setDisplayChildren(false) silently failed here.
-        $hasSubMenu = $item->hasSubMenu() && $item->displaysChildren();
+        $hasSubMenu = $this->rendersSubMenu($item, $options, $level);
         if (
             $hasSubMenu
             && $this->getBooleanOption($options, 'hideEmptyBranches', false)
-            && !$this->hasRenderableChild($item, $options)
+            && !$this->hasRenderableChild($item, $options, $level)
         ) {
             return '';
         }
@@ -334,7 +343,7 @@ class Bootstrap5SidebarRenderer extends StringTemplateRenderer
         $buttonAttributes += [
             'aria-controls' => $id,
             'aria-expanded' => $expanded ? 'true' : 'false',
-            'aria-label' => trim('Toggle ' . (string)$item->getLabel()),
+            'aria-label' => sprintf($this->getStringOption($options, 'toggleLabel'), (string)$item->getLabel()),
         ];
 
         $button = sprintf('<button%s>%s</button>', $this->renderAttributes($buttonAttributes), $this->caret($options, $expanded));

@@ -9,9 +9,77 @@ use CakeMenu\Item\Item;
 use CakeMenu\Item\SelfRendererInterface;
 use CakeMenu\Menu;
 use CakeMenu\Renderer\StringTemplateRenderer;
+use InvalidArgumentException;
 
 class StringTemplateRendererTest extends TestCase
 {
+    public function testActiveOnForLinksAndLabels(): void
+    {
+        foreach (['item', 'link', 'both'] as $activeOn) {
+            foreach ([true, false] as $asLink) {
+                $menu = Menu::create();
+                $parent = $menu->addItem('Parent', '/parent');
+                $parent->getSubMenu()->addItem('Child', '/child', ['active' => true]);
+                $html = (new StringTemplateRenderer())->render($menu, [
+                    'activeOn' => $activeOn,
+                    'currentAsLink' => $asLink,
+                ]);
+                $this->assertMatchesRegularExpression(
+                    '/<li class="' . ($activeOn === 'link' ? 'has-children' : 'active-ancestor has-children') . '">/',
+                    $html,
+                );
+                if ($activeOn !== 'item') {
+                    $this->assertStringContainsString('class="active-ancestor"', $html);
+                }
+                $this->assertStringContainsString(
+                    '<li' . ($activeOn === 'link' ? '>' : ' class="active">'),
+                    $html,
+                );
+                $this->assertMatchesRegularExpression(
+                    '/<' . ($asLink ? 'a' : 'span') . '[^>]*' . ($activeOn === 'item' ? 'aria-current' : 'class="active"') . '[^>]*>Child</',
+                    $html,
+                );
+            }
+        }
+    }
+
+    public function testInvalidActiveOnThrows(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        (new StringTemplateRenderer())->renderItem(Menu::create()->newItem('Home', '/'), ['activeOn' => 'other']);
+    }
+
+    public function testActiveOnLinkMarksUnlinkedLabels(): void
+    {
+        $menu = Menu::create();
+        $parent = $menu->addItem('Parent');
+        $parent->getSubMenu()->addItem('Child', null, ['active' => true]);
+
+        $html = (new StringTemplateRenderer())->render($menu, ['activeOn' => 'link']);
+
+        $this->assertStringContainsString('<span class="active-ancestor" aria-expanded="true">Parent</span>', $html);
+        $this->assertStringContainsString('<span aria-current="page" class="active">Child</span>', $html);
+    }
+
+    public function testAriaExpandedBelongsToLinkOrLabel(): void
+    {
+        foreach ([true, false] as $expanded) {
+            foreach ([true, false] as $asLink) {
+                $menu = Menu::create();
+                $parent = $menu->addItem('Parent', $asLink ? '/parent' : null);
+                $parent->setExpanded($expanded);
+                $parent->getSubMenu()->addItem('Child', '/child');
+                $html = (new StringTemplateRenderer())->render($menu);
+                $this->assertStringContainsString(
+                    '<' . ($asLink ? 'a href="/parent"' : 'span') . ' aria-expanded="' . ($expanded ? 'true' : 'false') . '">Parent',
+                    $html,
+                );
+                $this->assertStringNotContainsString('<li class="has-children" aria-expanded=', $html);
+                $this->assertStringNotContainsString('aria-expanded=', (new StringTemplateRenderer())->render($menu, ['addAriaExpanded' => false]));
+            }
+        }
+    }
+
     public function testRendersEscapedLabelAndActiveState(): void
     {
         $menu = Menu::create();
@@ -224,5 +292,17 @@ class StringTemplateRendererTest extends TestCase
         ]);
 
         $this->assertSame('<li><a data-test="custom" href="/">Home</a></li>', $result);
+    }
+
+    public function testRawItemKeepsStateOnListItem(): void
+    {
+        $menu = new Menu();
+        $raw = $menu->addItem('Raw')->setRaw('<span>raw</span>')->setActive(true);
+        $raw->getSubMenu()->addItem('Child', '/child');
+
+        $html = (new StringTemplateRenderer(['activeOn' => 'link']))->render($menu);
+
+        $this->assertMatchesRegularExpression('/<li[^>]*class="[^"]*\\bactive\\b[^"]*"[^>]*aria-expanded="true"|<li[^>]*aria-expanded="true"[^>]*class="[^"]*\\bactive\\b/', $html);
+        $this->assertStringContainsString('<span>raw</span>', $html);
     }
 }

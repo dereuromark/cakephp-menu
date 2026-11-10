@@ -30,6 +30,7 @@ The dependency-free default.
 
 | Option | Default | Description |
 |--------|---------|-------------|
+| `activeOn` | `'item'` | Place active and ancestor classes on the `<li>` (`'item'`), link or label (`'link'`), or both (`'both'`). Unknown values throw `InvalidArgumentException`. |
 | `activeClass` | `'active'` | Class on active items. |
 | `ancestorClass` | `'active-ancestor'` | Class on ancestors of the active item. |
 | `dividerClass` | `'divider'` | Class on divider `<li>`s. |
@@ -79,6 +80,7 @@ Extends `StringTemplateRenderer`. Overrides and additions:
 
 | Option | Default | Description |
 |--------|---------|-------------|
+| `activeOn` | `'link'` | Put active and ancestor classes on links and labels. Set `'both'` to also mark `<li>` elements. |
 | `ancestorClass` | `'active'` | Ancestors use `active` (not `active-ancestor`). |
 | `branchClass` | `'dropdown'` | Branch items become Bootstrap dropdowns. |
 | `nestedMenuClass` | `'dropdown-menu'` | Nested `<ul>`s are dropdown menus. |
@@ -97,6 +99,7 @@ Extends `StringTemplateRenderer`. A vertical, collapsible sidebar.
 
 | Option | Default | Description |
 |--------|---------|-------------|
+| `toggleLabel` | `'Toggle %s'` | `sprintf` format for the separate toggle button's accessible label. |
 | `idPrefix` | `'menu-collapse-'` | Prefix for collapse element ids (keep unique per sidebar on a page). |
 | `navClass` | `'nav flex-column'` | Class on the root nav. |
 | `nestedNavClass` | `'nav flex-column ms-3'` | Class on nested navs. |
@@ -112,7 +115,9 @@ Extends `StringTemplateRenderer`. A vertical, collapsible sidebar.
 | `caret` | `true` | Render an open/closed caret indicator. |
 | `caretOpen` | `'▾'` | Markup for the expanded caret (trusted). |
 | `caretClosed` | `'▸'` | Markup for the collapsed caret (trusted). |
-| `activeClass` / `currentAsLink` / `addAriaCurrent` / `hideEmptyBranches` | (as parent) | Inherited from `StringTemplateRenderer`. |
+| `activeClass` / `currentAsLink` / `addAriaCurrent` / `hideEmptyBranches` / `depth` / `ariaLabel` / `roles` / `translate` | (as parent) | Supported inherited options. |
+
+The sidebar also supports `iconTemplate` and `badgeTemplate`. It ignores the StringTemplate options `activeOn`, `ancestorClass`, `dividerClass`, `branchClass`, `leafClass`, `submenuClass`, `nestedMenuClass`, `rootClass`, `menuLevelClass`, `firstClass`, `lastClass`, `addAriaExpanded`, and `templates`. Its own markup and toggle behavior replace those options. `headerClass` controls header items; `itemClass` controls all sidebar list items.
 
 ## NavbarRenderer
 

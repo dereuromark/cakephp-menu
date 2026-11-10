@@ -76,7 +76,7 @@ class NavbarRendererTest extends TestCase
                 $branch->getSubMenu()->addItem('Profile', '/p');
                 $renderer = new NavbarRenderer();
                 $result = $renderer->render($menu, ['currentAsLink' => false]);
-                $expected = '<a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="'
+                $expected = '<a href="#" class="nav-link dropdown-toggle' . ($active ? ' active' : '') . '" data-bs-toggle="dropdown" role="button" aria-expanded="'
                     . ($active ? 'true' : 'false') . '"'
                     . ($active ? ' aria-current="page"' : '') . '>Account</a>';
                 if ($url !== null && !$active) {
@@ -85,7 +85,7 @@ class NavbarRendererTest extends TestCase
                 $this->assertStringContainsString($expected, $result);
                 $this->assertStringContainsString('<ul class="dropdown-menu">', $result);
                 if ($active) {
-                    $this->assertStringContainsString('<li class="active dropdown nav-item">', $result);
+                    $this->assertStringContainsString('<li class="dropdown nav-item">', $result);
                 }
 
                 $branch->setDisplayChildren(false);

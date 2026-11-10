@@ -39,7 +39,7 @@ class RendererFeaturesTest extends TestCase
         $result = (new StringTemplateRenderer())->render($menu);
 
         $this->assertSame(
-            '<ul><li class="has-children" aria-expanded="false"><a href="/parent">Parent</a>'
+            '<ul><li class="has-children"><a href="/parent" aria-expanded="false">Parent</a>'
             . '<ul class="submenu"><li><a href="/child">Child</a></li></ul></li></ul>',
             $result,
         );
@@ -91,8 +91,8 @@ class RendererFeaturesTest extends TestCase
 
         $this->assertSame(
             '<ul role="menubar">'
-            . '<li class="has-children" aria-expanded="false" role="none">'
-            . '<a href="/parent" role="menuitem" aria-haspopup="true">Parent</a>'
+            . '<li class="has-children" role="none">'
+            . '<a href="/parent" aria-expanded="false" role="menuitem" aria-haspopup="true">Parent</a>'
             . '<ul class="submenu" role="menu">'
             . '<li role="none"><a href="/child" role="menuitem">Child</a></li>'
             . '</ul></li></ul>',

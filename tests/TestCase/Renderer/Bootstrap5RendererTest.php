@@ -12,6 +12,24 @@ use CakeMenu\Renderer\StringTemplateRenderer;
 
 class Bootstrap5RendererTest extends TestCase
 {
+    public function testActiveClassesOnLinksAndBothOverride(): void
+    {
+        $menu = Menu::create();
+        $menu->addItem('Home', '/', ['active' => true]);
+        $branch = $menu->addItem('Account', '#');
+        $branch->getSubMenu()->addItem('Profile', '/profile', ['active' => true]);
+
+        $html = (new Bootstrap5Renderer())->render($menu);
+        $this->assertStringContainsString('<li class="nav-item"><a href="/" class="nav-link active"', $html);
+        $this->assertStringContainsString('class="nav-link dropdown-toggle active"', $html);
+        $this->assertStringContainsString('class="dropdown-item active"', $html);
+        $this->assertStringNotContainsString('<li class="active', $html);
+
+        $both = (new Bootstrap5Renderer())->render($menu, ['activeOn' => 'both']);
+        $this->assertStringContainsString('<li class="active nav-item">', $both);
+        $this->assertStringContainsString('class="nav-link active"', $both);
+    }
+
     public function testDepthCutoffRendersBranchesWithoutDropdownToggle(): void
     {
         $menu = Menu::create();
@@ -103,7 +121,7 @@ class Bootstrap5RendererTest extends TestCase
                 $branch->getSubMenu()->addItem('Profile', '/p');
                 $renderer = new Bootstrap5Renderer();
                 $result = $renderer->render($menu, ['currentAsLink' => false]);
-                $expected = '<a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="'
+                $expected = '<a href="#" class="nav-link dropdown-toggle' . ($active ? ' active' : '') . '" data-bs-toggle="dropdown" role="button" aria-expanded="'
                     . ($active ? 'true' : 'false') . '"'
                     . ($active ? ' aria-current="page"' : '') . '>Account</a>';
                 if ($url !== null && !$active) {
@@ -112,7 +130,7 @@ class Bootstrap5RendererTest extends TestCase
                 $this->assertStringContainsString($expected, $result);
                 $this->assertStringContainsString('<ul class="dropdown-menu">', $result);
                 if ($active) {
-                    $this->assertStringContainsString('<li class="active dropdown nav-item">', $result);
+                    $this->assertStringContainsString('<li class="dropdown nav-item">', $result);
                 }
 
                 $branch->setDisplayChildren(false);
@@ -140,10 +158,10 @@ class Bootstrap5RendererTest extends TestCase
         $this->assertStringContainsString('class="nav-link"', $result);
         $this->assertMatchesRegularExpression('/class="[^"]*dropdown[^"]*"/', $result);
         $this->assertStringContainsString('class="dropdown-menu"', $result);
-        $this->assertStringContainsString('class="dropdown-item dropdown-toggle"', $result);
+        $this->assertStringContainsString('class="dropdown-item dropdown-toggle active"', $result);
         $this->assertStringContainsString('aria-expanded="true"', $result);
         $this->assertStringContainsString('href="/profile"', $result);
-        $this->assertStringContainsString('class="dropdown-item"', $result);
+        $this->assertStringContainsString('class="dropdown-item active"', $result);
         $this->assertSame($result, $secondResult);
         $this->assertStringNotContainsString('Array', $secondResult);
     }

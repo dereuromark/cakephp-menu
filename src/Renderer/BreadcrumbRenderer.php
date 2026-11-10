@@ -90,7 +90,7 @@ class BreadcrumbRenderer extends StringTemplateRenderer
             $attributes = $this->appendClass($attributes, (string)($options['activeClass'] ?? $this->getConfig('activeClass')));
         }
 
-        $content = $this->renderContent($item, ['currentAsLink' => !$isCurrent] + $options);
+        $content = $this->renderContent($item, ['currentAsLink' => !$isCurrent, 'addAriaExpanded' => false] + $options);
 
         return $this->templater()->format('item', [
             'attributes' => $this->renderAttributes($attributes),
