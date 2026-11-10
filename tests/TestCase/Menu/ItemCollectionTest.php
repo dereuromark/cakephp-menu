@@ -23,7 +23,7 @@ class ItemCollectionTest extends TestCase
         $this->assertSame([$child], $collection->findByParent($parent));
     }
 
-    public function testFindByKeyIgnoresImplicitSlugKeys(): void
+    public function testFindByKeyFallsBackToImplicitSlug(): void
     {
         $explicit = (new Item('Profile'))->setId('profile-explicit')->setKey('profile');
         $implicit = (new Item('Settings'))->setId('settings-implicit');
@@ -31,6 +31,6 @@ class ItemCollectionTest extends TestCase
         $collection = new ItemCollection([$explicit, $implicit]);
 
         $this->assertSame($explicit, $collection->findByKey('profile'));
-        $this->assertNull($collection->findByKey('settings'));
+        $this->assertSame($implicit, $collection->findByKey('settings'));
     }
 }

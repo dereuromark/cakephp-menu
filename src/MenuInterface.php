@@ -98,16 +98,16 @@ interface MenuInterface
     public function remove(string $id): static;
 
     /**
-     * Returns the first item (depth-first) whose explicit key matches.
+     * Returns an explicit key match, or the first matching label slug.
      */
     public function getByKey(string $key): ?ItemInterface;
 
     public function hasKey(string $key): bool;
 
     /**
-     * Removes the first item (depth-first) whose explicit key matches.
+     * Removes an explicit key match, or the first matching label slug.
      *
-     * @throws \InvalidArgumentException When no explicit key matches.
+     * @throws \InvalidArgumentException When no key matches.
      */
     public function removeByKey(string $key): static;
 

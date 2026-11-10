@@ -9,6 +9,7 @@ use CakeMenu\Item\Item;
 use CakeMenu\Link\Link;
 use CakeMenu\Menu;
 use CakeMenu\MenuInterface;
+use InvalidArgumentException;
 use LogicException;
 use RuntimeException;
 
@@ -195,6 +196,41 @@ class ItemTest extends TestCase
             'Cannot reassign a populated submenu that already belongs to another item. Detach or clone its items first.',
         );
         $secondParent->setSubMenu($foreignMenu);
+    }
+
+    public function testReplacingSubMenuDetachesOldTree(): void
+    {
+        $root = Menu::create();
+        $parent = $root->addItem('Parent');
+        $old = $parent->getSubMenu();
+        $child = $old->addItem('Child', options: ['id' => 'child']);
+
+        $parent->setSubMenu(Menu::create());
+
+        $this->assertNull($old->getOwnerItem());
+        $this->assertNull($child->getParent());
+        $this->assertSame($old, $child->getOwnerMenu());
+        $this->assertNull($root->get('child'));
+        $root->addItem('Reused', options: ['id' => 'child']);
+    }
+
+    public function testRejectedSubMenuReplacementPreservesOldTree(): void
+    {
+        $root = Menu::create();
+        $root->addItem('Existing', options: ['id' => 'shared']);
+        $parent = $root->addItem('Parent');
+        $old = $parent->getSubMenu();
+        $old->addItem('Child', options: ['id' => 'child']);
+        $next = Menu::create();
+        $next->addItem('Collision', options: ['id' => 'shared']);
+
+        try {
+            $parent->setSubMenu($next);
+            $this->fail('Expected duplicate id.');
+        } catch (InvalidArgumentException) {
+            $this->assertSame($old, $parent->getSubMenu());
+            $this->assertSame($parent, $old->getOwnerItem());
+        }
     }
 
     public function testLinkShortcutAndDecorators(): void

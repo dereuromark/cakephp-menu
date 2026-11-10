@@ -129,7 +129,13 @@ class Item implements ItemInterface
     public function setId(string $id): static
     {
         $this->assertMutable();
+        if ($this->ownerMenu instanceof Menu) {
+            $this->ownerMenu->assertItemIdAvailable($this, $id);
+        }
         $this->id = $id;
+        if ($this->ownerMenu instanceof Menu) {
+            $this->ownerMenu->refreshTreeIndex();
+        }
 
         return $this;
     }
@@ -142,8 +148,14 @@ class Item implements ItemInterface
     public function setKey(string $key): static
     {
         $this->assertMutable();
+        if ($this->ownerMenu instanceof Menu) {
+            $this->ownerMenu->assertItemKeyAvailable($this, $key);
+        }
         $this->key = $key;
         $this->explicitKey = true;
+        if ($this->ownerMenu instanceof Menu) {
+            $this->ownerMenu->refreshTreeIndex();
+        }
 
         return $this;
     }
@@ -299,6 +311,9 @@ class Item implements ItemInterface
     public function setSubMenu(MenuInterface $menu): static
     {
         $this->assertMutable();
+        if ($this->subMenu === $menu) {
+            return $this;
+        }
         if (
             $menu->getOwnerItem() !== null
             && $menu->getOwnerItem() !== $this
@@ -308,8 +323,17 @@ class Item implements ItemInterface
                 'Cannot reassign a populated submenu that already belongs to another item. Detach or clone its items first.',
             );
         }
+        if ($this->ownerMenu instanceof Menu) {
+            $this->ownerMenu->assertSubMenuReplacement($this, $menu);
+        }
+        if ($this->subMenu instanceof Menu) {
+            $this->subMenu->setOwnerItem(null);
+        }
         $menu->setOwnerItem($this);
         $this->subMenu = $menu;
+        if ($this->ownerMenu instanceof Menu) {
+            $this->ownerMenu->refreshTreeIndex();
+        }
 
         return $this;
     }
@@ -399,14 +423,19 @@ class Item implements ItemInterface
         $this->assertMutable();
         $ownerMenu = $this->ownerMenu;
         if ($ownerMenu !== null) {
-            $ownerMenu->remove($this->id);
+            if ($ownerMenu->get($this->id) === $this) {
+                $ownerMenu->remove($this->id);
+            } else {
+                $this->setOwnerMenu(null);
+                $this->setParent(null);
+            }
 
             return $this;
         }
 
         if ($this->parent !== null) {
             $subMenu = $this->parent->getSubMenu();
-            if ($subMenu->get($this->id) !== null) {
+            if ($subMenu->get($this->id) === $this) {
                 $subMenu->remove($this->id);
             } else {
                 $this->setParent(null);
@@ -625,6 +654,11 @@ class Item implements ItemInterface
     public function freeze(): static
     {
         $this->frozen = true;
+        if ($this->link instanceof Link) {
+            // A link can be shared between items; freeze a private copy so the others stay mutable.
+            $this->link = clone $this->link;
+            $this->link->freeze();
+        }
         if ($this->subMenu instanceof MenuInterface) {
             $this->subMenu->freeze();
         }

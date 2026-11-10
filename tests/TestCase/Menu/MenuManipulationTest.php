@@ -21,14 +21,14 @@ class MenuManipulationTest extends TestCase
         return array_map(static fn ($item): string => $item->getKey(), $menu->getItems());
     }
 
-    public function testGetByKeyOnlyMatchesExplicitKeys(): void
+    public function testGetByKeyFallsBackToLabelSlug(): void
     {
         $menu = Menu::create();
         $menu->addItem('Dashboard', '/d');
         $profile = $menu->addItem('Profile', '/p', ['key' => 'profile']);
 
         $this->assertSame($profile, $menu->getByKey('profile'));
-        $this->assertNull($menu->getByKey('dashboard'));
+        $this->assertSame($menu->getItems()[0], $menu->getByKey('dashboard'));
         $this->assertNull($menu->getByKey('missing'));
     }
 
@@ -55,16 +55,16 @@ class MenuManipulationTest extends TestCase
         $this->assertSame(['keep'], $this->keys($menu));
     }
 
-    public function testRemoveByKeyThrowsWhenOnlyImplicitSlugKeysMatch(): void
+    public function testRemoveByKeyUsesFirstImplicitSlugMatch(): void
     {
         $menu = Menu::create();
         $menu->addItem('Settings', '/a'); // implicit slug key "settings"
         $menu->addItem('Settings', '/b'); // same slug key
         $menu->addItem('Other', '/c');
 
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Unknown menu item key `settings`.');
         $menu->removeByKey('settings');
+        $this->assertCount(2, $menu->getItems());
+        $this->assertSame('Settings', $menu->getItems()[0]->getLabel());
     }
 
     public function testRemoveByKeyThrowsWhenMissing(): void
@@ -188,6 +188,59 @@ class MenuManipulationTest extends TestCase
 
         $this->assertSame(['a', 'b', 'c', 'd'], $this->keys($main));
         $this->assertSame(['c', 'd'], $this->keys($other));
+    }
+
+    public function testMergeRejectsLaterCollisionWithoutChangingTarget(): void
+    {
+        $target = Menu::create(['class' => 'target']);
+        $target->addItem('Existing', options: ['id' => 'same']);
+        $source = Menu::create(['id' => 'source']);
+        $source->addItem('First', options: ['id' => 'first']);
+        $source->addItem('Collision', options: ['id' => 'same']);
+
+        try {
+            $target->merge($source, true);
+            $this->fail('Expected duplicate id.');
+        } catch (InvalidArgumentException $exception) {
+            $this->assertStringContainsString('same', $exception->getMessage());
+        }
+        $this->assertCount(1, $target->getItems());
+        $this->assertSame(['class' => 'target'], $target->getAttributes());
+    }
+
+    public function testMergeCloneOfSelfNamesCollidingId(): void
+    {
+        $menu = Menu::create();
+        $menu->addItem('Item', options: ['id' => 'same']);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Duplicate menu item id `same` detected.');
+        $menu->merge(clone $menu);
+    }
+
+    public function testExplicitKeyPrecedesSlugForLookupAndPositioning(): void
+    {
+        $menu = Menu::create();
+        $implicit = $menu->addItem('Account');
+        $explicit = $menu->addItem('Other', options: ['key' => 'account']);
+        $this->assertSame($explicit, $menu->getByKey('account'));
+        $menu->insertBefore($menu->newItem('New'), 'account');
+        $this->assertSame('New', $menu->getItems()[1]->getLabel());
+        $menu->moveToFirstPosition('account');
+        $this->assertSame($explicit, $menu->getItems()[0]);
+        $this->assertSame($implicit, $menu->getItems()[1]);
+    }
+
+    public function testInsertAndMoveUseLabelSlugWhenNoKeyIsSet(): void
+    {
+        $menu = Menu::create();
+        $menu->addItem('My Account');
+        $menu->addItem('Settings');
+
+        $menu->insertAfter($menu->newItem('Profile'), 'my-account');
+        $this->assertSame('Profile', $menu->getItems()[1]->getLabel());
+        $menu->moveToFirstPosition('settings');
+        $this->assertSame('Settings', $menu->getItems()[0]->getLabel());
     }
 
     public function testMergeAttributes(): void

@@ -14,7 +14,8 @@ use CakeMenu\Menu;
 $menu = Menu::create(['class' => 'nav nav-pills']);
 $menu->addItem('Home', '/');
 $menu->addItem('Docs', 'https://book.cakephp.org', [
-    'attributes' => ['target' => '_blank', 'rel' => 'noopener'],
+    'external' => true,
+    'linkAttributes' => ['target' => '_blank', 'rel' => 'noopener'],
 ]);
 
 $menu->addItems([
@@ -38,7 +39,7 @@ $menu->addItem('Articles', '/articles');
 ```php [External]
 $menu->addItem('Docs', 'https://book.cakephp.org', [
     'external' => true,
-    'attributes' => ['target' => '_blank', 'rel' => 'noopener'],
+    'linkAttributes' => ['target' => '_blank', 'rel' => 'noopener'],
 ]);
 ```
 
@@ -172,7 +173,7 @@ If you want to lock the structural definition after building it:
 $menu->freeze();
 ```
 
-Frozen menus still allow runtime state updates from resolvers such as `active`, `visible`, and `expanded`, but block structural/content changes.
+Frozen menus still allow runtime state updates from resolvers such as `active`, `visible`, and `expanded`. Item links also reject URL and attribute changes.
 
 ## Item Lookup and Mutation
 
@@ -183,9 +184,9 @@ $menu->get('account');           // by id
 $menu->has('account');
 $menu->remove('account');        // throws if the id does not exist
 
-$menu->getByKey('profile');      // by explicit key only
+$menu->getByKey('profile');      // explicit key, then label slug
 $menu->hasKey('profile');
-$menu->removeByKey('profile');   // removes the first explicit-key match; throws if missing
+$menu->removeByKey('profile');   // removes the explicit match, or first matching slug
 
 $menu->sortBy('weight');
 $menu->filter(fn ($item) => $item->isVisible());
@@ -195,8 +196,8 @@ $menu->getActiveItem();
 ```
 
 ::: tip
-Key lookups match explicit keys only. If you need to target an item by key, assign one explicitly
-with `['key' => 'profile']`.
+Explicit keys take precedence over label slugs. Assign a key when a label may change or two items
+have the same slug.
 :::
 
 ## Tree Manipulation
@@ -224,6 +225,22 @@ $firstTwo = $menu->slice(0, 2);
 ['primary' => $left, 'secondary' => $right] = $menu->split(2);
 ```
 
+IDs must be unique across the whole tree. `merge()` checks every incoming item before changing
+the target. Clones keep their IDs, so merging a clone of a menu into itself raises a duplicate ID
+error. To combine those trees, assign fresh IDs and explicit keys to the copied items first:
+
+```php
+$copy = clone $otherMenu;
+foreach ($copy->collect() as $item) {
+    $id = 'menu-item-' . \Cake\Utility\Text::uuid();
+    $item->setId($id);
+    if ($item->hasExplicitKey()) {
+        $item->setKey($id);
+    }
+}
+$menu->merge($copy);
+```
+
 ### Flattened Collection
 
 `Menu::collect()` returns an `ItemCollection` containing every item in the tree (depth-first), so
@@ -237,7 +254,7 @@ foreach ($items as $item) {
 }
 
 $items->findById('menu-item-...');
-$items->findByKey('profile'); // explicit key only
+$items->findByKey('profile'); // explicit key, then label slug
 $items->findByParent($accountItem); // direct children of $accountItem
 count($items);
 ```
@@ -277,6 +294,9 @@ $menu->setItemClass(CustomItem::class);
 $parent = $menu->addItem('Parent');
 $child = $parent->getSubMenu()->addItem('Child');
 ```
+
+`fromArray($config, CustomItem::class)` and `fromFlat($rows, $mapper, CustomItem::class)`
+accept the same item class when importing a menu.
 
 `getItemClass()` returns the configured class. `MenuInterface` also exposes `collect()`,
 which returns all items in an `ItemCollection`.
