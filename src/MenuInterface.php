@@ -10,6 +10,10 @@ use CakeMenu\Resolver\ResolverInterface;
 use Closure;
 use Stringable;
 
+/**
+ * Implementations should deep-clone their items in `__clone()`: `MenuHelper::getCurrentItem()` returns
+ * the item from a cloned, resolved menu so that it keeps its ancestors.
+ */
 interface MenuInterface
 {
     /**

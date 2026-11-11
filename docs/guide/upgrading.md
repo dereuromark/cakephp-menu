@@ -18,8 +18,8 @@ code changes, but check the points below.
   item hidden by another resolver, and an item built with `visible => false` stays hidden.
 - Duplicate ids and explicit keys are rejected across the whole tree, not only within one submenu.
   `fromFlat()` rejects duplicate keys before importing anything.
-- `getCurrentItem()` returns a detached clone that carries the resolved state, not the menu's own
-  item instance.
+- `getCurrentItem()` returns the item from a resolved copy of the menu, not the menu's own item
+  instance. Its state and ancestors are intact, but changes to it do not affect the menu.
 - Bootstrap 5 puts `active` on the link or dropdown toggle instead of the `<li>`. Set
   `activeOn => 'both'` to keep it on both.
 - `aria-expanded` moves from the `<li>` to the link or label that toggles the submenu. With
