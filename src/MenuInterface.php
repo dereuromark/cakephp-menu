@@ -8,6 +8,7 @@ use CakeMenu\Item\ItemInterface;
 use CakeMenu\Link\LinkInterface;
 use CakeMenu\Resolver\ResolverInterface;
 use Closure;
+use Stringable;
 
 interface MenuInterface
 {
@@ -46,7 +47,7 @@ interface MenuInterface
      * @phpstan-param array<string, mixed> $options
      */
     public function addItem(
-        string $label,
+        Stringable|string $label,
         LinkInterface|array|string|null $link = null,
         array $options = [],
     ): ItemInterface;
@@ -64,14 +65,14 @@ interface MenuInterface
     /**
      * @phpstan-param array<string, mixed> $options
      */
-    public function addHeader(string $label, array $options = []): ItemInterface;
+    public function addHeader(Stringable|string $label, array $options = []): ItemInterface;
 
     /**
      * @phpstan-param \CakeMenu\Link\LinkInterface|array<string|int, mixed>|string|null $link
      * @phpstan-param array<string, mixed> $options
      */
     public function newItem(
-        ?string $label = null,
+        Stringable|string|null $label = null,
         LinkInterface|array|string|null $link = null,
         array $options = [],
     ): ItemInterface;

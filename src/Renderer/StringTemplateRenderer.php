@@ -6,7 +6,6 @@ namespace CakeMenu\Renderer;
 
 use Cake\Core\InstanceConfigTrait;
 use Cake\View\StringTemplateTrait;
-use CakeMenu\Item\Item;
 use CakeMenu\Item\ItemInterface;
 use CakeMenu\Item\SelfRendererInterface;
 use CakeMenu\MenuInterface;
@@ -491,7 +490,7 @@ class StringTemplateRenderer implements RendererInterface
 
         $template = $this->getStringOption($options, 'iconTemplate') ?: '<i class="{{icon}}" aria-hidden="true"></i> ';
 
-        $content = $item instanceof Item && !$item->shouldEscapeIcon()
+        $content = !$item->shouldEscapeIcon()
             ? $icon
             : htmlspecialchars($icon, ENT_QUOTES, 'UTF-8');
 
@@ -515,7 +514,7 @@ class StringTemplateRenderer implements RendererInterface
             ['{{class}}', '{{text}}'],
             [
                 htmlspecialchars($class, ENT_QUOTES, 'UTF-8'),
-                $item instanceof Item && !$item->shouldEscapeBadge()
+                !$item->shouldEscapeBadge()
                     ? $badge
                     : htmlspecialchars($badge, ENT_QUOTES, 'UTF-8'),
             ],

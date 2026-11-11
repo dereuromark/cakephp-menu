@@ -13,6 +13,7 @@ use CakeMenu\Resolver\ResolverInterface;
 use Closure;
 use InvalidArgumentException;
 use LogicException;
+use Stringable;
 
 class Menu implements MenuInterface
 {
@@ -267,7 +268,7 @@ class Menu implements MenuInterface
      * @phpstan-param array<string, mixed> $options
      */
     public function addItem(
-        string $label,
+        Stringable|string $label,
         LinkInterface|array|string|null $link = null,
         array $options = [],
     ): ItemInterface {
@@ -306,7 +307,7 @@ class Menu implements MenuInterface
      *
      * @phpstan-param array<string, mixed> $options
      */
-    public function addHeader(string $label, array $options = []): ItemInterface
+    public function addHeader(Stringable|string $label, array $options = []): ItemInterface
     {
         $item = $this->newItem($label, null, $options);
         $item->setHeader();
@@ -320,12 +321,12 @@ class Menu implements MenuInterface
      * @phpstan-param array<string, mixed> $options
      */
     public function newItem(
-        ?string $label = null,
+        Stringable|string|null $label = null,
         LinkInterface|array|string|null $link = null,
         array $options = [],
     ): ItemInterface {
         $className = $this->itemClass;
-        $item = new $className($label, $link);
+        $item = new $className($label instanceof Stringable ? (string)$label : $label, $link);
 
         if (isset($options['id'])) {
             $item->setId((string)$options['id']);
@@ -345,19 +346,14 @@ class Menu implements MenuInterface
             $item->setAfter((string)$options['after']);
         }
         if (isset($options['icon'])) {
-            if ($item instanceof Item) {
-                $item->setIcon((string)$options['icon'], (bool)($options['escapeIcon'] ?? true));
-            } else {
-                $item->setIcon((string)$options['icon']);
-            }
+            $item->setIcon((string)$options['icon'], (bool)($options['escapeIcon'] ?? true));
         }
         if (isset($options['badge'])) {
-            $badgeType = isset($options['badgeType']) ? (string)$options['badgeType'] : null;
-            if ($item instanceof Item) {
-                $item->setBadge((string)$options['badge'], $badgeType, (bool)($options['escapeBadge'] ?? true));
-            } else {
-                $item->setBadge((string)$options['badge'], $badgeType);
-            }
+            $item->setBadge(
+                (string)$options['badge'],
+                isset($options['badgeType']) ? (string)$options['badgeType'] : null,
+                (bool)($options['escapeBadge'] ?? true),
+            );
         }
         if (isset($options['attributes']) && is_array($options['attributes'])) {
             $item->setAttributes($options['attributes']);

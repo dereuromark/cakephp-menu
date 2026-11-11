@@ -6,6 +6,7 @@ namespace CakeMenu\Item;
 
 use CakeMenu\Link\LinkInterface;
 use CakeMenu\MenuInterface;
+use Stringable;
 
 interface ItemInterface
 {
@@ -19,7 +20,7 @@ interface ItemInterface
 
     public function hasExplicitKey(): bool;
 
-    public function setLabel(string $label, bool $escape = true): static;
+    public function setLabel(Stringable|string $label, bool $escape = true): static;
 
     public function getLabel(): ?string;
 
@@ -116,13 +117,17 @@ interface ItemInterface
 
     public function getAfter(): string;
 
-    public function setIcon(?string $icon): static;
+    public function setIcon(Stringable|string|null $icon, bool $escape = true): static;
 
     public function getIcon(): ?string;
 
-    public function setBadge(string|int|null $badge, ?string $type = null): static;
+    public function shouldEscapeIcon(): bool;
+
+    public function setBadge(Stringable|string|int|null $badge, ?string $type = null, bool $escape = true): static;
 
     public function getBadge(): ?string;
+
+    public function shouldEscapeBadge(): bool;
 
     public function getBadgeType(): ?string;
 
