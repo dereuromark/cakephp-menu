@@ -74,9 +74,11 @@ Per-render overrides for the icon/badge markup (see [Building Menus](/guide/buil
 | `iconTemplate` | `<i class="{{icon}}" aria-hidden="true"></i> ` |
 | `badgeTemplate` | ` <span class="{{class}}">{{text}}</span>` |
 
-Icon and badge values are escaped before insertion into these templates. For trusted icon markup,
-set the item's icon with `setIcon($html, false)` and use an `iconTemplate` with `{{icon}}` outside
-an HTML attribute. Badge text can opt out through `setBadge($text, $type, false)`.
+Icon and badge values are escaped before insertion into these templates. Trusted icon markup
+(`setIcon($html, false)` or the `escapeIcon => false` item option) is a whole element, so without a
+custom `iconTemplate` it is inserted as-is, followed by a space, instead of into the default
+template's `class` attribute. A custom `iconTemplate` is used for it too, so keep `{{icon}}` outside
+an HTML attribute there. Badge text can opt out through `setBadge($text, $type, false)`.
 
 ## Bootstrap5Renderer
 

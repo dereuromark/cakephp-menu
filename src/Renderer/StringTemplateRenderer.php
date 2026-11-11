@@ -488,13 +488,15 @@ class StringTemplateRenderer implements RendererInterface
             return '';
         }
 
-        $template = $this->getStringOption($options, 'iconTemplate') ?: '<i class="{{icon}}" aria-hidden="true"></i> ';
+        $template = $this->getStringOption($options, 'iconTemplate');
+        if (!$item->shouldEscapeIcon()) {
+            // Trusted markup is a whole element, so it cannot go into the default template's class attribute.
+            return str_replace('{{icon}}', $icon, $template ?: '{{icon}} ');
+        }
 
-        $content = !$item->shouldEscapeIcon()
-            ? $icon
-            : htmlspecialchars($icon, ENT_QUOTES, 'UTF-8');
+        $template = $template ?: '<i class="{{icon}}" aria-hidden="true"></i> ';
 
-        return str_replace('{{icon}}', $content, $template);
+        return str_replace('{{icon}}', htmlspecialchars($icon, ENT_QUOTES, 'UTF-8'), $template);
     }
 
     /**

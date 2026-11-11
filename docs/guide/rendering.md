@@ -176,16 +176,18 @@ without roles they keep `role="button"`.
 
 ### Icons and badges
 
-Icon classes and badge text are escaped by default. To insert trusted Bootstrap icon markup,
-set the icon on the item and place `{{icon}}` in a text position:
+Icon classes and badge text are escaped by default. To insert trusted icon markup instead of a
+class name, turn escaping off for that icon. It is then inserted as-is in front of the label:
 
 ```php
-$item = new \CakeMenu\Item\Item('Inbox', '/inbox');
-$item->setIcon('<i class="bi bi-inbox" aria-hidden="true"></i>', false);
-$menu->add($item);
-
-echo $this->Menu->render($menu, ['iconTemplate' => '{{icon}} ']);
+$menu->addItem('Inbox', '/inbox', [
+    'icon' => '<i class="bi bi-inbox" aria-hidden="true"></i>',
+    'escapeIcon' => false,
+]);
+// or: $item->setIcon('<i class="bi bi-inbox" aria-hidden="true"></i>', false);
 ```
+
+A custom `iconTemplate` also applies to trusted markup, so place `{{icon}}` in a text position there.
 
 Use `setBadge($text, $type, false)` only when the badge text is trusted HTML.
 

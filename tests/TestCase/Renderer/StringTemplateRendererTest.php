@@ -367,4 +367,27 @@ class StringTemplateRendererTest extends TestCase
         $this->assertStringContainsString('&lt;i&gt;x&lt;/i&gt;', $html);
         $this->assertStringContainsString('&lt;b&gt;1&lt;/b&gt;', $html);
     }
+
+    public function testTrustedIconMarkupWorksWithDefaultTemplate(): void
+    {
+        $menu = new Menu();
+        $menu->addItem('Home', '/', ['icon' => '<i class="bi bi-house" aria-hidden="true"></i>', 'escapeIcon' => false]);
+        $menu->addItem('Plain', '/plain', ['icon' => 'bi bi-star']);
+
+        $html = (new StringTemplateRenderer())->render($menu);
+
+        $this->assertStringContainsString('<i class="bi bi-house" aria-hidden="true"></i> Home', $html);
+        $this->assertStringContainsString('<i class="bi bi-star" aria-hidden="true"></i> Plain', $html);
+        $this->assertStringNotContainsString('class="<i', $html);
+    }
+
+    public function testTrustedIconMarkupUsesCustomTemplate(): void
+    {
+        $menu = new Menu();
+        $menu->addItem('Home', '/', ['icon' => '<svg></svg>', 'escapeIcon' => false]);
+
+        $html = (new StringTemplateRenderer())->render($menu, ['iconTemplate' => '<span class="icon">{{icon}}</span> ']);
+
+        $this->assertStringContainsString('<span class="icon"><svg></svg></span> Home', $html);
+    }
 }
