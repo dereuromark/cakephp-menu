@@ -29,9 +29,11 @@ code changes, but check the points below.
 
 - `getCurrentItem()` and breadcrumbs return the deepest active item, and skip hidden items and
   everything below them.
-- Visibility you resolve on a menu before calling the helper survives `render()`.
-- Links with a custom route `_name` become active. String URLs match under a base path and ignore a
-  trailing slash or percent-encoding.
+- Visibility you resolve on a menu before calling the helper survives `render()`. Runtime active
+  and expanded state is cleared before the helper resolves the request, then restored afterward.
+- Links with a custom route `_name` become active. String URLs match the request's app-relative
+  path. If a link starts with the request's base path, the base is stripped before matching.
+  Trailing slashes and percent-encoded characters are normalized, except encoded slashes.
 - `newItem()`/`addItem()` apply `linkAttributes`, `external` and `expanded`, and key lookup falls back
   to the label slug.
 - `linkCurrent => true` links the last crumb in `renderBreadcrumbs()`, and only that crumb gets

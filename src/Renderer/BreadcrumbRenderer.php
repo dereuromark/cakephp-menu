@@ -91,6 +91,7 @@ class BreadcrumbRenderer extends StringTemplateRenderer
         }
 
         $content = $this->renderContent($item, [
+            'activeOn' => 'item',
             'currentAsLink' => !$isCurrent || $this->getBooleanOption($options, 'linkCurrent', false),
             'addAriaCurrent' => $isCurrent && $this->getBooleanOption($options, 'addAriaCurrent', true),
             'addAriaExpanded' => false,

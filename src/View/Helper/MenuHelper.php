@@ -133,6 +133,7 @@ class MenuHelper extends Helper
         $this->menus[$name] = $menu;
         $this->menuConfigs[$name] = array_diff_key($options, array_flip(['attributes', 'overwrite', 'cache', 'rebuild']));
         $this->lastMenuName = $name;
+        unset($this->cacheKeys[$name]);
         // Now explicitly defined in code; drop any config-origin marker so it is no longer
         // re-materialized from configuration.
         unset($this->configOrigin[$name]);
@@ -262,6 +263,7 @@ class MenuHelper extends Helper
             $this->menuConfigs[$name],
             $this->configuredMenus[$name],
             $this->configOrigin[$name],
+            $this->cacheKeys[$name],
         );
         if ($this->lastMenuName === $name) {
             $this->lastMenuName = null;
@@ -276,6 +278,7 @@ class MenuHelper extends Helper
         $this->menuConfigs = [];
         $this->configuredMenus = [];
         $this->configOrigin = [];
+        $this->cacheKeys = [];
         $this->lastMenuName = null;
         // Restore configured menus to their pristine state so they remain available after a reset.
         $this->loadConfiguredMenus();
@@ -331,15 +334,27 @@ class MenuHelper extends Helper
         try {
             $this->applyResolvers($menu, $resolvedOptions);
 
-            // Return the item from a resolved copy of the tree, so it keeps its state and ancestors
-            // (getPath()) after the live menu's state is restored.
-            $item = $this->getVisibleActiveItem(clone $menu);
-            if ($item !== null && $item === $this->getVisibleActiveItem($menu)) {
-                // A menu whose clone shares its items: copy the item alone so it stays independent.
-                return clone $item;
+            $current = $this->getVisibleActiveItem($menu);
+            if ($current === null) {
+                return null;
             }
 
-            return $item;
+            $root = $menu;
+            while ($root->getOwnerItem()?->getOwnerMenu() !== null) {
+                $root = $root->getOwnerItem()->getOwnerMenu();
+            }
+            $copy = (clone $root)->get($current->getId());
+            if ($copy === null) {
+                $copy = $this->getVisibleActiveItem(clone $menu);
+            }
+            if ($copy === $current) {
+                $copy = clone $current;
+            }
+            if ($copy !== null && $current->isFrozen()) {
+                $copy->freeze();
+            }
+
+            return $copy;
         } finally {
             $this->restoreItemState($menu, $state);
         }
@@ -495,10 +510,25 @@ class MenuHelper extends Helper
             throw new InvalidArgumentException('Resolver must implement ResolverInterface.');
         }
 
+        $this->clearRuntimeActivity($menu);
         $menu->resolve($resolver);
 
         if (!empty($options['singleActive'])) {
             $this->enforceSingleActive($menu);
+        }
+    }
+
+    protected function clearRuntimeActivity(MenuInterface $menu): void
+    {
+        foreach ($menu->getItems() as $item) {
+            $visibility = $item->getRuntimeState()['visible'];
+            $item->resetState();
+            if ($visibility !== null) {
+                $item->setRuntimeVisible($visibility);
+            }
+            if ($item->hasSubMenu()) {
+                $this->clearRuntimeActivity($item->getSubMenu());
+            }
         }
     }
 

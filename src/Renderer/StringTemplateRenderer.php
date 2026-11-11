@@ -313,7 +313,7 @@ class StringTemplateRenderer implements RendererInterface
             }
             $attributes = $this->mergeLabelAttributes($attributes, $item);
             $attributes = $this->applyContentState($attributes, $item, $options, $level);
-            $attributes = $this->applyMenuItemRole($attributes, $item, $options);
+            $attributes = $this->applyMenuItemRole($attributes, $item, $options, $level);
 
             return $this->templater()->format('label', [
                 'attributes' => $this->renderAttributes($attributes),
@@ -328,7 +328,7 @@ class StringTemplateRenderer implements RendererInterface
         }
         $attributes = $this->mergeLabelAttributes($attributes, $item);
         $attributes = $this->applyContentState($attributes, $item, $options, $level);
-        $attributes = $this->applyMenuItemRole($attributes, $item, $options);
+        $attributes = $this->applyMenuItemRole($attributes, $item, $options, $level);
 
         return $this->templater()->format('link', [
             'attributes' => $this->renderAttributes($attributes),
@@ -411,7 +411,7 @@ class StringTemplateRenderer implements RendererInterface
      *
      * @phpstan-return array<string, mixed>
      */
-    protected function applyMenuItemRole(array $attributes, ItemInterface $item, array $options): array
+    protected function applyMenuItemRole(array $attributes, ItemInterface $item, array $options, int $level = 1): array
     {
         if (!$this->getBooleanOption($options, 'roles', false)) {
             return $attributes;
@@ -419,7 +419,7 @@ class StringTemplateRenderer implements RendererInterface
         if (!isset($attributes['role'])) {
             $attributes['role'] = 'menuitem';
         }
-        if ($item->hasSubMenu() && $item->displaysChildren() && $this->hasRenderableChild($item, $options) && !isset($attributes['aria-haspopup'])) {
+        if ($this->rendersSubMenu($item, $options, $level) && $this->hasRenderableChild($item, $options, $level) && !isset($attributes['aria-haspopup'])) {
             $attributes['aria-haspopup'] = 'true';
         }
 

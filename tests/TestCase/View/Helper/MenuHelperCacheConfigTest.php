@@ -15,10 +15,34 @@ use CakeMenu\MenuInterface;
 use CakeMenu\Renderer\StringTemplateRenderer;
 use CakeMenu\View\Helper\MenuHelper;
 use InvalidArgumentException;
+use ReflectionProperty;
 use RuntimeException;
 
 class MenuHelperCacheConfigTest extends TestCase
 {
+    public function testCacheKeysClearWhenMenuIsReplacedRemovedOrReset(): void
+    {
+        $helper = $this->createHelper(new ServerRequest());
+        $build = static function (MenuInterface $menu): void {
+            $menu->addItem('Home', '/');
+        };
+        $options = ['cache' => ['key' => 'key_lifecycle', 'config' => 'menu_test']];
+        $keys = new ReflectionProperty(MenuHelper::class, 'cacheKeys');
+
+        $helper->register('main', $build, $options);
+        $this->assertArrayHasKey('main', $keys->getValue($helper));
+        $helper->create('main', ['overwrite' => true]);
+        $this->assertArrayNotHasKey('main', $keys->getValue($helper));
+
+        $helper->register('main', $build, $options);
+        $helper->remove('main');
+        $this->assertArrayNotHasKey('main', $keys->getValue($helper));
+
+        $helper->register('main', $build, $options);
+        $helper->reset();
+        $this->assertSame([], $keys->getValue($helper));
+    }
+
     public function testCacheSeparatesLocalesAndReusesEachLocale(): void
     {
         $oldLocale = I18n::getLocale();

@@ -44,8 +44,11 @@ $menu->addItem('View', ['_name' => 'articles:view']);
 
 Explicit route names are matched against the name in the current request. Passed parameters,
 such as `['_name' => 'article', 'slug' => 'hello']`, work with fuzzy and exact matching.
-String URLs use the rendered link path, including the application's base path. Trailing slashes
-and percent-encoded path characters are normalized for matching.
+String URLs match the request's app-relative path. For a subdirectory install at `/app`, both
+`/users` and `/app/users` match a request whose base is `/app` and whose URI path is `/users`
+(CakePHP strips the base from the request path; if a request still carries it, it is stripped too). Trailing slashes and percent-encoded path characters are
+normalized, but an encoded slash (`%2F`) remains distinct from a path separator. Empty links,
+fragment-only links, query-only links, and non-HTTP schemes never become active.
 
 In apps that mix prefixed and non-prefixed routes, pass `'prefix' => false` on the non-prefixed links.
 With fuzzy matching (the default), a link without a `prefix` key matches regardless of the current

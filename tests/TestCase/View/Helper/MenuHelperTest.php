@@ -83,6 +83,23 @@ class MenuHelperTest extends TestCase
         $this->assertFalse($child->isActive());
     }
 
+    public function testCurrentItemFromSubmenuKeepsFullPathAndFrozenState(): void
+    {
+        $helper = $this->createHelper(new ServerRequest(['url' => '/articles']));
+        $menu = $helper->create('nested');
+        $sub = $menu->addItem('Admin', '#')->getSubMenu();
+        $sub->addItem('Articles', '/articles');
+        $menu->freeze();
+
+        $current = $helper->getCurrentItem($sub);
+
+        $this->assertNotNull($current);
+        $this->assertSame(['Admin', 'Articles'], array_map(static fn ($item) => $item->getLabel(), $current->getPath()));
+        $this->assertSame(1, $current->getLevel());
+        $this->assertTrue($current->isFrozen());
+        $this->assertSame(['Admin', 'Articles'], array_column($helper->getBreadcrumbs($sub), 'title'));
+    }
+
     public function testCurrentItemStaysIndependentForShallowCloningMenu(): void
     {
         $request = (new ServerRequest(['url' => '/articles/view/42']))
@@ -139,6 +156,28 @@ class MenuHelperTest extends TestCase
         $this->assertSame('<ul></ul>', $helper->render($menu));
         $this->assertFalse($item->isVisible());
         $this->assertFalse($item->getRuntimeState()['visible']);
+    }
+
+    public function testRenderClearsStaleRuntimeActiveAndExpandedButKeepsVisibility(): void
+    {
+        $helper = $this->createHelper(new ServerRequest(['url' => '/users']));
+        $menu = $helper->create('state');
+        $stale = $menu->addItem('Articles', '/articles');
+        $stale->getSubMenu()->addItem('Hidden', '/hidden');
+        $stale->setRuntimeActive(true)->setRuntimeExpanded(true);
+        $hidden = $menu->addItem('Private', '/private')->setRuntimeVisible(false);
+        $menu->addItem('Users', '/users');
+
+        $html = $helper->render($menu);
+
+        $this->assertSame(1, substr_count($html, 'aria-current="page"'));
+        $this->assertSame(1, substr_count($html, 'class="active"'));
+        $this->assertStringNotContainsString('Private', $html);
+        $this->assertSame('Users', $helper->getCurrentItem($menu)?->getLabel());
+        $this->assertSame(['Users'], array_column($helper->getBreadcrumbs($menu), 'title'));
+        $this->assertTrue($stale->getRuntimeState()['active']);
+        $this->assertTrue($stale->getRuntimeState()['expanded']);
+        $this->assertFalse($hidden->getRuntimeState()['visible']);
     }
 
     public function testBreadcrumbsOmitHiddenActiveItemAndAncestors(): void
@@ -347,6 +386,18 @@ class MenuHelperTest extends TestCase
         $html = $menuHelper->renderBreadcrumbs('main', ['renderer' => BreadcrumbRenderer::class]);
 
         $this->assertStringContainsString('<nav aria-label="breadcrumb">', $html);
+    }
+
+    public function testBreadcrumbsIgnoreActiveOnLink(): void
+    {
+        $helper = $this->createHelper(new ServerRequest(['url' => '/articles']));
+        $menu = $helper->create('crumbs');
+        $menu->addItem('Articles', '/articles');
+
+        $html = $helper->renderBreadcrumbs($menu, ['activeOn' => 'link', 'linkCurrent' => true]);
+
+        $this->assertStringContainsString('<li class="breadcrumb-item active"><a href="/articles" aria-current="page">Articles</a></li>', $html);
+        $this->assertStringNotContainsString('<a href="/articles" aria-current="page" class="active">', $html);
     }
 
     public function testGetOrCreateAndDuplicateCreateProtection(): void

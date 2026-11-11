@@ -11,6 +11,20 @@ use CakeMenu\Renderer\Bootstrap5SidebarRenderer;
 
 class Bootstrap5SidebarRendererTest extends TestCase
 {
+    public function testDepthLimitedAncestorKeepsActiveTrail(): void
+    {
+        $menu = Menu::create();
+        $branch = $menu->addItem('Admin', '#');
+        $branch->getSubMenu()->addItem('Articles', '/articles', ['active' => true]);
+
+        $html = (new Bootstrap5SidebarRenderer())->render($menu, ['depth' => 1, 'roles' => true]);
+
+        $this->assertStringContainsString('<a class="nav-link active" href="#" role="menuitem">Admin</a>', $html);
+        $this->assertStringNotContainsString('aria-current="page"', $html);
+        $this->assertStringNotContainsString('aria-haspopup', $html);
+        $this->assertStringNotContainsString('Articles', $html);
+    }
+
     public function testBranchTriggerUsesMenuitemRoleAndOmitsEmptyNestedList(): void
     {
         $menu = Menu::create();

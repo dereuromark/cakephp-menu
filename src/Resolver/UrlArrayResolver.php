@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace CakeMenu\Resolver;
 
 use Cake\Core\InstanceConfigTrait;
+use Cake\Routing\Route\Route;
 use CakeMenu\Item\ItemInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use function array_diff_key;
@@ -16,6 +17,7 @@ use function array_walk;
 use function is_array;
 use function is_int;
 use function is_numeric;
+use function is_string;
 use function ksort;
 use const SORT_STRING;
 
@@ -114,6 +116,21 @@ class UrlArrayResolver implements ResolverInterface
                     unset($exactRequest[$default]);
                 }
             }
+            $requestRoute = $requestParams['_route'] ?? null;
+            $mappedPass = $requestRoute instanceof Route && is_array($requestRoute->options['pass'] ?? null)
+                ? $requestRoute->options['pass'] : [];
+            foreach ($mappedPass as $index => $name) {
+                if (!is_int($index) || !is_string($name)) {
+                    continue;
+                }
+                if (
+                    !array_key_exists($index, $exactRoute)
+                    && array_key_exists($name, $exactRoute)
+                    && ($exactRequest[$index] ?? null) === $exactRoute[$name]
+                ) {
+                    unset($exactRequest[$index]);
+                }
+            }
         }
 
         return $exactRequest === $exactRoute;
@@ -132,9 +149,9 @@ class UrlArrayResolver implements ResolverInterface
      * succeed. Truthy values (e.g. an actual plugin name) are kept, so they still differentiate
      * routes.
      *
-     * @param array<string, mixed> $params
+     * @param array<string|int, mixed> $params
      *
-     * @return array<string, mixed>
+     * @return array<string|int, mixed>
      */
     protected function canonicalizeForExactMatch(array $params): array
     {
