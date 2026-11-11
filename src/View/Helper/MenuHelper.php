@@ -331,9 +331,9 @@ class MenuHelper extends Helper
         try {
             $this->applyResolvers($menu, $resolvedOptions);
 
-            $item = $this->getVisibleActiveItem($menu);
-
-            return $item === null ? null : clone $item;
+            // Return the item from a resolved copy of the tree, so it keeps its state and ancestors
+            // (getPath()) after the live menu's state is restored.
+            return $this->getVisibleActiveItem(clone $menu);
         } finally {
             $this->restoreItemState($menu, $state);
         }

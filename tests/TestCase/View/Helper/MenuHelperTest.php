@@ -61,6 +61,28 @@ class MenuHelperTest extends TestCase
         }
     }
 
+    public function testCurrentItemKeepsAncestorsAndResolvedState(): void
+    {
+        $request = (new ServerRequest(['url' => '/articles/view/42']))
+            ->withAttribute('params', ['controller' => 'Articles', 'action' => 'view', 'pass' => [42]])
+            ->withUri((new ServerRequest())->getUri()->withPath('/articles/view/42'));
+        $helper = $this->createHelper($request);
+        $menu = $helper->create('trail');
+        $parent = $menu->addItem('Articles', ['controller' => 'Articles']);
+        $child = $parent->getSubMenu()->addItem('View', ['controller' => 'Articles', 'action' => 'view']);
+
+        $current = $helper->getCurrentItem('trail');
+
+        $this->assertNotNull($current);
+        $this->assertTrue($current->isActive());
+        $this->assertSame(['Articles', 'View'], array_map(
+            static fn ($item) => $item->getLabel(),
+            $helper->extractPath($current),
+        ));
+        $this->assertNotSame($child, $current);
+        $this->assertFalse($child->isActive());
+    }
+
     public function testNestedFuzzyMatchesUseDeepestItemWithoutSingleActive(): void
     {
         $request = (new ServerRequest(['url' => '/articles/view/42']))
@@ -240,7 +262,8 @@ class MenuHelperTest extends TestCase
         $this->assertSame($child->getId(), $currentItem->getId());
         $this->assertTrue($currentItem->isActive());
         $this->assertNull($child->getRuntimeState()['active']);
-        $this->assertNull($currentItem->getParent());
+        $this->assertSame($parent->getId(), $currentItem->getParent()?->getId());
+        $this->assertNotSame($parent, $currentItem->getParent());
         $this->assertSame([$parent, $child], $path);
     }
 

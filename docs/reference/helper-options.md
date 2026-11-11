@@ -21,7 +21,7 @@ $this->loadHelper('CakeMenu.Menu');
 | `get(string $name)` | Return a named menu (throws if missing). |
 | `remove(string $name)` / `reset()` | Drop one / all named menus. |
 | `render($menu = null, array $options = [])` | Resolve and render a menu (by name, instance, or the last-created). |
-| `getCurrentItem($menu = null, array $options = [])` | A detached clone of the selected visible active item, with its resolved state. The menu itself is restored after the call. |
+| `getCurrentItem($menu = null, array $options = [])` | The selected visible active item, taken from a resolved copy of the menu, so its state and ancestors (`getPath()`) stay available. The menu itself is restored after the call. |
 | `extractPath(ItemInterface $item)` | Root-to-item path (for breadcrumbs). |
 | `getBreadcrumbs($menu = null, array $options = [])` | Visible active path as an array of crumbs. Hidden items and their descendants yield no crumbs. Titles are HTML-escaped (unless the item opts out) and honor `translate`. |
 | `populateBreadcrumbs($menu = null, array $options = [])` | Push crumbs into Cake's `Breadcrumbs` helper. |
