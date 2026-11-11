@@ -5,6 +5,8 @@
 
     <file>src/</file>
     <file>tests/</file>
+    <!-- Declares Cake\View\HtmlStringable for CakePHP versions without it. -->
+    <exclude-pattern>tests/Fixture/html_stringable_shim.php</exclude-pattern>
 
     <rule ref="PhpCollective"/>
     <rule ref="PSR1.Classes.ClassDeclaration.MissingNamespace"/>
