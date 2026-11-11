@@ -260,7 +260,7 @@ from any template:
 public function initialize(): void
 {
     parent::initialize();
-    $this->loadHelper('CakeMenu.Menu');
+    $this->addHelper('CakeMenu.Menu');
 
     $this->Menu->register('main', function ($menu): void {
         $menu->addItem('Home', '/');

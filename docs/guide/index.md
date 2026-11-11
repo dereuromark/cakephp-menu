@@ -40,7 +40,7 @@ class AppView extends View
     {
         parent::initialize();
 
-        $this->loadHelper('CakeMenu.Menu');
+        $this->addHelper('CakeMenu.Menu');
     }
 }
 ```
