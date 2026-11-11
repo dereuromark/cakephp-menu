@@ -179,7 +179,7 @@ class Bootstrap5SidebarRenderer extends StringTemplateRenderer
 
         $content = $hasSubMenu
             ? $this->renderBranch($item, $options, $label, $level)
-            : $this->renderLeaf($item, $options, $label);
+            : $this->renderLeaf($item, $options, $label, $level);
 
         return $this->li($item, $options, $content);
     }
@@ -205,7 +205,7 @@ class Bootstrap5SidebarRenderer extends StringTemplateRenderer
     /**
      * @phpstan-param array<string, mixed> $options
      */
-    protected function renderLeaf(ItemInterface $item, array $options, string $label): string
+    protected function renderLeaf(ItemInterface $item, array $options, string $label, int $level): string
     {
         $active = $item->isActive();
         $link = $item->getLink();
@@ -214,7 +214,7 @@ class Bootstrap5SidebarRenderer extends StringTemplateRenderer
         // Keep the link's own attributes (title, data-*, custom classes) and merge our classes in.
         $attributes = $link?->getAttributes() ?? [];
         $attributes = $this->appendClass($attributes, $this->getStringOption($options, 'linkClass'));
-        if ($active) {
+        if ($active || $this->hasActiveDescendant($item)) {
             $attributes = $this->appendClass($attributes, $this->getStringOption($options, 'activeClass'));
         }
         if ($active && $this->getBooleanOption($options, 'addAriaCurrent', true)) {
@@ -224,14 +224,14 @@ class Bootstrap5SidebarRenderer extends StringTemplateRenderer
         if ($asLabel) {
             unset($attributes['href']);
             $attributes = $this->mergeLabelAttributes($attributes, $item);
-            $attributes = $this->applyMenuItemRole($attributes, $item, $options);
+            $attributes = $this->applyMenuItemRole($attributes, $item, $options, $level);
 
             return sprintf('<span%s>%s</span>', $this->renderAttributes($attributes), $label);
         }
 
         $attributes['href'] = $link->getUrl() ?? '#';
         $attributes = $this->mergeLabelAttributes($attributes, $item);
-        $attributes = $this->applyMenuItemRole($attributes, $item, $options);
+        $attributes = $this->applyMenuItemRole($attributes, $item, $options, $level);
 
         return sprintf('<a%s>%s</a>', $this->renderAttributes($attributes), $label);
     }

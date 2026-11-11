@@ -5,13 +5,14 @@ declare(strict_types=1);
 namespace CakeMenu\Resolver;
 
 use Cake\Core\InstanceConfigTrait;
-use Cake\Routing\Router;
 use CakeMenu\Item\ItemInterface;
 use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use function array_filter;
 use function array_merge;
 use function array_pad;
 use function explode;
+use function in_array;
 use function is_int;
 use function is_string;
 use function parse_url;
@@ -19,8 +20,11 @@ use function rawurldecode;
 use function rtrim;
 use function sort;
 use function str_ireplace;
+use function str_starts_with;
 use function strcasecmp;
+use function strlen;
 use function strtolower;
+use function substr;
 use function urldecode;
 use const SORT_STRING;
 
@@ -59,25 +63,25 @@ class Psr7UrlResolver implements ResolverInterface
         $ignoreQueryString = $item->getIgnoreQueryString() ?? (bool)$this->getConfig('ignoreQueryString');
 
         foreach ($this->extractRoutes($item) as $route) {
-            if (!is_string($route)) {
+            if (!is_string($route) || $route === '' || $route[0] === '#' || $route[0] === '?') {
                 continue;
             }
 
             $parts = parse_url($route);
-            if ($parts === false) {
+            if ($parts === false || !isset($parts['path']) || $parts['path'] === '') {
+                continue;
+            }
+            if (isset($parts['scheme']) && !in_array(strtolower($parts['scheme']), ['http', 'https'], true)) {
                 continue;
             }
 
-            // Match path (and query) separately rather than the full URI string: the request
-            // URI is absolute (scheme + host), whereas a link is usually a base-relative string.
-            // An absolute route must additionally agree on scheme/host/port so a link to another
-            // host never lights up on a same-path local request.
+            // Absolute links must agree on host as well as the app-relative path.
             if (isset($parts['host']) && !$this->hostMatches($parts)) {
                 continue;
             }
-            $renderedRoute = isset($parts['host']) ? $route : Router::url($route);
-            $renderedPath = parse_url($renderedRoute, PHP_URL_PATH);
-            if ($this->normalizePath($requestPath) !== $this->normalizePath(is_string($renderedPath) ? $renderedPath : '')) {
+            // CakePHP's request path is already app-relative; strip the base from either side when present.
+            $base = $this->request instanceof ServerRequestInterface ? $this->request->getAttribute('base') : null;
+            if ($this->normalizePath($this->stripBase($requestPath, $base)) !== $this->normalizePath($this->stripBase($parts['path'], $base))) {
                 continue;
             }
             if (!$ignoreQueryString && !$this->queryMatches($requestQuery, $parts['query'] ?? '')) {
@@ -88,6 +92,16 @@ class Psr7UrlResolver implements ResolverInterface
 
             return;
         }
+    }
+
+    protected function stripBase(string $path, mixed $base): string
+    {
+        if (!is_string($base) || $base === '' || $base === '/') {
+            return $path;
+        }
+        $base = rtrim($base, '/');
+
+        return str_starts_with($path, $base . '/') ? substr($path, strlen($base)) : $path;
     }
 
     protected function normalizePath(string $path): string

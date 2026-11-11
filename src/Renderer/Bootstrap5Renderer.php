@@ -65,7 +65,7 @@ class Bootstrap5Renderer extends StringTemplateRenderer
             }
             $attributes = $this->mergeLabelAttributes($attributes, $item);
             $attributes = $this->applyContentState($attributes, $item, $options, $level);
-            $attributes = $this->applyMenuItemRole($attributes, $item, $options);
+            $attributes = $this->applyMenuItemRole($attributes, $item, $options, $level);
 
             return $this->templater()->format('label', [
                 'attributes' => $this->renderAttributes($attributes),
@@ -104,7 +104,7 @@ class Bootstrap5Renderer extends StringTemplateRenderer
             $attributes['role'] = 'menuitem';
         }
         $attributes = $this->applyContentState($attributes, $item, $options, $level);
-        $attributes = $this->applyMenuItemRole($attributes, $item, $options);
+        $attributes = $this->applyMenuItemRole($attributes, $item, $options, $level);
 
         return $this->templater()->format('link', [
             'attributes' => $this->renderAttributes($attributes),

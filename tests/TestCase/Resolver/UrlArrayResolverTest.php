@@ -144,6 +144,36 @@ class UrlArrayResolverTest extends TestCase
         return ['fuzzy' => [true], 'exact' => [false]];
     }
 
+    public function testExactNamedRouteIgnoresPassForMappedSlug(): void
+    {
+        $route = new Route('/post/{slug}', ['controller' => 'Posts', 'action' => 'view'], ['_name' => 'post', 'pass' => ['slug']]);
+        $request = (new ServerRequest())->withAttribute('params', [
+            'controller' => 'Posts',
+            'action' => 'view',
+            'slug' => 'hello',
+            'pass' => ['hello'],
+            '_name' => 'post',
+            '_route' => $route,
+        ]);
+        $item = new Item('Post', ['_name' => 'post', 'slug' => 'hello']);
+
+        (new UrlArrayResolver($request, ['fuzzy' => false]))->resolve($item, new ResolverContext());
+
+        $this->assertTrue($item->isActive());
+
+        $extra = $request->withAttribute('params', [
+            'controller' => 'Posts',
+            'action' => 'view',
+            'slug' => 'hello',
+            'pass' => ['hello', 'extra'],
+            '_name' => 'post',
+            '_route' => $route,
+        ]);
+        $other = new Item('Other', ['_name' => 'post', 'slug' => 'hello']);
+        (new UrlArrayResolver($extra, ['fuzzy' => false]))->resolve($other, new ResolverContext());
+        $this->assertFalse($other->isActive());
+    }
+
     public function testMatchesExactArrayRouteWhenFuzzyDisabled(): void
     {
         $item = (new Item('View Article', [

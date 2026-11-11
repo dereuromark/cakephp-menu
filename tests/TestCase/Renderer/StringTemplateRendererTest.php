@@ -13,6 +13,19 @@ use InvalidArgumentException;
 
 class StringTemplateRendererTest extends TestCase
 {
+    public function testDepthLimitedBranchHasNoAriaHaspopup(): void
+    {
+        $menu = Menu::create();
+        $branch = $menu->addItem('Admin', '#');
+        $branch->getSubMenu()->addItem('Articles', '/articles');
+
+        $html = (new StringTemplateRenderer())->render($menu, ['depth' => 1, 'roles' => true]);
+
+        $this->assertStringContainsString('role="menuitem"', $html);
+        $this->assertStringNotContainsString('aria-haspopup', $html);
+        $this->assertStringNotContainsString('Articles', $html);
+    }
+
     public function testActiveOnForLinksAndLabels(): void
     {
         foreach (['item', 'link', 'both'] as $activeOn) {

@@ -173,6 +173,8 @@ This adds `role="menubar"` (root) / `role="menu"` (nested) on the lists, `role="
 `role="presentation"` on dividers / headers. It is off by default so existing markup is unchanged.
 Bootstrap dropdown and sidebar collapse triggers use `role="menuitem"` when roles are enabled;
 without roles they keep `role="button"`.
+When `depth` hides a submenu, its link has no `aria-haspopup`. A sidebar item still carries the
+active class when the current page is below the cutoff.
 
 ### Icons and badges
 

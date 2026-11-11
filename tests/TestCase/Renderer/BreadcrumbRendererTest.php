@@ -10,6 +10,16 @@ use CakeMenu\Renderer\BreadcrumbRenderer;
 
 class BreadcrumbRendererTest extends TestCase
 {
+    public function testActiveOnLinkDoesNotMarkCrumbContent(): void
+    {
+        $menu = Menu::create();
+        $menu->addItem('Articles', '/articles', ['active' => true]);
+
+        $html = (new BreadcrumbRenderer())->render($menu, ['activeOn' => 'link', 'linkCurrent' => true]);
+
+        $this->assertStringContainsString('<li class="breadcrumb-item active"><a href="/articles" aria-current="page">Articles</a></li>', $html);
+    }
+
     public function testRendersActivePath(): void
     {
         $menu = Menu::create();

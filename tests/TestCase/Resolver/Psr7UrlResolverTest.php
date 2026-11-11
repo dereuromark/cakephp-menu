@@ -131,17 +131,54 @@ class Psr7UrlResolverTest extends TestCase
         $this->assertTrue($item->isActive());
     }
 
-    public function testMatchesRenderedStringUrlUnderBasePath(): void
+    public function testMatchesWhenRequestPathStillContainsBase(): void
     {
-        $request = (new ServerRequest(['url' => '/subdir/users']))->withAttribute('base', '/subdir');
+        $request = (new ServerRequest())
+            ->withUri((new ServerRequest())->getUri()->withPath('/subdir/users'))
+            ->withAttribute('base', '/subdir');
+
+        $item = new Item('Users', '/users');
+        (new Psr7UrlResolver($request))->resolve($item, new ResolverContext());
+        $other = new Item('Other', '/other');
+        (new Psr7UrlResolver($request))->resolve($other, new ResolverContext());
+
+        $this->assertTrue($item->isActive());
+        $this->assertFalse($other->isActive());
+    }
+
+    public function testMatchesAppRelativeStringUrlUnderBasePath(): void
+    {
+        $request = (new ServerRequest(['url' => '/users']))->withAttribute('base', '/subdir');
+        $this->assertSame('/subdir', $request->getAttribute('base'));
+        $this->assertSame('/users', $request->getUri()->getPath());
         Router::setRequest($request);
         try {
             $item = new Item('Users', '/users');
             $this->assertSame('/subdir/users', $item->getLink()?->getUrl());
             (new Psr7UrlResolver($request))->resolve($item, new ResolverContext());
             $this->assertTrue($item->isActive());
+
+            $withBase = new Item('Users with base', '/subdir/users');
+            (new Psr7UrlResolver($request))->resolve($withBase, new ResolverContext());
+            $this->assertTrue($withBase->isActive());
+
+            $absolute = new Item('Absolute', 'http://localhost/subdir/users');
+            (new Psr7UrlResolver($request))->resolve($absolute, new ResolverContext());
+            $this->assertTrue($absolute->isActive());
         } finally {
             Router::reload();
+        }
+    }
+
+    public function testSkipsLinksWithoutPathAndOtherSchemes(): void
+    {
+        foreach (['/', '/users'] as $path) {
+            $request = new ServerRequest(['url' => $path]);
+            foreach (['', '#', '#section', '?page=2', 'javascript:void(0)', 'mailto:x@example.com', 'tel:123'] as $route) {
+                $item = new Item('Link', $route);
+                (new Psr7UrlResolver($request))->resolve($item, new ResolverContext());
+                $this->assertFalse($item->isActive(), $path . ': ' . $route);
+            }
         }
     }
 
