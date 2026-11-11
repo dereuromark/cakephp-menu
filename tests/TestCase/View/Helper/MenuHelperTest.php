@@ -83,6 +83,27 @@ class MenuHelperTest extends TestCase
         $this->assertFalse($child->isActive());
     }
 
+    public function testCurrentItemStaysIndependentForShallowCloningMenu(): void
+    {
+        $request = (new ServerRequest(['url' => '/articles/view/42']))
+            ->withAttribute('params', ['controller' => 'Articles', 'action' => 'view', 'pass' => [42]])
+            ->withUri((new ServerRequest())->getUri()->withPath('/articles/view/42'));
+        $helper = $this->createHelper($request);
+        $menu = new class extends Menu {
+            public function __clone(): void
+            {
+            }
+        };
+        $live = $menu->addItem('View', ['controller' => 'Articles', 'action' => 'view']);
+
+        $current = $helper->getCurrentItem($menu);
+
+        $this->assertNotNull($current);
+        $this->assertNotSame($live, $current);
+        $this->assertTrue($current->isActive());
+        $this->assertFalse($live->isActive());
+    }
+
     public function testNestedFuzzyMatchesUseDeepestItemWithoutSingleActive(): void
     {
         $request = (new ServerRequest(['url' => '/articles/view/42']))
