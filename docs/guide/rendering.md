@@ -191,6 +191,24 @@ A custom `iconTemplate` also applies to trusted markup, so place `{{icon}}` in a
 
 Use `setBadge($text, $type, false)` only when the badge text is trusted HTML.
 
+#### Trusted HTML values (CakePHP 5.next+)
+
+CakePHP 5.next adds `Cake\View\HtmlStringable` and the `html()` function for markup you have
+marked as trusted. Labels, icons and badges recognize these values and skip escaping for them, so
+no escape flag is needed:
+
+```php
+use function Cake\View\html;
+
+$menu->addItem(html('<strong>Inbox</strong>'), '/inbox', [
+    'icon' => html('<i class="bi bi-inbox" aria-hidden="true"></i>'),
+]);
+```
+
+A trusted value is stored as a string with escaping turned off, so a cached menu renders the same.
+An explicit `escape => true` still wins. Other `Stringable` objects are cast to a string and escaped
+as usual. On CakePHP versions without the interface, nothing changes.
+
 ### Auto-translation
 
 If your labels are message keys or untranslated source strings, enable `translate` to pass them

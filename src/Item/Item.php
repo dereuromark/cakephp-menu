@@ -9,6 +9,7 @@ use CakeMenu\Link\Link;
 use CakeMenu\Link\LinkInterface;
 use CakeMenu\Menu;
 use CakeMenu\MenuInterface;
+use CakeMenu\TrustedHtml;
 use LogicException;
 use Stringable;
 use Throwable;
@@ -186,7 +187,7 @@ class Item implements ItemInterface
     {
         $this->assertMutable();
         $this->label = (string)$label;
-        $this->escapeLabel = $escape;
+        $this->escapeLabel = $escape && !TrustedHtml::isTrusted($label);
 
         return $this;
     }
@@ -480,7 +481,7 @@ class Item implements ItemInterface
     {
         $this->assertMutable();
         $this->icon = $icon === null ? null : (string)$icon;
-        $this->escapeIcon = $escape;
+        $this->escapeIcon = $escape && !TrustedHtml::isTrusted($icon);
 
         return $this;
     }
@@ -500,7 +501,7 @@ class Item implements ItemInterface
         $this->assertMutable();
         $this->badge = $badge === null ? null : (string)$badge;
         $this->badgeType = $type;
-        $this->escapeBadge = $escape;
+        $this->escapeBadge = $escape && !TrustedHtml::isTrusted($badge);
 
         return $this;
     }

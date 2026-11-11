@@ -325,6 +325,16 @@ class Menu implements MenuInterface
         LinkInterface|array|string|null $link = null,
         array $options = [],
     ): ItemInterface {
+        // Trusted values become plain strings plus an escape flag, so custom item classes with
+        // string-typed constructors keep working.
+        if (TrustedHtml::isTrusted($label)) {
+            $options += ['escape' => false];
+        }
+        foreach (['icon' => 'escapeIcon', 'badge' => 'escapeBadge'] as $field => $flag) {
+            if (TrustedHtml::isTrusted($options[$field] ?? null)) {
+                $options += [$flag => false];
+            }
+        }
         $className = $this->itemClass;
         $item = new $className($label instanceof Stringable ? (string)$label : $label, $link);
 
