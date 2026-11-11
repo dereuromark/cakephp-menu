@@ -9,9 +9,11 @@ use CakeMenu\Item\Item;
 use CakeMenu\Link\Link;
 use CakeMenu\Menu;
 use CakeMenu\MenuInterface;
+use CakeMenu\Renderer\StringTemplateRenderer;
 use InvalidArgumentException;
 use LogicException;
 use RuntimeException;
+use Stringable;
 
 class ItemTest extends TestCase
 {
@@ -307,5 +309,25 @@ class ItemTest extends TestCase
 
         $item->setBadge(null);
         $this->assertNull($item->getBadge());
+    }
+
+    public function testStringableValuesAreCastAndEscaped(): void
+    {
+        $value = new class implements Stringable {
+            public function __toString(): string
+            {
+                return '<b>x</b>';
+            }
+        };
+        $menu = new Menu();
+        $item = $menu->addItem($value, '/', ['icon' => $value]);
+        $item->setBadge($value);
+
+        $this->assertSame('<b>x</b>', $item->getLabel());
+        $this->assertTrue($item->shouldEscapeLabel());
+        $this->assertTrue($item->shouldEscapeIcon());
+        $this->assertTrue($item->shouldEscapeBadge());
+        $html = (new StringTemplateRenderer())->render($menu);
+        $this->assertStringNotContainsString('<b>x</b>', $html);
     }
 }

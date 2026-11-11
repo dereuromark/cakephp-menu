@@ -7,6 +7,10 @@ code changes, but check the points below.
 
 ### May need a change
 
+- Custom `ItemInterface` and `MenuInterface` implementations must match the widened signatures:
+  labels, icons and badges accept `string|Stringable`; `setIcon()` and `setBadge()` take a
+  `bool $escape = true` argument; `ItemInterface` adds `shouldEscapeIcon()` and
+  `shouldEscapeBadge()`. Classes extending `Item` or `Menu` need no change.
 - `getBreadcrumbs()` titles are HTML-escaped (unless the item disables label escaping) and honor
   `translate`, because Cake's `BreadcrumbsHelper` prints titles unescaped. If you print the returned
   titles yourself, drop your own `h()` call to avoid double escaping.

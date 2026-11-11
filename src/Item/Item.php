@@ -10,6 +10,7 @@ use CakeMenu\Link\LinkInterface;
 use CakeMenu\Menu;
 use CakeMenu\MenuInterface;
 use LogicException;
+use Stringable;
 use Throwable;
 
 class Item implements ItemInterface
@@ -96,7 +97,7 @@ class Item implements ItemInterface
      * @phpstan-param \CakeMenu\Link\LinkInterface|array<string|int, mixed>|string|null $link
      */
     public function __construct(
-        ?string $label = null,
+        Stringable|string|null $label = null,
         LinkInterface|array|string|null $link = null,
     ) {
         $this->id = 'menu-item-' . Text::uuid();
@@ -181,10 +182,10 @@ class Item implements ItemInterface
         return $this->explicitKey;
     }
 
-    public function setLabel(string $label, bool $escape = true): static
+    public function setLabel(Stringable|string $label, bool $escape = true): static
     {
         $this->assertMutable();
-        $this->label = $label;
+        $this->label = (string)$label;
         $this->escapeLabel = $escape;
 
         return $this;
@@ -475,10 +476,10 @@ class Item implements ItemInterface
         return $this->after;
     }
 
-    public function setIcon(?string $icon, bool $escape = true): static
+    public function setIcon(Stringable|string|null $icon, bool $escape = true): static
     {
         $this->assertMutable();
-        $this->icon = $icon;
+        $this->icon = $icon === null ? null : (string)$icon;
         $this->escapeIcon = $escape;
 
         return $this;
@@ -494,7 +495,7 @@ class Item implements ItemInterface
         return $this->escapeIcon;
     }
 
-    public function setBadge(string|int|null $badge, ?string $type = null, bool $escape = true): static
+    public function setBadge(Stringable|string|int|null $badge, ?string $type = null, bool $escape = true): static
     {
         $this->assertMutable();
         $this->badge = $badge === null ? null : (string)$badge;

@@ -66,16 +66,24 @@ $menu->addItem('Home', '/'); // hard-coded, ignores the base path
 
 ## A FontAwesome icon shows as literal `<i>` text
 
-The `label` is HTML-escaped by default. Don't put markup in the label; use the dedicated, trusted
-slots instead:
+The `label` is HTML-escaped by default. Don't put markup in the label; set the icon class instead,
+and the default `iconTemplate` wraps it in an `<i>` tag:
 
 ```php
-$menu->addItem('Inbox', '/inbox')->setIcon('fa fa-inbox'); // rendered as trusted markup
+$menu->addItem('Inbox', '/inbox')->setIcon('fa fa-inbox');
+```
+
+To insert your own icon markup, pass `false` as the escape argument (or the `escapeIcon => false`
+item option) and use an `iconTemplate` with `{{icon}}` in a text position:
+
+```php
+$menu->addItem('Inbox', '/inbox')->setIcon('<i class="fa fa-inbox" aria-hidden="true"></i>', false);
 ```
 
 ::: warning
-`icon`, `badge`, `before`, `after`, and `raw` are emitted **without escaping**. Escape or cast any
-dynamic value you put there yourself. See [Item Options](/reference/item-options#options).
+`icon` and `badge` are escaped unless you opt out, but `before`, `after` and `raw` are emitted
+**without escaping**. Escape or cast any dynamic value you put there yourself. See
+[Item Options](/reference/item-options#options).
 :::
 
 ## A Bootstrap dropdown / collapse doesn't open
