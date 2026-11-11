@@ -206,8 +206,10 @@ $menu->addItem(html('<strong>Inbox</strong>'), '/inbox', [
 ```
 
 A trusted value is stored as a string with escaping turned off, so a cached menu renders the same.
-An explicit `escape => true` still wins. Other `Stringable` objects are cast to a string and escaped
-as usual. On CakePHP versions without the interface, nothing changes.
+The `escape => true` item option still forces escaping; with the setters, cast the value instead
+(`setLabel((string)$value)`). Other `Stringable` objects are cast to a string and escaped as usual.
+With `translate` on, a trusted label's translation is not escaped either, so keep the translations of
+such labels trusted too. On CakePHP versions without the interface, nothing changes.
 
 ### Auto-translation
 
