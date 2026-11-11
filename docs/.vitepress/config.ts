@@ -83,6 +83,7 @@ export default withMermaid({
         text: 'Links',
         items: [
           { text: 'Live Sandbox Demo', link: 'https://sandbox.dereuromark.de/menu-sandbox' },
+          { text: 'Introduction (blog post)', link: 'https://www.dereuromark.de/2026/05/27/a-powerful-composable-menu-builder-for-cakephp/' },
           { text: 'GitHub', link: 'https://github.com/dereuromark/cakephp-menu' },
           { text: 'Packagist', link: 'https://packagist.org/packages/dereuromark/cakephp-menu' },
           { text: 'Issues', link: 'https://github.com/dereuromark/cakephp-menu/issues' },

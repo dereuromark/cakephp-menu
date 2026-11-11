@@ -78,8 +78,8 @@ $this->addPlugin('CakeMenu'); // [!code ++]
 
 ```php
 // src/View/AppView.php
-$this->loadHelper('Menu.Menu'); // [!code --]
-$this->loadHelper('CakeMenu.Menu'); // [!code ++]
+$this->addHelper('Menu.Menu'); // [!code --]
+$this->addHelper('CakeMenu.Menu'); // [!code ++]
 ```
 
 The helper keeps its `Menu` alias, so `$this->Menu->render('main')` in templates stays as it is.

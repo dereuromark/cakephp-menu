@@ -7,7 +7,7 @@ description: The Menu helper's methods and the options accepted by render(), get
 The `Menu` helper builds, resolves, and renders named menus. Load it in `AppView`:
 
 ```php
-$this->loadHelper('CakeMenu.Menu');
+$this->addHelper('CakeMenu.Menu');
 ```
 
 ## Methods

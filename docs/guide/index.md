@@ -10,7 +10,8 @@ This is for **CakePHP 5.3+** and **PHP 8.2+**.
 ::: tip See it in action
 Prefer to explore first? The **[live sandbox](https://sandbox.dereuromark.de/menu-sandbox)** lets you
 build a menu and preview every renderer. New to the plugin? Read [Concepts](/guide/concepts) for the
-mental model behind it.
+mental model behind it, or the introductory
+[blog post](https://www.dereuromark.de/2026/05/27/a-powerful-composable-menu-builder-for-cakephp/).
 :::
 
 ## Installation
@@ -39,7 +40,7 @@ class AppView extends View
     {
         parent::initialize();
 
-        $this->loadHelper('CakeMenu.Menu');
+        $this->addHelper('CakeMenu.Menu');
     }
 }
 ```

@@ -43,7 +43,7 @@ class AppView extends View
     {
         parent::initialize();
 
-        $this->loadHelper('CakeMenu.Menu');
+        $this->addHelper('CakeMenu.Menu');
     }
 }
 ```
@@ -76,23 +76,10 @@ Full documentation lives at **<https://dereuromark.github.io/cakephp-menu/>**.
 - [Rendering](https://dereuromark.github.io/cakephp-menu/guide/rendering)
 - [Recipes](https://dereuromark.github.io/cakephp-menu/guide/recipes)
 - [Extending](https://dereuromark.github.io/cakephp-menu/guide/extending)
+- [Upgrading](https://dereuromark.github.io/cakephp-menu/guide/upgrading): breaking changes and migration steps per release
 
 ## Demo
 
 https://sandbox.dereuromark.de/menu-sandbox
 
-### 0.2 API changes
-
-Menu callbacks accept `Closure`; use `$service->method(...)` for method references.
-Sort with `CakeMenu\SortDirection::Asc` or `Desc`. Authentication data accepts
-`CakeMenu\Resolver\AuthState` or its backed string; unknown strings throw.
-
-The helper uses `attributes` when building a menu. Build options (`attributes`,
-`overwrite`, `cache`, `rebuild`) do not become render defaults. Registration closures
-receive the menu and helper. `renderBreadcrumbs($menu, $options)` uses `BreadcrumbRenderer`;
-use `populateBreadcrumbs()` before calling Cake's `Breadcrumbs->render()` yourself.
-
-`PermissionResolver` calls `can($identity, $permission, $item)`. `RegexResolver` takes a
-server request and supports `dataKey` and `maxDepth` options. `MenuInterface` exposes
-`collect()` and item-class accessors; `setItemClass()` propagates to new submenus.
-See the [upgrade guide](docs/guide/upgrading.md) for migration examples.
+The blog post [A powerful composable menu builder for CakePHP](https://www.dereuromark.de/2026/05/27/a-powerful-composable-menu-builder-for-cakephp/) introduces the plugin and the ideas behind it.
